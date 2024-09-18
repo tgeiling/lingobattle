@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'auth.dart';
 
 class StartPage extends StatefulWidget {
   @override
@@ -33,6 +37,38 @@ class _StartPageState extends State<StartPage> {
     });
   }
 
+  void _navigateToLogin() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => LoginScreen(setAuthenticated: (bool value) {
+                print("User is authenticated: $value");
+              })),
+    );
+  }
+
+  Future<void> _initiateBattle() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
+    );
+
+    // Call the backend to join the battle
+    final url =
+        'http://YOUR_SERVER_IP:PORT/joinBattle'; // Change with your backend IP/Port
+    final response = await http.post(Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': 'Player1', 'battleId': '12345'}));
+
+    if (response.statusCode == 200) {
+      // Handle battle start after opponent is found
+      final battleData = jsonDecode(response.body);
+      // You can navigate to your battle screen here.
+    } else {
+      print('Failed to start battle');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,10 +94,38 @@ class _StartPageState extends State<StartPage> {
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                // Insert event for start button here
-              },
-              child: Text('Start'),
+              onPressed: _initiateBattle,
+              child: Text('Start Battle'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _navigateToLogin,
+              child: Text('Login'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// New screen for searching opponent with SpinKit animation
+class SearchingOpponentScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            SpinKitFadingCircle(
+              color: Colors.blue,
+              size: 50.0,
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Searching for an opponent...',
+              style: TextStyle(fontSize: 18),
             ),
           ],
         ),
