@@ -2,15 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services.dart';
+import 'level.dart';
 
 class ProfileProvider with ChangeNotifier {
   int _winStreak = 0;
   int _exp = 0;
   int _completedLevels = 0;
+  int _completedLevelsTotal = 0;
+  String _lastUpdateString = "";
 
   int get winStreak => _winStreak;
   int get exp => _exp;
   int get completedLevels => _completedLevels;
+  int get completedLevelsTotal => _completedLevelsTotal;
+  String get lastUpdateString => _lastUpdateString;
 
   ProfileProvider() {
     loadPreferences();
@@ -29,6 +34,18 @@ class ProfileProvider with ChangeNotifier {
   }
 
   void setCompletedLevels(int completedLevels) {
+    _completedLevels = completedLevels;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setCompletedLevelsTotal(int completedLevelsTotal) {
+    _completedLevelsTotal = completedLevelsTotal;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setLastUpdateString(int completedLevels) {
     _completedLevels = completedLevels;
     notifyListeners();
     savePreferences();
@@ -57,6 +74,8 @@ class ProfileProvider with ChangeNotifier {
     _winStreak = prefs.getInt('winStreak') ?? 0;
     _exp = prefs.getInt('exp') ?? 0;
     _completedLevels = prefs.getInt('completedLevels') ?? 0;
+    _completedLevelsTotal = prefs.getInt('completedLevelsTotal') ?? 0;
+    _lastUpdateString = prefs.getString('lastUpdateString') ?? "";
     notifyListeners();
   }
 
@@ -64,6 +83,9 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
+    await prefs.setInt('completedLevels', _completedLevels);
+    await prefs.setInt('completedLevelsTotal', _completedLevelsTotal);
+    await prefs.setString('lastUpdateString', _lastUpdateString);
   }
 }
 
@@ -191,50 +213,4 @@ class LevelNotifier with ChangeNotifier {
     _loadLevels();
     notifyListeners();
   }
-
-  Future<void> resetAllLevels() async {
-    final prefs = await SharedPreferences.getInstance();
-
-    if (completedLevels >= 1) {
-      await prefs.setInt('completedLevels', 0);
-
-      for (int levelId = 1; levelId <= 20; levelId++) {
-        earaseLevelStatusSync(levelId);
-      }
-
-      getAuthToken().then((token) {
-        if (token != null) {
-          updateProfile(
-            token: token,
-            completedLevels: 0,
-          ).then((success) {
-            if (success) {
-              print("Profile updated successfully.");
-            } else {
-              print("Failed to update profile.");
-            }
-          });
-        } else {
-          print("No auth token available.");
-        }
-      });
-    } else {
-      print('Invalid completedLevels value: $completedLevels');
-    }
-  }
-}
-
-class Level {
-  final int id;
-  final String description;
-  final int minutes;
-  final String reward;
-  bool isDone;
-
-  Level(
-      {required this.id,
-      required this.description,
-      this.minutes = 15,
-      this.reward = '',
-      this.isDone = false});
 }

@@ -5,6 +5,13 @@ import 'dart:convert';
 import 'auth.dart';
 
 class StartPage extends StatefulWidget {
+  final bool Function() isLoggedIn;
+
+  const StartPage({
+    Key? key,
+    required this.isLoggedIn,
+  }) : super(key: key);
+
   @override
   _StartPageState createState() => _StartPageState();
 }
@@ -55,7 +62,7 @@ class _StartPageState extends State<StartPage> {
 
     // Call the backend to join the battle
     final url =
-        'http://YOUR_SERVER_IP:PORT/joinBattle'; // Change with your backend IP/Port
+        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
     final response = await http.post(Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': 'Player1', 'battleId': '12345'}));
@@ -98,10 +105,11 @@ class _StartPageState extends State<StartPage> {
               child: Text('Start Battle'),
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _navigateToLogin,
-              child: Text('Login'),
-            ),
+            if (!widget.isLoggedIn())
+              ElevatedButton(
+                onPressed: _navigateToLogin,
+                child: Text('Login'),
+              ),
           ],
         ),
       ),
@@ -114,6 +122,15 @@ class SearchingOpponentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

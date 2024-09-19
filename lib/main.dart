@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lingobattle/auth.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -9,12 +8,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'provider.dart';
 import 'start.dart';
-import 'services.dart';
+import 'auth.dart';
+import 'level.dart';
 
 void main() {
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => ProfileProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => LevelNotifier()),
+        ChangeNotifierProvider(create: (context) => ProfileProvider()),
+      ],
       child: MyApp(),
     ),
   );
@@ -41,6 +44,26 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
+  bool _isModalVisible = false;
+  String modalDescription = "Declaring Description";
+  int level = 0;
+  bool isVideoPlayer = true;
+
+  void _toggleModal(
+      [String setDescription = "Was passt für dich ?",
+      int setLevel = 0,
+      bool setIsVideoPlayer = true]) {
+    setState(() {
+      _isModalVisible = !_isModalVisible;
+      if (_isModalVisible) {
+        modalDescription = setDescription;
+        level = setLevel;
+        isVideoPlayer = setIsVideoPlayer;
+      }
+    });
+
+    isModalOpen = !isModalOpen;
+  }
 
   bool? _authenticated;
   bool? _loggedIn;
@@ -147,16 +170,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     if (!isGuest) {
       setState(() {
         _setAuthenticated(true);
+        print("isLoggedIn");
       });
       if (tokenExpired) {
         setState(() {
           _setAuthenticated(false);
+          print("tokenExpired");
         });
       }
     } else {
       await _authService.setGuestToken();
       setState(() {
         _setAuthenticated(false);
+        print("guestTokenSet");
       });
     }
 
@@ -173,6 +199,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void _setLoggedIn(bool loggedIn) {
     setState(() {
+      print("########");
+      print(loggedIn);
       _loggedIn = loggedIn;
     });
   }
@@ -181,8 +209,23 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return _loggedIn ?? false;
   }
 
+  bool isAuthenticated() {
+    return _authenticated ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    bool isSmallScreen = screenWidth < 360;
+
+    double modalHeight;
+
+    if (isSmallScreen) {
+      modalHeight = 250;
+    } else {
+      modalHeight = 380;
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Consumer<ProfileProvider>(
@@ -203,16 +246,63 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ),
         backgroundColor: Colors.blue,
       ),
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+      body: Stack(
         children: [
-          Center(child: StartPage()),
-          Center(child: Text("Site2")),
+          GestureDetector(
+            onTap: () {
+              if (_isModalVisible) {
+                _toggleModal();
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              children: [
+                Center(child: StartPage(isLoggedIn: isLoggedIn)),
+                Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
+              ],
+            ),
+          ),
+          // Modal integration from the old scaffold
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            bottom: _isModalVisible ? 0 : -450,
+            left: 0,
+            right: 0,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color.fromRGBO(0, 59, 46, 0.9),
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16),
+                ),
+              ),
+              child: SizedBox(
+                height: modalHeight,
+                width: double.maxFinite,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    print("Inner pressed");
+                  },
+                  child: CustomBottomModal(
+                    description: modalDescription,
+                    levelId: level,
+                    authenticated: isAuthenticated,
+                    isVideoPlayer: isVideoPlayer,
+                    toggleModal: _toggleModal,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
       bottomNavigationBar: SalomonBottomBar(

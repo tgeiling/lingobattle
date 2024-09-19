@@ -18,6 +18,7 @@ dependencies:
   http: ^0.13.6
   flutter_spinkit: ^5.2.1
   connectivity_plus: ^6.0.3
+  stroke_text: ^0.0.2
 
 dev_dependencies:
   flutter_test:
@@ -33,3 +34,7 @@ flutter:
     - assets/german.png
     - assets/netherlands.png
     - assets/schweiz.png
+    - assets/button_green.png
+    - assets/button_grey.png
+    - assets/button_mint.png
+    - assets/button_locked.png

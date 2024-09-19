@@ -14,7 +14,7 @@ Future<String?> getAuthToken() async {
 }
 
 Future<Map<String, dynamic>?> fetchProfile(String token) async {
-  final Uri apiUrl = Uri.parse('http://34.89.180.139:3000/profile');
+  final Uri apiUrl = Uri.parse('http://35.246.224.168:3000/profile');
   try {
     final response = await http.get(
       apiUrl,
@@ -60,7 +60,7 @@ Future<bool> updateProfile({
   String? receiptData,
   String? lastResetDate,
 }) async {
-  final Uri apiUrl = Uri.parse('http://34.89.180.139:3000/updateProfile');
+  final Uri apiUrl = Uri.parse('http://35.246.224.168:3000/updateProfile');
 
   Map<String, dynamic> body = {};
   if (birthdate != null) body['birthdate'] = birthdate.toIso8601String();
@@ -122,7 +122,7 @@ int weekNumber(DateTime date) {
   return weeks;
 }
 
-/* const String serverUrl = 'http://34.89.180.139/validate-receipt';
+/* const String serverUrl = 'http://35.246.224.168/validate-receipt';
 
 Future<bool> validateAppleReceipt(String receiptData) async {
   return await _validateReceipt(receiptData, platform: 'apple');

@@ -9,7 +9,7 @@ import 'provider.dart';
 
 class AuthService {
   final String baseUrl =
-      'http://34.89.180.139:3000'; // Replace with your server's IP
+      'http://35.246.224.168:3000'; // Replace with your server's IP
   final storage = const FlutterSecureStorage();
 
   // Login function
@@ -21,12 +21,23 @@ class AuthService {
         body: jsonEncode({'username': username, 'password': password}),
       );
 
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final token = jsonDecode(response.body)['accessToken'];
-        await storage.write(key: 'authToken', value: token);
-        return true;
+        final token = jsonDecode(
+            response.body)['token']; // Key should match the server response
+        if (token != null) {
+          await storage.write(key: 'authToken', value: token);
+          return true;
+        } else {
+          print('Token is null');
+          return false;
+        }
       } else {
-        print('Login failed: ${response.statusCode}');
+        final errorResponse = jsonDecode(response.body);
+        print(
+            'Login failed: ${response.statusCode}, ${errorResponse['message']}');
         return false;
       }
     } catch (e) {
@@ -121,6 +132,9 @@ class AuthService {
     final expiration = getTokenExpiration(token);
     if (expiration == null) return true;
 
+    bool test = expiration.isBefore(DateTime.now());
+    print(test);
+
     return expiration.isBefore(DateTime.now());
   }
 
@@ -203,6 +217,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await profileProvider.loadPreferences();
 
         widget.setAuthenticated(true);
+        Navigator.popUntil(context, (route) => route.isFirst);
       } else {
         print("No token found after successful login");
       }
