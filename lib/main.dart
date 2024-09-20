@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +31,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Salomon Bottom Bar Example',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.grey,
       ),
       home: MyHomePage(),
     );
@@ -221,9 +223,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     double modalHeight;
 
     if (isSmallScreen) {
-      modalHeight = 250;
+      modalHeight = 200;
     } else {
-      modalHeight = 380;
+      modalHeight = 240;
     }
 
     return Scaffold(
@@ -244,7 +246,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             ],
           ),
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: Color.fromRGBO(245, 245, 245, 0.894),
       ),
       body: Stack(
         children: [
@@ -263,7 +265,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 });
               },
               children: [
-                Center(child: StartPage(isLoggedIn: isLoggedIn)),
+                Center(
+                    child: StartPage(
+                        isLoggedIn: isLoggedIn, toggleModal: _toggleModal)),
                 Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
               ],
             ),
@@ -278,7 +282,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: Color.fromRGBO(0, 59, 46, 0.9),
+                color: Color.fromRGBO(230, 230, 230, 0.894),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -305,28 +309,88 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
         ],
       ),
-      bottomNavigationBar: SalomonBottomBar(
-        currentIndex: _currentIndex,
-        onTap: (i) {
-          setState(() {
-            _currentIndex = i;
-            _pageController.animateToPage(
-              i,
-              duration: Duration(milliseconds: 400),
-              curve: Curves.easeOut,
-            );
-          });
-        },
-        items: [
-          SalomonBottomBarItem(
-            icon: Icon(Icons.home),
-            title: Text("Home"),
-            selectedColor: Colors.purple,
+      bottomNavigationBar: _buildBottomNavigationBar(),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
+
+    // Calculate the width and height in actual pixels
+    double widthInPixels = screenWidth * pixelRatio;
+    double heightInPixels = screenHeight * pixelRatio;
+
+    // Calculate the diagonal in pixels
+    double diagonalPixels =
+        sqrt(pow(widthInPixels, 2) + pow(heightInPixels, 2));
+
+    // Convert the diagonal from pixels to inches
+    double diagonalInches = diagonalPixels /
+        pixelRatio /
+        160; // 160 is typically used as the DPI baseline
+
+    // A more reliable condition for detecting tablets
+    bool isTablet =
+        (diagonalInches >= 7.0 && (screenWidth / screenHeight) < 1.6);
+
+    bool isSmallScreen = screenWidth < 360;
+
+    double navHeight;
+
+    if (isSmallScreen) {
+      navHeight = 60;
+    } else if (isTablet) {
+      navHeight = 140;
+    } else {
+      navHeight = 90;
+    }
+
+    return SizedBox(
+      height: navHeight,
+      child: Column(
+        children: [
+          Container(
+            height: 1,
+            color: Colors.grey,
           ),
-          SalomonBottomBarItem(
-            icon: Icon(Icons.search),
-            title: Text("Search"),
-            selectedColor: Colors.orange,
+          Expanded(
+            child: SalomonBottomBar(
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              backgroundColor: Colors.grey,
+              currentIndex: _currentIndex,
+              onTap: (i) {
+                setState(() {
+                  _currentIndex = i;
+                  _pageController.animateToPage(
+                    i,
+                    duration: Duration(milliseconds: 400),
+                    curve: Curves.easeOut,
+                  );
+                });
+              },
+              items: [
+                SalomonBottomBarItem(
+                  icon: Icon(
+                    CupertinoIcons.home,
+                    size: MediaQuery.of(context).size.width * 0.08,
+                    color: Colors.white,
+                  ),
+                  title: const Text("Play"),
+                  selectedColor: Colors.white,
+                ),
+                SalomonBottomBarItem(
+                  icon: Icon(
+                    CupertinoIcons.wand_stars_inverse,
+                    size: MediaQuery.of(context).size.width * 0.08,
+                    color: Colors.white,
+                  ),
+                  title: const Text("Level"),
+                  selectedColor: Colors.white,
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -12,8 +12,8 @@ class PressableButton extends StatefulWidget {
     Key? key,
     required this.child,
     required this.padding,
-    this.color = const Color(0xFF59c977),
-    this.shadowColor = const Color(0xFF48a160),
+    this.color = const Color.fromARGB(255, 243, 243, 243),
+    this.shadowColor = const Color.fromARGB(255, 216, 216, 216),
     this.onPressed,
   }) : super(key: key);
 
@@ -111,11 +111,11 @@ class GreenContainer extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: const Color(0xFF59c977),
+        color: const Color.fromARGB(255, 243, 243, 243),
         borderRadius: BorderRadius.circular(10),
         boxShadow: const [
           BoxShadow(
-            color: Color(0xFF48a160),
+            color: const Color.fromARGB(255, 216, 216, 216),
             offset: Offset(0, 5),
             blurRadius: 0,
             spreadRadius: 0,

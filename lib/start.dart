@@ -2,14 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+
 import 'auth.dart';
+import 'elements.dart';
+import 'level.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
+  final Function(String, int, bool) toggleModal;
 
   const StartPage({
     Key? key,
     required this.isLoggedIn,
+    required this.toggleModal,
   }) : super(key: key);
 
   @override
@@ -22,26 +27,45 @@ class _StartPageState extends State<StartPage> {
     'assets/netherlands.png',
     'assets/schweiz.png'
   ];
+  late PageController _pageController;
   int currentIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   void nextFlag() {
-    setState(() {
-      if (currentIndex < flags.length - 1) {
+    if (currentIndex < flags.length - 1) {
+      setState(() {
         currentIndex++;
-      } else {
-        currentIndex = 0;
-      }
-    });
+        _pageController.animateToPage(
+          currentIndex,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
   }
 
   void previousFlag() {
-    setState(() {
-      if (currentIndex > 0) {
+    if (currentIndex > 0) {
+      setState(() {
         currentIndex--;
-      } else {
-        currentIndex = flags.length - 1;
-      }
-    });
+        _pageController.animateToPage(
+          currentIndex,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      });
+    }
   }
 
   void _navigateToLogin() {
@@ -79,7 +103,18 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
+        body: Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color.fromRGBO(245, 245, 245, 0.894),
+            Color.fromRGBO(160, 160, 160, 0.886),
+          ],
+        ),
+      ),
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
@@ -90,19 +125,53 @@ class _StartPageState extends State<StartPage> {
                   icon: Icon(Icons.arrow_left),
                   onPressed: previousFlag,
                   tooltip: 'Previous Flag',
+                  iconSize: 50,
                 ),
-                Image.asset(flags[currentIndex], width: 100, height: 72),
+                Container(
+                  width: 200,
+                  height: 144,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentIndex = index;
+                      });
+                    },
+                    itemCount: flags.length,
+                    itemBuilder: (context, index) {
+                      return Image.asset(
+                        flags[index],
+                        fit: BoxFit.contain,
+                      );
+                    },
+                  ),
+                ),
                 IconButton(
                   icon: Icon(Icons.arrow_right),
                   onPressed: nextFlag,
                   tooltip: 'Next Flag',
+                  iconSize: 50,
                 ),
               ],
             ),
             SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _initiateBattle,
-              child: Text('Start Battle'),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
+              child: PressableButton(
+                onPressed: () {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    widget.toggleModal("", 0, false);
+                  });
+                },
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                child: Center(
+                    child: Text(
+                  "Start",
+                  style: Theme.of(context).textTheme.labelLarge,
+                )),
+              ),
             ),
             SizedBox(height: 20),
             if (!widget.isLoggedIn())
@@ -113,7 +182,7 @@ class _StartPageState extends State<StartPage> {
           ],
         ),
       ),
-    );
+    ));
   }
 }
 

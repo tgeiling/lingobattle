@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:lingobattle/elements.dart';
 import 'package:provider/provider.dart';
@@ -51,7 +52,6 @@ class CustomBottomModal extends StatefulWidget {
 }
 
 class _CustomBottomModalState extends State<CustomBottomModal> {
-  int selectedDuration = 600;
   String selectedDifficulty = "Easy";
   String selectedType = "Speedrun";
 
@@ -79,12 +79,12 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
       MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
     );
 
-    // Call the backend to join the battle
-    final url =
-        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
-    final response = await http.post(Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': 'Player1', 'battleId': '12345'}));
+    final url = 'http://35.246.224.168/joinBattle';
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'username': 'Player1', 'battleId': '12345'}),
+    );
 
     if (response.statusCode == 200) {
       // Handle battle start after opponent is found
@@ -163,14 +163,6 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              "Edit you Level",
-              style: Theme.of(context).textTheme.displayLarge,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
               widget.description,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
@@ -183,19 +175,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
               childAspectRatio: aspectRatioItems / 1,
               children: <Widget>[
                 PressableButton(
-                  onPressed: () => showDurationDialog(),
-                  padding: EdgeInsets.symmetric(
-                      vertical: smallPressableVerticalPadding,
-                      horizontal: smallPressableHorizontalPadding),
-                  child: Center(
-                    child: Text(
-                      "Dauer: ${selectedDuration ~/ 60} Minuten",
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ),
-                ),
-                PressableButton(
-                  onPressed: () => showOptionDialogFocus(difficulties,
+                  onPressed: () => showOptionDialogDifficulty(difficulties,
                       "Difficulty", (value) => selectedDifficulty = value),
                   padding: EdgeInsets.symmetric(
                       vertical: smallPressableVerticalPadding,
@@ -208,7 +188,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
                   ),
                 ),
                 PressableButton(
-                  onPressed: () => showOptionDialogGoal(typeOptions,
+                  onPressed: () => showOptionDialogType(typeOptions,
                       "Choose Type", (value) => selectedType = value),
                   padding: EdgeInsets.symmetric(
                       vertical: smallPressableVerticalPadding,
@@ -336,7 +316,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color.fromRGBO(97, 184, 115, 1),
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),
           ),
@@ -391,64 +371,13 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
     );
   }
 
-  void showDurationDialog() async {
-    int? duration = await showDialog<int>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: const Color.fromRGBO(97, 184, 115, 1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          title: const Text(
-            "Wählen Sie die Dauer",
-            style: TextStyle(color: Colors.white),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: 20,
-              itemBuilder: (BuildContext context, int index) {
-                int minute = 5 + index;
-                return ListTile(
-                  selectedColor: Colors.green,
-                  title: Text(
-                    "$minute Minuten",
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  onTap: () => Navigator.of(context).pop(minute * 60),
-                );
-              },
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                "Abbrechen",
-                style: TextStyle(color: Colors.white),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (duration != null) {
-      setState(() {
-        selectedDuration = duration;
-      });
-    }
-  }
-
-  void showOptionDialogFocus(List<String> options, String title,
+  void showOptionDialogDifficulty(List<String> options, String title,
       void Function(String) onSelected) async {
     String? selection = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color.fromRGBO(97, 184, 115, 1),
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
           title: Text(
             title,
             style: const TextStyle(color: Colors.white),
@@ -485,13 +414,13 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
     }
   }
 
-  void showOptionDialogGoal(List<String> options, String title,
+  void showOptionDialogType(List<String> options, String title,
       void Function(String) onSelected) async {
     String? selection = await showDialog<String>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          backgroundColor: const Color.fromRGBO(97, 184, 115, 1),
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
           title: Text(
             title,
             style: const TextStyle(color: Colors.white),
@@ -564,148 +493,164 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     final levelNotifier = Provider.of<LevelNotifier>(context);
     final levels = levelNotifier.levels;
 
-    return Stack(
-      children: [
-        ListView.builder(
-          reverse: true,
-          controller: _scrollController,
-          itemCount: levels.length,
-          itemBuilder: (context, index) {
-            int levelId = levels.keys.toList()[index];
-            Level level = levels[levelId]!;
+    return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromRGBO(245, 245, 245, 0.894),
+              Color.fromRGBO(160, 160, 160, 0.886),
+            ],
+          ),
+        ),
+        child: Stack(
+          children: [
+            ListView.builder(
+              reverse: true,
+              controller: _scrollController,
+              itemCount: levels.length,
+              itemBuilder: (context, index) {
+                int levelId = levels.keys.toList()[index];
+                Level level = levels[levelId]!;
 
-            int group = index ~/ 5;
-            int withinGroupIndex = index % 5;
-            double screenWidth = MediaQuery.of(context).size.width;
-            double curveIntensity = screenWidth / 2;
+                int group = index ~/ 5;
+                int withinGroupIndex = index % 5;
+                double screenWidth = MediaQuery.of(context).size.width;
+                double curveIntensity = screenWidth / 2;
 
-            double curvePadding;
-            double startPadding = 0;
-            double endPadding = 0;
+                double curvePadding;
+                double startPadding = 0;
+                double endPadding = 0;
 
-            if (group % 2 == 0) {
-              startPadding = curveIntensity * sin(withinGroupIndex * pi / 5);
-            } else {
-              // Left curve (use endPadding)
-              endPadding = curveIntensity * sin(withinGroupIndex * pi / 5);
-            }
-
-            // Determine if this is the next level
-            bool isNext = false;
-            if (!level.isDone) {
-              int? maxDoneLevelId = levels.entries
-                  .where((entry) => entry.value.isDone)
-                  .map((entry) => entry.key)
-                  .fold<int?>(
-                      null,
-                      (prev, element) => prev != null
-                          ? (element > prev ? element : prev)
-                          : element);
-
-              if (maxDoneLevelId == null) {
-                isNext = levelId == levels.keys.first;
-              } else {
-                if (levelId == maxDoneLevelId + 1) {
-                  isNext = true;
+                if (group % 2 == 0) {
+                  startPadding =
+                      curveIntensity * sin(withinGroupIndex * pi / 5);
+                } else {
+                  // Left curve (use endPadding)
+                  endPadding = curveIntensity * sin(withinGroupIndex * pi / 5);
                 }
-              }
-            }
 
-            return Padding(
-              padding: EdgeInsets.only(left: startPadding, right: endPadding),
-              child: LevelCircle(
-                level: level.id,
-                onTap: () {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    widget.toggleModal(level.description, level.id, true);
-                  });
-                },
-                isTreasureLevel: level.id % 4 == 0,
-                isDone: level.isDone,
-                isNext: isNext,
-              ),
-            );
-          },
-        ),
-        Positioned(
-          top: 75,
-          left: 15,
-          child: GreenContainer(
-            padding: const EdgeInsets.all(12.0), // Adjust padding if needed
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Level Reset: \n $_timeRemaining',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                // Determine if this is the next level
+                bool isNext = false;
+                if (!level.isDone) {
+                  int? maxDoneLevelId = levels.entries
+                      .where((entry) => entry.value.isDone)
+                      .map((entry) => entry.key)
+                      .fold<int?>(
+                          null,
+                          (prev, element) => prev != null
+                              ? (element > prev ? element : prev)
+                              : element);
+
+                  if (maxDoneLevelId == null) {
+                    isNext = levelId == levels.keys.first;
+                  } else {
+                    if (levelId == maxDoneLevelId + 1) {
+                      isNext = true;
+                    }
+                  }
+                }
+
+                return Padding(
+                  padding:
+                      EdgeInsets.only(left: startPadding, right: endPadding),
+                  child: LevelCircle(
+                    level: level.id,
+                    onTap: () {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        widget.toggleModal(level.description, level.id, true);
+                      });
+                    },
+                    isTreasureLevel: level.id % 4 == 0,
+                    isDone: level.isDone,
+                    isNext: isNext,
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () {
-                    OverlayEntry? overlayEntry;
-
-                    overlayEntry = OverlayEntry(
-                      builder: (context) => GestureDetector(
-                        onTap: () {
-                          overlayEntry?.remove();
-                        },
-                        child: Stack(
-                          children: <Widget>[
-                            Container(
-                              color: Colors.transparent,
-                            ),
-                            Positioned(
-                              top: MediaQuery.of(context).size.height * 0.08,
-                              left: MediaQuery.of(context).size.width * 0.45,
-                              child: SpeechBubble(
-                                message:
-                                    ' Alle Level werden\n jeden Monat\n zurückgesetzt.\n Schau, wie weit\n du kommst!\n Du verlierst\n nicht deinen\n Gesamtfortschritt.',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-
-                    Overlay.of(context)?.insert(overlayEntry);
-                  },
-                  child: Icon(
-                    Icons.info_outline,
-                    color: Colors.white,
-                    size: 24, // Adjust size as needed
-                  ),
-                ),
-              ],
+                );
+              },
             ),
-          ),
-        ),
-        Positioned(
-          top: 160,
-          left: 15,
-          child: Consumer<ProfileProvider>(
-            builder: (context, profilProvider, child) {
-              int totalLevelsCompleted = profilProvider.completedLevelsTotal;
+            Positioned(
+              top: 75,
+              left: 15,
+              child: GreenContainer(
+                padding: const EdgeInsets.all(12.0), // Adjust padding if needed
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Level Reset: \n $_timeRemaining',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () {
+                        OverlayEntry? overlayEntry;
 
-              return GreenContainer(
-                padding: const EdgeInsets.all(12.0),
-                child: Text(
-                  'Level: $totalLevelsCompleted',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        overlayEntry = OverlayEntry(
+                          builder: (context) => GestureDetector(
+                            onTap: () {
+                              overlayEntry?.remove();
+                            },
+                            child: Stack(
+                              children: <Widget>[
+                                Container(
+                                  color: Colors.transparent,
+                                ),
+                                Positioned(
+                                  top:
+                                      MediaQuery.of(context).size.height * 0.08,
+                                  left:
+                                      MediaQuery.of(context).size.width * 0.45,
+                                  child: SpeechBubble(
+                                    message:
+                                        ' Alle Level werden\n jeden Monat\n zurückgesetzt.\n Schau, wie weit\n du kommst!\n Du verlierst\n nicht deinen\n Gesamtfortschritt.',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+
+                        Overlay.of(context)?.insert(overlayEntry);
+                      },
+                      child: Icon(
+                        Icons.info_outline,
+                        color: Colors.white,
+                        size: 24, // Adjust size as needed
+                      ),
+                    ),
+                  ],
                 ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+              ),
+            ),
+            Positioned(
+              top: 160,
+              left: 15,
+              child: Consumer<ProfileProvider>(
+                builder: (context, profilProvider, child) {
+                  int totalLevelsCompleted =
+                      profilProvider.completedLevelsTotal;
+
+                  return GreenContainer(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Text(
+                      'Level: $totalLevelsCompleted',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ));
   }
 
   @override
