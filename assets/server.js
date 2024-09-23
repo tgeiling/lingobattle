@@ -134,6 +134,17 @@ const io = new Server(server);
 // Active battles storage (in-memory)
 let activeBattles = {};
 
+// Timeout period for waiting (in milliseconds)
+const WAIT_TIMEOUT = 60000; // 1 minute
+
+// Function to clean up battle data
+const cleanupBattle = (battleId) => {
+  if (activeBattles[battleId]) {
+    io.to(battleId).emit('battleCancelled', { message: 'Battle has been cancelled due to inactivity or player disconnection.' });
+    delete activeBattles[battleId]; // Remove the battle
+  }
+};
+
 // 1vs1 Battle endpoint using WebSocket (Socket.io)
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
@@ -144,25 +155,80 @@ io.on('connection', (socket) => {
 
     if (!activeBattles[battleId]) {
       // If the battle doesn't exist, create it and add the first player
-      activeBattles[battleId] = { players: [username], status: 'waiting' };
+      activeBattles[battleId] = { players: [{ id: socket.id, username }], status: 'waiting', timeout: null };
+
       socket.join(battleId);
       io.to(battleId).emit('waitingForOpponent', { message: 'Waiting for another player...' });
+
+      // Set a timeout to clean up the battle if no opponent joins
+      activeBattles[battleId].timeout = setTimeout(() => cleanupBattle(battleId), WAIT_TIMEOUT);
     } else if (activeBattles[battleId].players.length === 1) {
       // If one player is already in, add the second player
-      activeBattles[battleId].players.push(username);
+      activeBattles[battleId].players.push({ id: socket.id, username });
       activeBattles[battleId].status = 'active';
+      
+      // Clear the waiting timeout since both players are present
+      clearTimeout(activeBattles[battleId].timeout);
+      activeBattles[battleId].timeout = null;
+
       socket.join(battleId);
-      io.to(battleId).emit('battleStart', { message: 'Battle started!', players: activeBattles[battleId].players });
+      io.to(battleId).emit('battleStart', { 
+        message: 'Battle started!', 
+        players: activeBattles[battleId].players.map(player => player.username) 
+      });
     } else {
       // Battle is full
       socket.emit('battleFull', { message: 'This battle is already full.' });
     }
   });
 
-  // Handle disconnect
+  // Handle player leaving or disconnecting
   socket.on('disconnect', () => {
     console.log('A user disconnected:', socket.id);
-    // Clean up any battle states here if necessary
+
+    // Find and clean up the battle the player was in
+    for (const battleId in activeBattles) {
+      const battle = activeBattles[battleId];
+      const playerIndex = battle.players.findIndex((player) => player.id === socket.id);
+
+      if (playerIndex !== -1) {
+        // Remove the player from the battle
+        battle.players.splice(playerIndex, 1);
+        
+        if (battle.players.length === 0) {
+          // If no players remain, clean up the battle
+          cleanupBattle(battleId);
+        } else {
+          // If one player remains, change status to waiting
+          battle.status = 'waiting';
+          io.to(battleId).emit('waitingForOpponent', { message: 'Your opponent has disconnected. Waiting for a new player...' });
+
+          // Start a timeout to auto-cancel if no one joins
+          battle.timeout = setTimeout(() => cleanupBattle(battleId), WAIT_TIMEOUT);
+        }
+      }
+    }
+  });
+
+  // Leave battle manually (in case you need a separate leave event)
+  socket.on('leaveBattle', (battleId) => {
+    if (activeBattles[battleId]) {
+      const playerIndex = activeBattles[battleId].players.findIndex((player) => player.id === socket.id);
+
+      if (playerIndex !== -1) {
+        activeBattles[battleId].players.splice(playerIndex, 1);
+        
+        if (activeBattles[battleId].players.length === 0) {
+          cleanupBattle(battleId);
+        } else {
+          activeBattles[battleId].status = 'waiting';
+          io.to(battleId).emit('waitingForOpponent', { message: 'Your opponent has left the battle. Waiting for a new player...' });
+          activeBattles[battleId].timeout = setTimeout(() => cleanupBattle(battleId), WAIT_TIMEOUT);
+        }
+      }
+
+      socket.leave(battleId);
+    }
   });
 });
 

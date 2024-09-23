@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'auth.dart';
 import 'elements.dart';
@@ -28,18 +29,60 @@ class _StartPageState extends State<StartPage> {
     'assets/schweiz.png'
   ];
   late PageController _pageController;
+  late IO.Socket socket;
   int currentIndex = 0;
+  bool isSearching = false;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: currentIndex);
+    _initializeSocket(); // Initialize WebSocket
   }
 
   @override
   void dispose() {
     _pageController.dispose();
+    socket.dispose(); // Dispose the socket connection
     super.dispose();
+  }
+
+  // Initialize WebSocket connection
+  void _initializeSocket() {
+    socket = IO.io('http://35.246.224.168', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+
+    socket.connect();
+
+    // Listen for WebSocket events
+    socket.onConnect((_) {
+      print('Connected to WebSocket server');
+    });
+
+    socket.on('waitingForOpponent', (data) {
+      print('Waiting for opponent: ${data['message']}');
+    });
+
+    socket.on('battleStart', (data) {
+      print('Battle started: $data');
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BattleScreen(battleData: data),
+        ),
+      );
+    });
+
+    socket.on('battleFull', (data) {
+      print('Battle full: ${data['message']}');
+      _showErrorDialog('Battle is already full. Try another.');
+    });
+
+    socket.onDisconnect((_) {
+      print('Disconnected from WebSocket server');
+    });
   }
 
   void nextFlag() {
@@ -84,105 +127,117 @@ class _StartPageState extends State<StartPage> {
       MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
     );
 
-    // Call the backend to join the battle
-    final url =
-        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
-    final response = await http.post(Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'username': 'Player1', 'battleId': '12345'}));
+    // Join the battle using WebSocket
+    socket.emit('joinBattle', {
+      'username': 'Player1',
+      'battleId': '12345',
+    });
 
-    if (response.statusCode == 200) {
-      // Handle battle start after opponent is found
-      final battleData = jsonDecode(response.body);
-      // You can navigate to your battle screen here.
-    } else {
-      print('Failed to start battle');
-    }
+    setState(() {
+      isSearching = true;
+    });
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.fromRGBO(245, 245, 245, 0.894),
-            Color.fromRGBO(160, 160, 160, 0.886),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color.fromRGBO(245, 245, 245, 0.894),
+              Color.fromRGBO(160, 160, 160, 0.886),
+            ],
+          ),
         ),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                IconButton(
-                  icon: Icon(Icons.arrow_left),
-                  onPressed: previousFlag,
-                  tooltip: 'Previous Flag',
-                  iconSize: 50,
-                ),
-                Container(
-                  width: 200,
-                  height: 144,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        currentIndex = index;
-                      });
-                    },
-                    itemCount: flags.length,
-                    itemBuilder: (context, index) {
-                      return Image.asset(
-                        flags[index],
-                        fit: BoxFit.contain,
-                      );
-                    },
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  IconButton(
+                    icon: Icon(Icons.arrow_left),
+                    onPressed: previousFlag,
+                    tooltip: 'Previous Flag',
+                    iconSize: 50,
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.arrow_right),
-                  onPressed: nextFlag,
-                  tooltip: 'Next Flag',
-                  iconSize: 50,
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
-              child: PressableButton(
-                onPressed: () {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    widget.toggleModal("", 0, false);
-                  });
-                },
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-                child: Center(
-                    child: Text(
-                  "Start",
-                  style: Theme.of(context).textTheme.labelLarge,
-                )),
+                  Container(
+                    width: 200,
+                    height: 144,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          currentIndex = index;
+                        });
+                      },
+                      itemCount: flags.length,
+                      itemBuilder: (context, index) {
+                        return Image.asset(
+                          flags[index],
+                          fit: BoxFit.contain,
+                        );
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.arrow_right),
+                    onPressed: nextFlag,
+                    tooltip: 'Next Flag',
+                    iconSize: 50,
+                  ),
+                ],
               ),
-            ),
-            SizedBox(height: 20),
-            if (!widget.isLoggedIn())
-              ElevatedButton(
-                onPressed: _navigateToLogin,
-                child: Text('Login'),
+              SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    vertical: 10.0, horizontal: 110.0),
+                child: PressableButton(
+                  onPressed: _initiateBattle, // Start battle via WebSocket
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                  child: Center(
+                      child: Text(
+                    "Start",
+                    style: Theme.of(context).textTheme.labelLarge,
+                  )),
+                ),
               ),
-          ],
+              SizedBox(height: 20),
+              if (!widget.isLoggedIn())
+                ElevatedButton(
+                  onPressed: _navigateToLogin,
+                  child: Text('Login'),
+                ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }
 
@@ -214,6 +269,28 @@ class SearchingOpponentScreen extends StatelessWidget {
               style: TextStyle(fontSize: 18),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// A sample battle screen to navigate after finding an opponent
+class BattleScreen extends StatelessWidget {
+  final dynamic battleData;
+
+  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Battle Screen"),
+      ),
+      body: Center(
+        child: Text(
+          'Battle started with players: ${battleData['players']}',
+          style: TextStyle(fontSize: 18),
         ),
       ),
     );

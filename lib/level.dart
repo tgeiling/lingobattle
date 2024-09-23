@@ -71,28 +71,59 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
     "Riddles"
   ];
 
-  get http => null;
-
   Future<void> _initiateBattle() async {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
     );
 
-    final url = 'http://35.246.224.168/joinBattle';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': 'Player1', 'battleId': '12345'}),
-    );
+    // Call the backend to join the battle
+    final url =
+        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': 'Player1', 'battleId': '12345'}),
+      );
 
-    if (response.statusCode == 200) {
-      // Handle battle start after opponent is found
-      final battleData = jsonDecode(response.body);
-      // You can navigate to your battle screen here.
-    } else {
-      print('Failed to start battle');
+      if (response.statusCode == 200) {
+        final battleData = jsonDecode(response.body);
+        // You can navigate to your battle screen here.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BattleScreen(battleData: battleData),
+          ),
+        );
+      } else {
+        // Handle failure - perhaps the battle couldn't start
+        _showErrorDialog('Failed to start battle. Please try again.');
+      }
+    } catch (e) {
+      // Handle any network or other errors
+      _showErrorDialog('An error occurred: $e');
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
