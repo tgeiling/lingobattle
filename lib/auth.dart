@@ -9,7 +9,7 @@ import 'provider.dart';
 
 class AuthService {
   final String baseUrl =
-      'http://35.246.224.168:3000'; // Replace with your server's IP
+      'http://34.159.152.1:3000'; // Replace with your server's IP
   final storage = const FlutterSecureStorage();
 
   // Login function

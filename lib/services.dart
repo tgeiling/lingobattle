@@ -14,7 +14,7 @@ Future<String?> getAuthToken() async {
 }
 
 Future<Map<String, dynamic>?> fetchProfile(String token) async {
-  final Uri apiUrl = Uri.parse('http://35.246.224.168:3000/profile');
+  final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/profile');
   try {
     final response = await http.get(
       apiUrl,
@@ -60,7 +60,7 @@ Future<bool> updateProfile({
   String? receiptData,
   String? lastResetDate,
 }) async {
-  final Uri apiUrl = Uri.parse('http://35.246.224.168:3000/updateProfile');
+  final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/updateProfile');
 
   Map<String, dynamic> body = {};
   if (birthdate != null) body['birthdate'] = birthdate.toIso8601String();

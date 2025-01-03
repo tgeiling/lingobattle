@@ -1,3 +1,11 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:lingobattle/provider.dart';
+import 'package:lingobattle/start.dart';
+import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+
 import 'auth.dart';
 import 'package:flutter/material.dart';
 
@@ -430,4 +438,582 @@ class TrianglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class CustomBottomModal extends StatefulWidget {
+  final String description;
+  final int levelId;
+  final bool Function() authenticated;
+  final bool isVideoPlayer;
+  final Function(String, int, bool) toggleModal;
+
+  const CustomBottomModal({
+    Key? key,
+    required this.description,
+    required this.levelId,
+    required this.authenticated,
+    required this.isVideoPlayer,
+    required this.toggleModal,
+  }) : super(key: key);
+
+  @override
+  _CustomBottomModalState createState() => _CustomBottomModalState();
+}
+
+class _CustomBottomModalState extends State<CustomBottomModal> {
+  String selectedDifficulty = "Easy";
+  String selectedType = "Speedrun";
+
+  final List<String> difficulties = [
+    "Easy",
+    "Mid",
+    "Hard",
+    "Native",
+    "Very Hard",
+    "Very much Harder"
+  ];
+
+  final List<String> typeOptions = [
+    "Speedrun",
+    "Dictionary",
+    "Wordchain",
+    "Riddles"
+  ];
+
+  Future<void> _initiateBattle() async {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
+    );
+
+    // Call the backend to join the battle
+    final url =
+        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
+    try {
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': 'Player1', 'battleId': '12345'}),
+      );
+
+      if (response.statusCode == 200) {
+        final battleData = jsonDecode(response.body);
+        // You can navigate to your battle screen here.
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BattleScreen(battleData: battleData),
+          ),
+        );
+      } else {
+        // Handle failure - perhaps the battle couldn't start
+        _showErrorDialog('Failed to start battle. Please try again.');
+      }
+    } catch (e) {
+      // Handle any network or other errors
+      _showErrorDialog('An error occurred: $e');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Error'),
+          content: Text(message),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+
+    double screenWidth = mediaQuery.size.width;
+    double screenHeight = mediaQuery.size.height;
+    double pixelRatio = mediaQuery.devicePixelRatio;
+
+    double widthInPixels = screenWidth * pixelRatio;
+    double heightInPixels = screenHeight * pixelRatio;
+
+    double diagonalPixels =
+        sqrt(pow(widthInPixels, 2) + pow(heightInPixels, 2));
+
+    double diagonalInches = diagonalPixels / pixelRatio / 160;
+
+    bool isTablet =
+        (diagonalInches >= 7.0 && (screenWidth / screenHeight) < 1.6);
+
+    double modalPadding;
+    double smallPressableVerticalPadding;
+    double smallPressableHorizontalPadding;
+    double bigPressableVerticalPadding;
+    double aspectRatioItems;
+
+    if (screenWidth < 360) {
+      modalPadding = 8;
+      smallPressableVerticalPadding = 0;
+      smallPressableHorizontalPadding = 0;
+      bigPressableVerticalPadding = 4;
+      aspectRatioItems = 10;
+    } else if (isTablet) {
+      modalPadding = 24;
+      smallPressableVerticalPadding = 0;
+      smallPressableHorizontalPadding = 0;
+      bigPressableVerticalPadding = 12;
+      aspectRatioItems = 16;
+    } else {
+      modalPadding = 16;
+      smallPressableVerticalPadding = 8;
+      smallPressableHorizontalPadding = 12;
+      bigPressableVerticalPadding = 14;
+      aspectRatioItems = 8;
+    }
+
+    bool isDateSevenDaysAgo(String isoDateString) {
+      DateTime parsedDate = DateTime.parse(isoDateString).toLocal();
+      DateTime currentDate = DateTime.now().toLocal();
+      DateTime sevenDaysAgo = currentDate.subtract(Duration(days: 7)).toLocal();
+
+      return parsedDate.isBefore(sevenDaysAgo) ||
+          parsedDate.isAtSameMomentAs(sevenDaysAgo);
+    }
+
+    final profilProvider = Provider.of<ProfileProvider>(context, listen: false);
+    final bool readyForNextVideo = profilProvider.lastUpdateString == ""
+        ? true
+        : isDateSevenDaysAgo(profilProvider.lastUpdateString);
+
+    //bool payedUp = profilProvider.payedSubscription == true ? true : false;
+
+    return Padding(
+      padding: EdgeInsets.all(modalPadding),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              widget.description,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+          ),
+          Expanded(
+            child: GridView.count(
+              crossAxisCount: 1,
+              crossAxisSpacing: 0,
+              mainAxisSpacing: 10,
+              childAspectRatio: aspectRatioItems / 1,
+              children: <Widget>[
+                PressableButton(
+                  onPressed: () => showOptionDialogDifficulty(difficulties,
+                      "Difficulty", (value) => selectedDifficulty = value),
+                  padding: EdgeInsets.symmetric(
+                      vertical: smallPressableVerticalPadding,
+                      horizontal: smallPressableHorizontalPadding),
+                  child: Center(
+                    child: Text(
+                      "Fokus: $selectedDifficulty",
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ),
+                ),
+                PressableButton(
+                  onPressed: () => showOptionDialogType(typeOptions,
+                      "Choose Type", (value) => selectedType = value),
+                  padding: EdgeInsets.symmetric(
+                      vertical: smallPressableVerticalPadding,
+                      horizontal: smallPressableHorizontalPadding),
+                  child: Center(
+                    child: Text(
+                      "Ziel: $selectedType",
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 30),
+          /* PressableButton(
+            onPressed: widget.authenticated && payedUp
+                ? widget.isVideoPlayer
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoCombinerScreen(
+                              levelId: widget.levelId,
+                              levelNotifier: Provider.of<LevelNotifier>(context,
+                                  listen: false),
+                              profilProvider: Provider.of<ProfilProvider>(
+                                  context,
+                                  listen: false),
+                              focus: selectedFocus,
+                              goal: selectedGoal,
+                              duration: selectedDuration,
+                            ),
+                          ),
+                        );
+                        widget.toggleModal;
+                      }
+                    : () {
+                        downloadScreenKey.currentState!.combineAndDownloadVideo(
+                            selectedFocus,
+                            selectedGoal,
+                            selectedDuration,
+                            ProfilProvider().fitnessLevel);
+                      }
+                : readyForNextVideo
+                    ? () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoCombinerScreen(
+                              levelId: widget.levelId,
+                              levelNotifier: Provider.of<LevelNotifier>(context,
+                                  listen: false),
+                              profilProvider: Provider.of<ProfilProvider>(
+                                  context,
+                                  listen: false),
+                              focus: selectedFocus,
+                              goal: selectedGoal,
+                              duration: selectedDuration,
+                            ),
+                          ),
+                        );
+                        widget.toggleModal;
+                      }
+                    : () async {
+                        await _validateSubscriptionAndShowRestrictionDialog(profilProvider);
+                      },
+            padding: EdgeInsets.symmetric(
+                vertical: bigPressableVerticalPadding, horizontal: 12),
+            child: Center(
+                child: Text(
+              widget.isVideoPlayer ? "Jetzt starten" : "Video erstellen",
+              style: Theme.of(context).textTheme.labelLarge,
+            )),
+          ), */
+          PressableButton(
+            onPressed: _initiateBattle,
+            padding: EdgeInsets.symmetric(
+                vertical: bigPressableVerticalPadding, horizontal: 12),
+            child: Center(
+                child: Text(
+              widget.isVideoPlayer ? "Jetzt starten" : "Video erstellen",
+              style: Theme.of(context).textTheme.labelLarge,
+            )),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /* Future<void> _validateSubscriptionAndShowRestrictionDialog(
+      ProfilProvider profilProvider) async {
+    bool isValid = false;
+
+    if (Platform.isIOS && profilProvider.receiptData != null) {
+      isValid = await validateAppleReceipt(profilProvider.receiptData!);
+    } else if (Platform.isAndroid && profilProvider.receiptData != null) {
+      isValid = await validateGoogleReceipt(profilProvider.receiptData!);
+    }
+
+    if (!isValid && profilProvider.receiptData != null) {
+      profilProvider.setPayedSubscription(false);
+      profilProvider.setSubType('');
+      QuickAlert.show(
+        backgroundColor: Colors.red.shade900,
+        textColor: Colors.white,
+        context: context,
+        type: QuickAlertType.error,
+        title: 'Abonnement ungültig',
+        text: 'Ihr Abonnement wurde storniert oder ist ungültig.',
+      );
+    }
+
+    showVideoRestrictionDialog(profilProvider.lastUpdateString);
+  } */
+
+  void showVideoRestrictionDialog(String lastUpdateString) {
+    DateTime lastUpdateDate = DateTime.parse(lastUpdateString).toLocal();
+    DateTime nextAvailableDate = lastUpdateDate.add(Duration(days: 7));
+
+    int daysUntilNextVideo =
+        nextAvailableDate.difference(DateTime.now()).inDays;
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          title: Text(
+            "Videoeinschränkung",
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text(
+                "Sie können nur ein Video pro Woche ansehen. Nächstes Video verfügbar in:",
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 20),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$daysUntilNextVideo ',
+                      style: TextStyle(
+                        fontSize: 36,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    TextSpan(
+                      text: 'Tage',
+                      style: TextStyle(
+                        fontSize:
+                            Theme.of(context).textTheme.displayLarge?.fontSize,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                "OK",
+                style: Theme.of(context).textTheme.displayMedium,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void showOptionDialogDifficulty(List<String> options, String title,
+      void Function(String) onSelected) async {
+    String? selection = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options
+                  .map((String option) => RadioListTile<String>(
+                        activeColor: Colors.white,
+                        title: Text(
+                          option,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        value: option,
+                        groupValue: selectedDifficulty,
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            Navigator.of(context).pop(value);
+                          }
+                        },
+                      ))
+                  .toList(),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selection != null) {
+      setState(() {
+        onSelected(selection);
+      });
+    }
+  }
+
+  void showOptionDialogType(List<String> options, String title,
+      void Function(String) onSelected) async {
+    String? selection = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 243, 243, 243),
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.white),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: options
+                  .map((String option) => RadioListTile<String>(
+                        activeColor: Colors.white,
+                        title: Text(
+                          option,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        value: option,
+                        groupValue: selectedType,
+                        onChanged: (String? value) {
+                          if (value != null) {
+                            Navigator.of(context).pop(value);
+                          }
+                        },
+                      ))
+                  .toList(),
+            ),
+          ),
+        );
+      },
+    );
+
+    if (selection != null) {
+      setState(() {
+        onSelected(selection);
+      });
+    }
+  }
+}
+
+void showCustomDialog({
+  required BuildContext context,
+  required String modalDescription,
+  required int levelId,
+  required bool isAuthenticated,
+}) {
+  String selectedDifficulty = "Easy";
+  String selectedType = "Speedrun";
+
+  final List<String> difficulties = [
+    "Easy",
+    "Mid",
+    "Hard",
+    "Native",
+    "Very Hard",
+    "Very much Harder"
+  ];
+
+  final List<String> typeOptions = [
+    "Speedrun",
+    "Dictionary",
+    "Wordchain",
+    "Riddles"
+  ];
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (BuildContext context, StateSetter setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+            title: Text(
+              "Level $levelId: $modalDescription",
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Display authentication status
+                Text(
+                  isAuthenticated
+                      ? "You are authenticated!"
+                      : "You need to log in to proceed.",
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: isAuthenticated ? Colors.green : Colors.red,
+                      ),
+                ),
+                const SizedBox(height: 16),
+                // Difficulty Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedDifficulty,
+                  decoration: InputDecoration(
+                    labelText: "Select Difficulty",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: difficulties.map((difficulty) {
+                    return DropdownMenuItem<String>(
+                      value: difficulty,
+                      child: Text(difficulty),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedDifficulty = value!;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                // Type Dropdown
+                DropdownButtonFormField<String>(
+                  value: selectedType,
+                  decoration: InputDecoration(
+                    labelText: "Choose Type",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: typeOptions.map((type) {
+                    return DropdownMenuItem<String>(
+                      value: type,
+                      child: Text(type),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedType = value!;
+                    });
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  // Handle your "Start" logic here
+                  print(
+                      "Starting with Difficulty: $selectedDifficulty, Type: $selectedType, Level: $levelId, Authenticated: $isAuthenticated");
+                },
+                child: Text("Start"),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }
