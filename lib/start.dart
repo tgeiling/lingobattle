@@ -24,9 +24,11 @@ class StartPage extends StatefulWidget {
 
 class _StartPageState extends State<StartPage> {
   final List<String> flags = [
-    'assets/german.png',
-    'assets/netherlands.png',
-    'assets/schweiz.png'
+    'assets/flags/english.png',
+    'assets/flags/german.png',
+    'assets/flags/spanish.png',
+    'assets/flags/dutch.png',
+    'assets/flags/swiss.png'
   ];
   late PageController _pageController;
   late IO.Socket socket;

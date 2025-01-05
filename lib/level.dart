@@ -65,7 +65,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
       ),
       child: Column(
         children: [
-          LanguageSelector(),
+          LanguageSelector(), // Language selector remains at the top
           Expanded(
             child: ListView.builder(
               reverse: false,
@@ -104,7 +104,6 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       context: context,
                       modalDescription: level.description,
                       levelId: level.id,
-                      isAuthenticated: true,
                     );
                   },
                   isTreasureLevel: level.id % 4 == 0,
@@ -154,69 +153,74 @@ class LevelListItem extends StatelessWidget {
       buttonImage = 'assets/button_locked.png';
     }
 
-    return GestureDetector(
-      onTap: isNext || isDone ? onTap : null,
-      child: Column(
-        children: [
-          // List item
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Button Image
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                child: Image.asset(
-                  buttonImage,
-                  width: 40,
-                  height: 40,
-                  fit: BoxFit.cover,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: isNext || isDone ? onTap : null,
+        splashColor: Colors.blue.withOpacity(0.2),
+        highlightColor: Colors.blue.withOpacity(0.1),
+        child: Column(
+          children: [
+            // List item
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Button Image
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Image.asset(
+                    buttonImage,
+                    width: 40,
+                    height: 40,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
-              // Text details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Stage $level",
-                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: isDone
-                                ? Colors.green
-                                : (isNext ? Colors.blue : Colors.grey),
-                          ),
-                    ),
-                    Text(
-                      description,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                // Text details
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Stage $level",
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isDone
+                                  ? Colors.green
+                                  : (isNext ? Colors.blue : Colors.grey),
+                            ),
+                      ),
+                      Text(
+                        description,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              // Arrow Icon
-              if (isNext || isDone)
-                Icon(
-                  Icons.arrow_forward_ios,
-                  color: isNext ? Colors.blue : Colors.green,
-                ),
-            ],
-          ),
-          // Dotted Line
-          if (!isNext)
-            Padding(
-              padding: const EdgeInsets.only(left: 36),
-              child: SizedBox(
-                height: 20,
-                child: VerticalDivider(
-                  color: Colors.grey,
-                  thickness: 1,
-                  width: 1,
-                  endIndent: 0,
-                  indent: 0,
-                ),
-              ),
+                // Arrow Icon
+                if (isNext || isDone)
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    color: isNext ? Colors.blue : Colors.green,
+                  ),
+              ],
             ),
-        ],
+            // Dotted Line
+            if (!isNext)
+              Padding(
+                padding: const EdgeInsets.only(left: 36),
+                child: SizedBox(
+                  height: 20,
+                  child: VerticalDivider(
+                    color: Colors.grey,
+                    thickness: 1,
+                    width: 1,
+                    endIndent: 0,
+                    indent: 0,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -227,37 +231,45 @@ class LanguageSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     final levelNotifier = Provider.of<LevelNotifier>(context);
 
-    // Map of language to flag assets
-    final Map<String, String> languageFlags = {
-      'English': 'assets/netherlands.png',
-      'German': 'assets/german.png',
-      'Spanish': 'assets/schweiz.png',
+    // Define the languages and their corresponding flag assets
+    final Map<String, String> languagesWithFlags = {
+      'English': 'assets/flags/english.png',
+      'German': 'assets/flags/german.png',
+      'Spanish': 'assets/flags/spanish.png',
+      'Dutch': 'assets/flags/dutch.png',
+      'Swiss': 'assets/flags/swiss.png',
     };
 
+    // Check if the selected language exists in the map
+    String? selectedLanguage = levelNotifier.selectedLanguage;
+    if (!languagesWithFlags.containsKey(selectedLanguage)) {
+      selectedLanguage =
+          languagesWithFlags.keys.first; // Default to the first language
+    }
+
     return Container(
-      width: double.infinity, // Makes the dropdown full width
-      padding: const EdgeInsets.symmetric(horizontal: 16), // Optional padding
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: DropdownButton<String>(
-        isExpanded: true, // Ensures the dropdown stretches to full width
-        value: levelNotifier.selectedLanguage,
-        items: languageFlags.keys.map((language) {
+        value: selectedLanguage,
+        isExpanded: true, // Ensures dropdown takes full width
+        items: languagesWithFlags.entries.map((entry) {
           return DropdownMenuItem<String>(
-            value: language,
+            value: entry.key,
             child: Row(
               children: [
                 Image.asset(
-                  languageFlags[language]!,
+                  entry.value, // Path to the flag image
                   width: 24,
                   height: 24,
                   fit: BoxFit.cover,
                 ),
                 const SizedBox(width: 8), // Spacing between flag and text
-                Text(language),
+                Text(entry.key), // Language name
               ],
             ),
           );
         }).toList(),
-        onChanged: (newLanguage) {
+        onChanged: (String? newLanguage) {
           if (newLanguage != null) {
             levelNotifier.selectLanguage(newLanguage);
           }

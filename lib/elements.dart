@@ -902,7 +902,6 @@ void showCustomDialog({
   required BuildContext context,
   required String modalDescription,
   required int levelId,
-  required bool isAuthenticated,
 }) {
   String selectedDifficulty = "Easy";
   String selectedType = "Speedrun";
@@ -939,15 +938,6 @@ void showCustomDialog({
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Display authentication status
-                Text(
-                  isAuthenticated
-                      ? "You are authenticated!"
-                      : "You need to log in to proceed.",
-                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                        color: isAuthenticated ? Colors.green : Colors.red,
-                      ),
-                ),
                 const SizedBox(height: 16),
                 // Difficulty Dropdown
                 DropdownButtonFormField<String>(
@@ -1006,7 +996,7 @@ void showCustomDialog({
                   Navigator.of(context).pop();
                   // Handle your "Start" logic here
                   print(
-                      "Starting with Difficulty: $selectedDifficulty, Type: $selectedType, Level: $levelId, Authenticated: $isAuthenticated");
+                      "Starting with Difficulty: $selectedDifficulty, Type: $selectedType, Level: $levelId");
                 },
                 child: Text("Start"),
               ),

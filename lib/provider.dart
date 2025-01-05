@@ -169,6 +169,50 @@ class LevelNotifier with ChangeNotifier {
             reward: "Gold Coin",
             minutes: 30),
       },
+      'Dutch': {
+        1: Level(id: 1, description: "Introductie tot Nederlands", minutes: 10),
+        2: Level(id: 2, description: "Basiswoordenschat", minutes: 12),
+        3: Level(id: 3, description: "Eenvoudige zinnen", minutes: 15),
+        4: Level(id: 4, description: "Grammatica Basis", minutes: 14),
+        5: Level(
+            id: 5,
+            description: "Veelgebruikte uitdrukkingen",
+            reward: "Gold Coin",
+            minutes: 10),
+        6: Level(id: 6, description: "Luistervaardigheid", minutes: 20),
+        7: Level(id: 7, description: "Dagelijkse gesprekken", minutes: 18),
+        8: Level(id: 8, description: "Leesvaardigheid", minutes: 22),
+        9: Level(id: 9, description: "Schrijfvaardigheid", minutes: 25),
+        10: Level(
+            id: 10,
+            description: "Geavanceerde woordenschat",
+            reward: "Gold Coin",
+            minutes: 30),
+      },
+      'Swiss': {
+        1: Level(
+            id: 1, description: "Einführung ins Schweizerdeutsch", minutes: 10),
+        2: Level(
+            id: 2,
+            description: "Grundwortschatz Schweizerdeutsch",
+            minutes: 12),
+        3: Level(id: 3, description: "Einfache Sätze", minutes: 15),
+        4: Level(id: 4, description: "Grundlagen der Grammatik", minutes: 14),
+        5: Level(
+            id: 5,
+            description: "Häufig verwendete Ausdrücke",
+            reward: "Gold Coin",
+            minutes: 10),
+        6: Level(id: 6, description: "Hörverständnis", minutes: 20),
+        7: Level(id: 7, description: "Alltagsgespräche", minutes: 18),
+        8: Level(id: 8, description: "Leseübungen", minutes: 22),
+        9: Level(id: 9, description: "Schreibübungen", minutes: 25),
+        10: Level(
+            id: 10,
+            description: "Fortgeschrittene Wortschatz",
+            reward: "Gold Coin",
+            minutes: 30),
+      },
     };
 
     // Load levels and their completion statuses from SharedPreferences

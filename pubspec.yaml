@@ -32,9 +32,11 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/german.png
-    - assets/netherlands.png
-    - assets/schweiz.png
+    - assets/flags/german.png
+    - assets/flags/dutch.png
+    - assets/flags/swiss.png
+    - assets/flags/english.png
+    - assets/flags/spanish.png
     - assets/button_green.png
     - assets/button_grey.png
     - assets/button_mint.png
