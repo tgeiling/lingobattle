@@ -13,6 +13,7 @@ import 'provider.dart';
 import 'start.dart';
 import 'services.dart';
 import 'auth.dart';
+import 'game.dart';
 
 bool isModalOpen = false;
 
@@ -100,10 +101,14 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                   level: level.id,
                   description: level.description,
                   onTap: () {
-                    showCustomDialog(
-                      context: context,
-                      modalDescription: level.description,
-                      levelId: level.id,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GameScreen(
+                          levelId: level.id,
+                          description: level.description,
+                        ),
+                      ),
                     );
                   },
                   isTreasureLevel: level.id % 4 == 0,
