@@ -18,64 +18,54 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
-  List<bool> questionResults = List.filled(6, false);
+  List<bool> questionResults = List.filled(5, false);
+  final List<String> userAnswers = List.filled(5, "");
 
-  // Default static questions for the exercise
   final List<Map<String, dynamic>> questions = [
     {
-      "question": "Translate: 'Hello' in English.",
-      "correctAnswer": "Hello",
+      "sentence": "The plane _____ soon after takeoff, but no one was killed.",
+      "correctAnswer": "crashed",
     },
     {
-      "question": "Translate: 'Danke' in German.",
-      "correctAnswer": "Thank you",
+      "sentence": "Advertising on the Internet has helped to _____ our sales.",
+      "correctAnswer": "boost",
     },
     {
-      "question": "Translate: 'Gracias' in Spanish.",
-      "correctAnswer": "Thank you",
+      "sentence":
+          "She had to _____ her car and walk to work after getting stuck in the snow.",
+      "correctAnswer": "abandon",
     },
     {
-      "question": "Translate: 'Goedemorgen' in Dutch.",
-      "correctAnswer": "Good morning",
+      "sentence":
+          "I can't afford to buy a car. I'm already in _____ from paying for university.",
+      "correctAnswer": "debt",
     },
     {
-      "question": "Translate: 'Merci' in Swiss.",
-      "correctAnswer": "Thank you",
-    },
-    {
-      "question": "Fill the gap: 'I am ___ to the market.'",
-      "correctAnswer": "going",
+      "sentence": "He _____ it would cost \$45 to fix my bicycle.",
+      "correctAnswer": "estimated",
     },
   ];
 
-  TextEditingController answerController = TextEditingController();
-
   void submitAnswer() {
-    String userAnswer = answerController.text.trim();
-    if (userAnswer.isNotEmpty) {
-      setState(() {
-        if (userAnswer.toLowerCase() ==
-            questions[currentQuestionIndex]['correctAnswer']
-                .toString()
-                .toLowerCase()) {
-          questionResults[currentQuestionIndex] = true;
-          correctAnswers++;
-        } else {
-          questionResults[currentQuestionIndex] = false;
-        }
+    setState(() {
+      if (userAnswers[currentQuestionIndex].toLowerCase() ==
+          questions[currentQuestionIndex]['correctAnswer'].toLowerCase()) {
+        questionResults[currentQuestionIndex] = true;
+        correctAnswers++;
+      } else {
+        questionResults[currentQuestionIndex] = false;
+      }
 
-        if (currentQuestionIndex < 5) {
-          currentQuestionIndex++;
-          answerController.clear();
-        } else {
-          _showCompletionDialog();
-        }
-      });
-    }
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+      } else {
+        _showCompletionDialog();
+      }
+    });
   }
 
   void _showCompletionDialog() {
-    bool isLevelPassed = correctAnswers >= 4;
+    bool isLevelPassed = correctAnswers >= 3;
 
     showDialog(
       context: context,
@@ -84,15 +74,15 @@ class _GameScreenState extends State<GameScreen> {
         return AlertDialog(
           title: Text(isLevelPassed ? "Level Completed!" : "Level Failed!"),
           content: Text(isLevelPassed
-              ? "Congratulations! You answered $correctAnswers out of 6 questions correctly."
-              : "You answered $correctAnswers out of 6 correctly. Try again!"),
+              ? "Congratulations! You answered $correctAnswers out of ${questions.length} questions correctly."
+              : "You answered $correctAnswers out of ${questions.length} correctly. Try again!"),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.pop(context); // Go back to the level selection screen
+                Navigator.pop(context);
               },
-              child: Text("OK"),
+              child: const Text("OK"),
             ),
           ],
         );
@@ -102,114 +92,136 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return NeumorphicApp(
+    return NeumorphicTheme(
       theme: NeumorphicThemeData(
-        baseColor: const Color(0xFFE0E5EC), // Light gray background
+        baseColor: const Color(0xFFE0E5EC),
         lightSource: LightSource.topLeft,
         depth: 8,
       ),
-      home: Scaffold(
+      child: Scaffold(
         appBar: NeumorphicAppBar(
           title: Text(
             "Level ${widget.levelId}: ${widget.description}",
-            style: TextStyle(color: Colors.black),
+            style: const TextStyle(color: Colors.black),
           ),
           color: const Color(0xFFE0E5EC),
         ),
-        body: Row(
-          children: [
-            // Main content area
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Progress indicator on the right
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Question display
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      questions[currentQuestionIndex]['question'],
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                  Text(
+                    "Question ${currentQuestionIndex + 1} of ${questions.length}",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                  // Answer input integrated into the question
-                  GestureDetector(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) {
-                          return AlertDialog(
-                            title: Text("Enter your answer"),
-                            content: TextField(
-                              controller: answerController,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(),
-                                hintText: "Your Answer",
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  submitAnswer();
-                                },
-                                child: Text("Submit"),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                    child: Neumorphic(
-                      style: NeumorphicStyle(
-                        depth: -4,
-                        color: const Color(0xFFE0E5EC),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      child: Center(
-                        child: Text(
-                          "Tap here to answer",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontStyle: FontStyle.italic,
-                            color: Colors.blue,
-                          ),
+                  Row(
+                    children: List.generate(questions.length, (index) {
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: questionResults[index]
+                              ? Colors.green
+                              : index < currentQuestionIndex
+                                  ? Colors.red
+                                  : Colors.grey,
                         ),
-                      ),
-                    ),
+                      );
+                    }),
                   ),
                 ],
               ),
-            ),
-            // Red points on the right side
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(6, (index) {
-                return Container(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: questionResults[index]
-                        ? Colors.green
-                        : index < currentQuestionIndex
-                            ? Colors.red
-                            : Colors.grey,
+
+              const SizedBox(height: 20),
+
+              // Sentence with gap
+              Neumorphic(
+                padding: const EdgeInsets.all(16),
+                style: NeumorphicStyle(
+                  depth: -4,
+                  color: const Color(0xFFFFFFFF),
+                  boxShape:
+                      NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                ),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  children: _buildSentenceWithGap(
+                      questions[currentQuestionIndex]['sentence']),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Submit button
+              Center(
+                child: NeumorphicButton(
+                  onPressed: submitAnswer,
+                  style: NeumorphicStyle(
+                    color: Colors.blue.shade100,
+                    depth: 6,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
                   ),
-                );
-              }),
-            ),
-          ],
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    child: Text(
+                      "Submit Answer",
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  List<Widget> _buildSentenceWithGap(String sentence) {
+    List<String> parts = sentence.split("_____");
+    List<Widget> widgets = [];
+    for (int i = 0; i < parts.length; i++) {
+      widgets.add(Text(parts[i],
+          style: const TextStyle(fontSize: 18, color: Colors.black87)));
+      if (i < parts.length - 1) {
+        widgets.add(
+          SizedBox(
+            width: 100,
+            child: TextField(
+              onChanged: (value) {
+                setState(() {
+                  userAnswers[currentQuestionIndex] = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: "Answer",
+                hintStyle: const TextStyle(color: Colors.grey),
+                filled: true,
+                fillColor: Colors.white,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.blue.shade300),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    return widgets;
   }
 }

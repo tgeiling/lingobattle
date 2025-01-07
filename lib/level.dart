@@ -20,15 +20,13 @@ bool isModalOpen = false;
 class Level {
   final int id;
   final String description;
-  final int minutes;
-  final String reward;
+  final int reward;
   bool isDone;
 
   Level(
       {required this.id,
       required this.description,
-      this.minutes = 15,
-      this.reward = '',
+      required this.reward,
       this.isDone = false});
 }
 
