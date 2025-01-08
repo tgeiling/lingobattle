@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 
+import 'level.dart';
+
 class GameScreen extends StatefulWidget {
-  final int levelId;
-  final String description;
+  final Level level;
 
   const GameScreen({
     Key? key,
-    required this.levelId,
-    required this.description,
+    required this.level,
   }) : super(key: key);
 
   @override
@@ -18,45 +18,30 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
-  List<bool> questionResults = List.filled(5, false);
-  final List<String> userAnswers = List.filled(5, "");
+  late List<bool> questionResults;
+  late List<String> userAnswers;
 
-  final List<Map<String, dynamic>> questions = [
-    {
-      "sentence": "The plane _____ soon after takeoff, but no one was killed.",
-      "correctAnswer": "crashed",
-    },
-    {
-      "sentence": "Advertising on the Internet has helped to _____ our sales.",
-      "correctAnswer": "boost",
-    },
-    {
-      "sentence":
-          "She had to _____ her car and walk to work after getting stuck in the snow.",
-      "correctAnswer": "abandon",
-    },
-    {
-      "sentence":
-          "I can't afford to buy a car. I'm already in _____ from paying for university.",
-      "correctAnswer": "debt",
-    },
-    {
-      "sentence": "He _____ it would cost \$45 to fix my bicycle.",
-      "correctAnswer": "estimated",
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    questionResults = List.filled(widget.level.questions.length, false);
+    userAnswers = List.filled(widget.level.questions.length, "");
+  }
 
   void submitAnswer() {
     setState(() {
-      if (userAnswers[currentQuestionIndex].toLowerCase() ==
-          questions[currentQuestionIndex]['correctAnswer'].toLowerCase()) {
+      List<String> acceptableAnswers =
+          widget.level.questions[currentQuestionIndex]['answers'];
+      if (acceptableAnswers.any((answer) =>
+          userAnswers[currentQuestionIndex].toLowerCase() ==
+          answer.toLowerCase())) {
         questionResults[currentQuestionIndex] = true;
         correctAnswers++;
       } else {
         questionResults[currentQuestionIndex] = false;
       }
 
-      if (currentQuestionIndex < questions.length - 1) {
+      if (currentQuestionIndex < widget.level.questions.length - 1) {
         currentQuestionIndex++;
       } else {
         _showCompletionDialog();
@@ -65,7 +50,7 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _showCompletionDialog() {
-    bool isLevelPassed = correctAnswers >= 3;
+    bool isLevelPassed = correctAnswers >= widget.level.questions.length ~/ 2;
 
     showDialog(
       context: context,
@@ -74,8 +59,8 @@ class _GameScreenState extends State<GameScreen> {
         return AlertDialog(
           title: Text(isLevelPassed ? "Level Completed!" : "Level Failed!"),
           content: Text(isLevelPassed
-              ? "Congratulations! You answered $correctAnswers out of ${questions.length} questions correctly."
-              : "You answered $correctAnswers out of ${questions.length} correctly. Try again!"),
+              ? "Congratulations! You answered $correctAnswers out of ${widget.level.questions.length} questions correctly."
+              : "You answered $correctAnswers out of ${widget.level.questions.length} correctly. Try again!"),
           actions: [
             TextButton(
               onPressed: () {
@@ -101,7 +86,7 @@ class _GameScreenState extends State<GameScreen> {
       child: Scaffold(
         appBar: NeumorphicAppBar(
           title: Text(
-            "Level ${widget.levelId}: ${widget.description}",
+            "Level ${widget.level.id}: ${widget.level.description}",
             style: const TextStyle(color: Colors.black),
           ),
           color: const Color(0xFFE0E5EC),
@@ -111,17 +96,18 @@ class _GameScreenState extends State<GameScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Progress indicator on the right
+              // Progress indicator
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Question ${currentQuestionIndex + 1} of ${questions.length}",
+                    "Question ${currentQuestionIndex + 1} of ${widget.level.questions.length}",
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   Row(
-                    children: List.generate(questions.length, (index) {
+                    children:
+                        List.generate(widget.level.questions.length, (index) {
                       return Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         width: 16,
@@ -154,7 +140,7 @@ class _GameScreenState extends State<GameScreen> {
                 child: Wrap(
                   alignment: WrapAlignment.center,
                   children: _buildSentenceWithGap(
-                      questions[currentQuestionIndex]['sentence']),
+                      widget.level.questions[currentQuestionIndex]['question']),
                 ),
               ),
 
@@ -216,6 +202,14 @@ class _GameScreenState extends State<GameScreen> {
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(color: Colors.blue.shade300),
                 ),
+              ),
+              style: TextStyle(
+                color: questionResults[currentQuestionIndex] &&
+                        userAnswers[currentQuestionIndex].isNotEmpty
+                    ? Colors.green
+                    : userAnswers[currentQuestionIndex].isNotEmpty
+                        ? Colors.red
+                        : Colors.black,
               ),
             ),
           ),

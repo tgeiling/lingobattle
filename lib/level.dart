@@ -22,12 +22,16 @@ class Level {
   final String description;
   final int reward;
   bool isDone;
+  final List<Map<String, dynamic>>
+      questions; // Each question includes text and answers.
 
-  Level(
-      {required this.id,
-      required this.description,
-      required this.reward,
-      this.isDone = false});
+  Level({
+    required this.id,
+    required this.description,
+    required this.reward,
+    this.isDone = false,
+    required this.questions,
+  });
 }
 
 class LevelSelectionScreen extends StatefulWidget {
@@ -103,8 +107,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       context,
                       MaterialPageRoute(
                         builder: (context) => GameScreen(
-                          levelId: level.id,
-                          description: level.description,
+                          level: level, // Pass the Level object
                         ),
                       ),
                     );
