@@ -22,8 +22,7 @@ class Level {
   final String description;
   final int reward;
   bool isDone;
-  final List<Map<String, dynamic>>
-      questions; // Each question includes text and answers.
+  final List<Map<String, dynamic>> questions;
 
   Level({
     required this.id,
@@ -32,6 +31,28 @@ class Level {
     this.isDone = false,
     required this.questions,
   });
+
+  // Serialize the Level object to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'description': description,
+      'reward': reward,
+      'isDone': isDone,
+      'questions': questions,
+    };
+  }
+
+  // Deserialize a Level object from JSON
+  factory Level.fromJson(Map<String, dynamic> json) {
+    return Level(
+      id: json['id'],
+      description: json['description'],
+      reward: json['reward'],
+      isDone: json['isDone'],
+      questions: List<Map<String, dynamic>>.from(json['questions']),
+    );
+  }
 }
 
 class LevelSelectionScreen extends StatefulWidget {

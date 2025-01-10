@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:provider/provider.dart';
 
 import 'level.dart';
+import 'provider.dart';
 
 class GameScreen extends StatefulWidget {
   final Level level;
@@ -44,6 +46,11 @@ class _GameScreenState extends State<GameScreen> {
       if (currentQuestionIndex < widget.level.questions.length - 1) {
         currentQuestionIndex++;
       } else {
+        // Mark the level as completed and save progress
+        Provider.of<LevelNotifier>(context, listen: false)
+            .updateLevelStatus(widget.level.id);
+
+        // Show completion dialog
         _showCompletionDialog();
       }
     });

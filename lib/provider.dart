@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -107,7 +109,47 @@ class LevelNotifier with ChangeNotifier {
   Future<void> _loadLanguages() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    Map<String, Map<int, Level>> tempLanguageLevels = {
+    // Load saved levels data from SharedPreferences
+    String? savedData = prefs.getString('language_levels');
+    if (savedData != null) {
+      // Deserialize JSON and populate _languageLevels
+      Map<String, dynamic> jsonData = json.decode(savedData);
+      _languageLevels = jsonData.map((lang, levels) {
+        return MapEntry(
+          lang,
+          (levels as Map<String, dynamic>).map((key, value) {
+            return MapEntry(
+              int.parse(key),
+              Level.fromJson(value),
+            );
+          }),
+        );
+      });
+    } else {
+      // Initialize default levels if no data is saved
+      _initializeDefaultLevels();
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> _saveLanguages() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Serialize _languageLevels to JSON and save it
+    String jsonData = json.encode(_languageLevels.map((lang, levels) {
+      return MapEntry(
+        lang,
+        levels.map((key, level) => MapEntry(key.toString(), level.toJson())),
+      );
+    }));
+
+    await prefs.setString('language_levels', jsonData);
+  }
+
+  void _initializeDefaultLevels() {
+    // Populate default levels (you already have this structure)
+    _languageLevels = {
       'English': {
         1: Level(
           id: 1,
@@ -932,279 +974,277 @@ class LevelNotifier with ChangeNotifier {
           ],
         ),
       },
-      'Spanish': {
+      'Dutch': {
         1: Level(
           id: 1,
-          description: "Introducción al español",
+          description: "Inleiding tot Nederlands",
           reward: 100,
           questions: [
             {
-              "question": "El gato está _____ la mesa.",
-              "answers": ["debajo de", "sobre"]
+              "question": "De kat zit _____ de tafel.",
+              "answers": ["onder", "op"]
             },
             {
-              "question": "Voy _____ la escuela todos los días.",
-              "answers": ["a", "hacia"]
+              "question": "Ik ga _____ school elke dag.",
+              "answers": ["naar", "richting"]
             },
             {
-              "question": "Ella está sentada _____ la silla.",
-              "answers": ["en", "sobre"]
+              "question": "Zij zit _____ de stoel.",
+              "answers": ["op", "in"]
             },
             {
-              "question": "Vamos _____ el parque esta tarde.",
-              "answers": ["a", "hacia"]
+              "question": "Wij gaan _____ het park vanmiddag.",
+              "answers": ["naar", "richting"]
             },
             {
-              "question": "Él juega fútbol _____ la tarde.",
-              "answers": ["por", "durante"]
+              "question": "Hij speelt voetbal _____ de middag.",
+              "answers": ["in", "tijdens"]
             },
           ],
         ),
         2: Level(
           id: 2,
-          description: "Vocabulario básico",
+          description: "Basiswoordenschat",
           reward: 100,
           questions: [
             {
-              "question": "Estoy _____ mi tarea ahora.",
-              "answers": ["haciendo", "terminando"]
+              "question": "Ik ben _____ mijn huiswerk nu.",
+              "answers": ["bezig met", "aan het doen"]
             },
             {
-              "question": "Ellos están yendo _____ el cine.",
-              "answers": ["a", "hacia"]
+              "question": "Zij gaan _____ de bioscoop.",
+              "answers": ["naar", "richting"]
             },
             {
-              "question": "El perro está durmiendo _____ el sofá.",
-              "answers": ["en", "debajo de"]
+              "question": "De hond slaapt _____ de bank.",
+              "answers": ["onder", "op"]
             },
             {
-              "question": "Ella está interesada _____ la música.",
-              "answers": ["en", "por"]
+              "question": "Zij is geïnteresseerd _____ muziek.",
+              "answers": ["in"]
             },
             {
-              "question": "El libro está _____ la mochila.",
-              "answers": ["en", "dentro de"]
+              "question": "Het boek zit _____ de tas.",
+              "answers": ["in", "binnen"]
             },
           ],
         ),
         3: Level(
           id: 3,
-          description: "Frases simples",
+          description: "Eenvoudige zinnen",
           reward: 100,
           questions: [
             {
-              "question": "Voy _____ el mercado.",
-              "answers": ["a", "hacia"]
+              "question": "Ik ga _____ de markt.",
+              "answers": ["naar", "richting"]
             },
             {
-              "question": "Ella está _____ una carta a su amiga.",
-              "answers": ["escribiendo", "enviando"]
+              "question":
+                  "Zij is _____ een brief aan haar vriend aan het schrijven.",
+              "answers": ["bezig met", "aan het sturen"]
             },
             {
-              "question": "Estamos _____ la cena en la cocina.",
-              "answers": ["preparando", "cocinando"]
+              "question":
+                  "Wij zijn _____ het avondeten in de keuken aan het bereiden.",
+              "answers": ["bezig met", "aan het koken"]
             },
             {
-              "question": "Ellos están _____ al cine juntos.",
-              "answers": ["yendo", "caminando"]
+              "question": "Zij gaan _____ de bioscoop samen.",
+              "answers": ["naar", "richting"]
             },
             {
-              "question": "Los niños están _____ afuera.",
-              "answers": ["jugando", "corriendo"]
+              "question": "De kinderen zijn _____ buiten aan het spelen.",
+              "answers": ["aan het", "bezig met"]
             },
           ],
         ),
         4: Level(
           id: 4,
-          description: "Gramática básica",
+          description: "Basisgrammatica",
           reward: 100,
           questions: [
             {
-              "question": "El pájaro está _____ el árbol.",
-              "answers": ["en", "sobre"]
+              "question": "De vogel zit _____ de boom.",
+              "answers": ["in", "op"]
             },
             {
-              "question": "Él va _____ la escuela en autobús.",
-              "answers": ["a", "hacia"]
+              "question": "Hij gaat _____ school met de bus.",
+              "answers": ["naar"]
             },
             {
-              "question": "Vamos _____ visitar a nuestros abuelos mañana.",
-              "answers": ["a", "para"]
+              "question": "Wij gaan _____ onze grootouders morgen bezoeken.",
+              "answers": ["om", "naar"]
             },
             {
-              "question": "Ella _____ un vestido bonito ayer.",
-              "answers": ["compró", "usó"]
+              "question": "Zij heeft gisteren _____ een mooie jurk gekocht.",
+              "answers": ["al"]
             },
             {
-              "question": "Ellos están _____ en el jardín ahora.",
-              "answers": ["jugando", "trabajando"]
+              "question": "Zij zijn nu _____ in de tuin aan het spelen.",
+              "answers": ["bezig"]
             },
           ],
         ),
         5: Level(
           id: 5,
-          description: "Frases comunes",
+          description: "Veelvoorkomende zinnen",
           reward: 100,
           questions: [
             {
-              "question": "¡Buenos días! ¿Cómo _____ estás?",
-              "answers": ["te", "tan"]
+              "question": "Goedemorgen! Hoe _____ jij?",
+              "answers": ["gaat het"]
             },
             {
-              "question": "¿Puedes pasarme _____ la sal, por favor?",
-              "answers": ["", "un poco de"]
+              "question": "Kun je mij alsjeblieft _____ het zout aangeven?",
+              "answers": ["even"]
             },
             {
-              "question": "Me gustaría _____ una taza de café.",
-              "answers": ["pedir", "tomar"]
+              "question": "Ik zou graag _____ een kopje koffie willen.",
+              "answers": ["hebben", "drinken"]
             },
             {
-              "question": "¿Sabes cómo estará _____ el clima mañana?",
-              "answers": ["", "soleado"]
+              "question": "Weet jij hoe _____ het weer morgen zal zijn?",
+              "answers": ["exact"]
             },
             {
-              "question":
-                  "Ha estado trabajando _____ en el proyecto todo el día.",
-              "answers": ["sin descanso", "continuamente"]
+              "question": "Hij is al de hele dag _____ met dat project bezig.",
+              "answers": ["druk"]
             },
           ],
         ),
         6: Level(
           id: 6,
-          description: "Práctica de escucha",
+          description: "Luistervaardigheid",
           reward: 100,
           questions: [
             {
-              "question":
-                  "El profesor nos pidió _____ que estemos en silencio.",
-              "answers": ["amablemente", "firmemente"]
+              "question": "De leraar vroeg ons _____ stil te zijn.",
+              "answers": ["om"]
             },
             {
-              "question": "Ella quiere _____ tocar el piano.",
-              "answers": ["aprender a", "enseñar a"]
+              "question": "Zij wil graag _____ piano leren spelen.",
+              "answers": ["op de"]
             },
             {
-              "question": "Él va a _____ hacer su tarea más tarde.",
-              "answers": ["terminar", "comenzar"]
+              "question": "Hij gaat later _____ zijn huiswerk maken.",
+              "answers": ["af"]
             },
             {
-              "question": "¿Puedes hacerme _____ un favor?",
-              "answers": ["", "grande"]
+              "question": "Kun je mij alsjeblieft _____ een gunst verlenen?",
+              "answers": ["eventjes"]
             },
             {
-              "question": "Necesito _____ comprar algunos comestibles.",
-              "answers": ["urgentemente", "rápidamente"]
+              "question": "Ik moet nog even _____ boodschappen doen.",
+              "answers": ["wat"]
             },
           ],
         ),
         7: Level(
           id: 7,
-          description: "Conversaciones diarias",
+          description: "Dagelijkse gesprekken",
           reward: 100,
           questions: [
             {
-              "question": "¿Cómo _____ te sientes hoy?",
-              "answers": ["bien", "regular"]
+              "question": "Hoe _____ je vandaag?",
+              "answers": ["voel jij"]
             },
             {
-              "question": "¿Puedes decirme _____ cómo llegar a la estación?",
-              "answers": ["fácilmente", "claramente"]
+              "question": "Kun je mij _____ de weg naar het station wijzen?",
+              "answers": ["precies"]
             },
             {
-              "question": "Él sabe _____ la respuesta a la pregunta.",
-              "answers": ["exactamente", "casi"]
+              "question": "Hij weet _____ het antwoord op de vraag.",
+              "answers": ["altijd"]
             },
             {
-              "question": "Ellos están _____ yendo al parque juntos.",
-              "answers": ["felices", "entusiasmados"]
+              "question": "Zij gaan _____ naar het park samen.",
+              "answers": ["vaak"]
             },
             {
-              "question": "Tengo que _____ visitar al médico esta tarde.",
-              "answers": ["urgentemente", "posponer"]
+              "question": "Ik moet vanmiddag _____ naar de dokter.",
+              "answers": ["zeker"]
             },
           ],
         ),
         8: Level(
           id: 8,
-          description: "Práctica de lectura",
+          description: "Leesvaardigheid",
           reward: 100,
           questions: [
             {
-              "question": "El niño está leyendo _____ en la biblioteca.",
-              "answers": ["tranquilamente", "un libro"]
+              "question": "De jongen leest _____ in de bibliotheek.",
+              "answers": ["rustig"]
             },
             {
-              "question": "Ella nació _____ en abril.",
-              "answers": ["durante", "en"]
+              "question": "Zij werd geboren _____ in april.",
+              "answers": ["ergens"]
             },
             {
-              "question": "Estamos planeando ir _____ de vacaciones pronto.",
-              "answers": ["a algún lugar tropical", "lejos"]
+              "question": "Wij zijn van plan _____ op vakantie te gaan.",
+              "answers": ["binnenkort"]
             },
             {
-              "question": "Él es muy bueno _____ en matemáticas.",
-              "answers": ["practicando", "explicando"]
+              "question": "Hij is heel goed _____ wiskunde.",
+              "answers": ["in"]
             },
             {
-              "question":
-                  "Necesito terminar este proyecto _____ para el viernes.",
-              "answers": ["mañana", "hoy"]
+              "question": "Ik moet dit project _____ voor vrijdag afronden.",
+              "answers": ["zeker"]
             },
           ],
         ),
         9: Level(
           id: 9,
-          description: "Escritura básica",
+          description: "Schrijfvaardigheid",
           reward: 100,
           questions: [
             {
-              "question": "El coche está estacionado _____ en el garaje.",
-              "answers": ["adentro", "fuera"]
+              "question": "De auto staat geparkeerd _____ in de garage.",
+              "answers": ["binnen", "buiten"]
             },
             {
-              "question": "Ellos se encontraron _____ en la cafetería.",
-              "answers": ["por casualidad", "planeadamente"]
+              "question": "Zij ontmoetten elkaar _____ in het café.",
+              "answers": ["voor het eerst"]
             },
             {
-              "question": "Ella está buscando _____ sus llaves perdidas.",
-              "answers": ["ansiosamente", "sin prisa"]
+              "question": "Zij zoekt _____ naar haar verloren sleutels.",
+              "answers": ["nog steeds"]
             },
             {
-              "question": "Te llamaré _____ cuando llegue a casa.",
-              "answers": ["tan pronto", "inmediatamente"]
+              "question": "Ik bel je zodra ik _____ thuis ben.",
+              "answers": ["direct"]
             },
             {
-              "question": "El gato saltó _____ sobre la valla.",
-              "answers": ["grácilmente", "rápidamente"]
+              "question": "De kat sprong _____ over het hek.",
+              "answers": ["snel"]
             },
           ],
         ),
         10: Level(
           id: 10,
-          description: "Vocabulario avanzado",
+          description: "Geavanceerde woordenschat",
           reward: 100,
           questions: [
             {
-              "question":
-                  "Él ha estado trabajando _____ en este problema por horas.",
-              "answers": ["arduamente", "sin descanso"]
-            },
-            {
-              "question": "Están discutiendo el plan _____ en la reunión.",
-              "answers": ["detenidamente", "rápidamente"]
-            },
-            {
-              "question": "Ella se está preparando _____ para sus exámenes.",
-              "answers": ["diligentemente", "a fondo"]
+              "question": "Hij werkt al uren _____ aan dit probleem.",
+              "answers": ["geconcentreerd"]
             },
             {
               "question":
-                  "La presentación está programada _____ para el próximo lunes.",
-              "answers": ["puntualmente", "estratégicamente"]
+                  "Zij bespreken het plan _____ tijdens de vergadering.",
+              "answers": ["uitgebreid"]
             },
             {
-              "question": "Estoy muy orgulloso _____ de mis logros.",
-              "answers": ["profundamente", "realmente"]
+              "question": "Zij bereidt zich _____ op haar examens voor.",
+              "answers": ["nauwgezet"]
+            },
+            {
+              "question": "De presentatie is gepland _____ voor maandag.",
+              "answers": ["volledig"]
+            },
+            {
+              "question": "Ik ben heel trots _____ op mijn prestaties.",
+              "answers": ["volledig"]
             },
           ],
         ),
@@ -1483,24 +1523,6 @@ class LevelNotifier with ChangeNotifier {
         ),
       },
     };
-
-    // Load levels and their completion statuses from SharedPreferences
-    for (var language in tempLanguageLevels.keys) {
-      _languageLevels[language] = {
-        for (var entry in tempLanguageLevels[language]!.entries)
-          entry.key: Level(
-            id: entry.value.id,
-            description: entry.value.description,
-            reward: entry.value.reward,
-            isDone:
-                prefs.getBool('${language}_level_${entry.value.id}_isDone') ??
-                    false,
-            questions: entry.value.questions,
-          ),
-      };
-    }
-
-    notifyListeners();
   }
 
   void selectLanguage(String language) {
@@ -1509,10 +1531,8 @@ class LevelNotifier with ChangeNotifier {
   }
 
   void updateLevelStatus(int levelId) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('${_selectedLanguage}_level_${levelId}_isDone', true);
-
     _languageLevels[_selectedLanguage]?[levelId]?.isDone = true;
     notifyListeners();
+    await _saveLanguages();
   }
 }
