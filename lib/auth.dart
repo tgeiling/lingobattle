@@ -168,7 +168,7 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
-        return result['isValid'];
+        return !result['isValid'];
       } else {
         print('Failed to validate token: ${response.body}');
         return true;

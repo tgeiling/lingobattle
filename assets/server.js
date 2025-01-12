@@ -101,17 +101,20 @@ app.post('/guestnode', (req, res) => {
   }
 });
 
-app.post('/validateToken', (req, res) => {
-    console.log('Token validation endpoint hit');
-    const token = req.body.token;
-    if (!token) return res.status(400).json({ message: 'Token required' });
-    try {
-      const decoded = jwt.verify(token, JWT_SECRET);
-      res.json({ isValid: true, decoded });
-    } catch (err) {
-      res.status(401).json({ isValid: false, message: 'Invalid or expired token' });
+app.post('/validateToken', async (req, res) => {
+  const { token } = req.body;
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const user = await User.findOne({ username: decoded.username });
+    if (user) {
+      res.json({ isValid: true });
+    } else {
+      res.json({ isValid: false, reason: "No user found" });
     }
-  });
+  } catch (error) {
+    res.status(400).send({ isValid: false, reason: "Invalid token" });
+  }
+});
 
 // Middleware to authenticate token
 function authenticateToken(req, res, next) {
