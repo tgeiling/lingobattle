@@ -104,7 +104,7 @@ app.post('/guestnode', (req, res) => {
 app.post('/validateToken', async (req, res) => {
   const { token } = req.body;
   try {
-    const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findOne({ username: decoded.username });
     if (user) {
       res.json({ isValid: true });
