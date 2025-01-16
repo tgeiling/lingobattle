@@ -13,6 +13,7 @@ import 'provider.dart';
 import 'start.dart';
 import 'auth.dart';
 import 'level.dart';
+import 'settings.dart';
 
 void main() {
   runApp(
@@ -270,6 +271,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     child: StartPage(
                         isLoggedIn: isLoggedIn, toggleModal: _toggleModal)),
                 Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
+                SettingsPage(setAuthenticated: _setAuthenticated),
               ],
             ),
           ),
@@ -388,6 +390,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                     color: Colors.white,
                   ),
                   title: const Text("Level"),
+                  selectedColor: Colors.white,
+                ),
+                SalomonBottomBarItem(
+                  icon: Icon(
+                    CupertinoIcons.gear,
+                    size: MediaQuery.of(context).size.width * 0.08,
+                    color: Colors.white,
+                  ),
+                  title: const Text("Settings"),
                   selectedColor: Colors.white,
                 ),
               ],

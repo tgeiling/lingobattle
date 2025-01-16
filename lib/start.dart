@@ -162,6 +162,8 @@ class _StartPageState extends State<StartPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isLoggedIn = widget.isLoggedIn();
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -230,7 +232,7 @@ class _StartPageState extends State<StartPage> {
                 ),
               ),
               SizedBox(height: 20),
-              if (!widget.isLoggedIn())
+              if (!isLoggedIn)
                 ElevatedButton(
                   onPressed: _navigateToLogin,
                   child: Text('Login'),
