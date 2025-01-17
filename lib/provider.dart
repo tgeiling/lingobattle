@@ -12,12 +12,14 @@ class ProfileProvider with ChangeNotifier {
   int _completedLevels = 0;
   int _completedLevelsTotal = 0;
   String _lastUpdateString = "";
+  String _username = "";
 
   int get winStreak => _winStreak;
   int get exp => _exp;
   int get completedLevels => _completedLevels;
   int get completedLevelsTotal => _completedLevelsTotal;
   String get lastUpdateString => _lastUpdateString;
+  String get username => _username;
 
   ProfileProvider() {
     loadPreferences();
@@ -41,14 +43,8 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  void setCompletedLevelsTotal(int completedLevelsTotal) {
-    _completedLevelsTotal = completedLevelsTotal;
-    notifyListeners();
-    savePreferences();
-  }
-
-  void setLastUpdateString(int completedLevels) {
-    _completedLevels = completedLevels;
+  void setUsername(String username) {
+    _username = username;
     notifyListeners();
     savePreferences();
   }
@@ -76,8 +72,7 @@ class ProfileProvider with ChangeNotifier {
     _winStreak = prefs.getInt('winStreak') ?? 0;
     _exp = prefs.getInt('exp') ?? 0;
     _completedLevels = prefs.getInt('completedLevels') ?? 0;
-    _completedLevelsTotal = prefs.getInt('completedLevelsTotal') ?? 0;
-    _lastUpdateString = prefs.getString('lastUpdateString') ?? "";
+    _username = prefs.getString('username') ?? "";
     notifyListeners();
   }
 
@@ -86,8 +81,7 @@ class ProfileProvider with ChangeNotifier {
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
     await prefs.setInt('completedLevels', _completedLevels);
-    await prefs.setInt('completedLevelsTotal', _completedLevelsTotal);
-    await prefs.setString('lastUpdateString', _lastUpdateString);
+    await prefs.setString('username', _username);
   }
 }
 

@@ -1,6 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'level.dart';
 import 'provider.dart';
@@ -21,13 +25,24 @@ class _GameScreenState extends State<GameScreen> {
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
   late List<bool> questionResults;
-  late List<String> userAnswers;
+  late List<TextEditingController> controllers;
 
   @override
   void initState() {
     super.initState();
     questionResults = List.filled(widget.level.questions.length, false);
-    userAnswers = List.filled(widget.level.questions.length, "");
+    controllers = List.generate(
+      widget.level.questions.length,
+      (_) => TextEditingController(),
+    );
+  }
+
+  @override
+  void dispose() {
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   void submitAnswer() {
@@ -35,7 +50,7 @@ class _GameScreenState extends State<GameScreen> {
       List<String> acceptableAnswers =
           widget.level.questions[currentQuestionIndex]['answers'];
       if (acceptableAnswers.any((answer) =>
-          userAnswers[currentQuestionIndex].toLowerCase() ==
+          controllers[currentQuestionIndex].text.toLowerCase() ==
           answer.toLowerCase())) {
         questionResults[currentQuestionIndex] = true;
         correctAnswers++;
@@ -45,6 +60,8 @@ class _GameScreenState extends State<GameScreen> {
 
       if (currentQuestionIndex < widget.level.questions.length - 1) {
         currentQuestionIndex++;
+        controllers[currentQuestionIndex]
+            .clear(); // Clear input box for next question
       } else {
         // Mark the level as completed and save progress
         Provider.of<LevelNotifier>(context, listen: false)
@@ -63,20 +80,27 @@ class _GameScreenState extends State<GameScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(isLevelPassed ? "Level Completed!" : "Level Failed!"),
-          content: Text(isLevelPassed
-              ? "Congratulations! You answered $correctAnswers out of ${widget.level.questions.length} questions correctly."
-              : "You answered $correctAnswers out of ${widget.level.questions.length} correctly. Try again!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text("OK"),
-            ),
-          ],
+        return Neumorphic(
+          style: NeumorphicStyle(
+            depth: 10,
+            color: Colors.white,
+            boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+          ),
+          child: AlertDialog(
+            title: Text(isLevelPassed ? "Level Completed!" : "Level Failed!"),
+            content: Text(isLevelPassed
+                ? "Congratulations! You answered $correctAnswers out of ${widget.level.questions.length} questions correctly."
+                : "You answered $correctAnswers out of ${widget.level.questions.length} correctly. Try again!"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -190,33 +214,25 @@ class _GameScreenState extends State<GameScreen> {
         widgets.add(
           SizedBox(
             width: 100,
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  userAnswers[currentQuestionIndex] = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: "Answer",
-                hintStyle: const TextStyle(color: Colors.grey),
-                filled: true,
-                fillColor: Colors.white,
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: Colors.blue.shade300),
-                ),
+            child: Neumorphic(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              style: NeumorphicStyle(
+                depth: -2,
+                boxShape:
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                color: Colors.white,
               ),
-              style: TextStyle(
-                color: questionResults[currentQuestionIndex] &&
-                        userAnswers[currentQuestionIndex].isNotEmpty
-                    ? Colors.green
-                    : userAnswers[currentQuestionIndex].isNotEmpty
-                        ? Colors.red
-                        : Colors.black,
+              child: TextField(
+                controller: controllers[currentQuestionIndex],
+                onChanged: (value) {
+                  setState(() {});
+                },
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Answer",
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                style: const TextStyle(color: Colors.black),
               ),
             ),
           ),
@@ -224,5 +240,407 @@ class _GameScreenState extends State<GameScreen> {
       }
     }
     return widgets;
+  }
+}
+
+class MultiplayerQuestion {
+  final String question;
+  final List<String> answers;
+
+  MultiplayerQuestion({
+    required this.question,
+    required this.answers,
+  });
+}
+
+class MultiplayerQuestionsPool {
+  static final Map<String, List<MultiplayerQuestion>> questionsByLanguage = {
+    'english': [
+      MultiplayerQuestion(
+        question: "The capital of France is _____",
+        answers: ["Paris"],
+      ),
+      MultiplayerQuestion(
+        question: "The largest planet in the solar system is _____",
+        answers: ["Jupiter"],
+      ),
+    ],
+    'spanish': [
+      MultiplayerQuestion(
+        question: "La capital de España es _____",
+        answers: ["Madrid"],
+      ),
+      MultiplayerQuestion(
+        question: "El océano más grande del mundo es el _____",
+        answers: ["Pacífico"],
+      ),
+    ],
+    'dutch': [
+      MultiplayerQuestion(
+        question: "De hoofdstad van Nederland is _____",
+        answers: ["Amsterdam"],
+      ),
+      MultiplayerQuestion(
+        question: "Het grootste land in Europa is _____",
+        answers: ["Rusland"],
+      ),
+    ],
+    'german': [
+      MultiplayerQuestion(
+        question: "Die Hauptstadt von Deutschland ist _____",
+        answers: ["Berlin"],
+      ),
+      MultiplayerQuestion(
+        question: "Der höchste Berg in Europa ist der _____",
+        answers: ["Mont Blanc"],
+      ),
+    ],
+    'swiss': [
+      MultiplayerQuestion(
+        question: "Die Hauptstadt der Schweiz ist _____",
+        answers: ["Bern"],
+      ),
+      MultiplayerQuestion(
+        question: "Der größte See der Schweiz ist der _____",
+        answers: ["Genfersee"],
+      ),
+    ],
+  };
+}
+
+class MultiplayerGameScreen extends StatefulWidget {
+  final String opponentUsername;
+  final String matchId;
+  final String language;
+
+  const MultiplayerGameScreen({
+    Key? key,
+    required this.opponentUsername,
+    required this.matchId,
+    required this.language,
+  }) : super(key: key);
+
+  @override
+  _MultiplayerGameScreenState createState() => _MultiplayerGameScreenState();
+}
+
+class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
+  int currentQuestionIndex = 0;
+  int correctAnswers = 0;
+  late List<MultiplayerQuestion> questions;
+  late List<TextEditingController> controllers;
+  late List<bool> questionResults;
+
+  @override
+  void initState() {
+    super.initState();
+    questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+    controllers =
+        List.generate(questions.length, (_) => TextEditingController());
+    questionResults = List.filled(questions.length, false);
+  }
+
+  @override
+  void dispose() {
+    for (var controller in controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void submitAnswer() {
+    setState(() {
+      List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
+
+      if (acceptableAnswers.any((answer) =>
+          controllers[currentQuestionIndex].text.toLowerCase() ==
+          answer.toLowerCase())) {
+        questionResults[currentQuestionIndex] = true;
+        correctAnswers++;
+      } else {
+        questionResults[currentQuestionIndex] = false;
+      }
+
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex++;
+        controllers[currentQuestionIndex].clear();
+      } else {
+        _sendResultsToServer();
+      }
+    });
+  }
+
+  void _sendResultsToServer() {
+    final results = {
+      'username': Provider.of<ProfileProvider>(context, listen: false).username,
+      'opponentUsername': widget.opponentUsername,
+      'language': widget.language,
+      'matchId': widget.matchId,
+      'correctAnswers': correctAnswers,
+      'totalQuestions': questions.length,
+    };
+
+    Provider.of<ProfileProvider>(context, listen: false)
+        .addExp(correctAnswers * 10);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MultiplayerResultScreen(results: results),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Match in ${widget.language}"),
+      ),
+      body: Column(
+        children: [
+          Text("Question ${currentQuestionIndex + 1} of ${questions.length}"),
+          Wrap(
+            alignment: WrapAlignment.start,
+            children:
+                _buildSentenceWithGap(questions[currentQuestionIndex].question),
+          ),
+          ElevatedButton(onPressed: submitAnswer, child: Text("Submit Answer")),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildSentenceWithGap(String sentence) {
+    List<String> parts = sentence.split("_____");
+    List<Widget> widgets = [];
+    for (int i = 0; i < parts.length; i++) {
+      widgets.add(
+        Text(
+          parts[i],
+          style: const TextStyle(fontSize: 18, color: Colors.black87),
+        ),
+      );
+      if (i < parts.length - 1) {
+        widgets.add(
+          SizedBox(
+            width: 100,
+            child: Neumorphic(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              style: NeumorphicStyle(
+                depth: -2,
+                boxShape:
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                color: Colors.white,
+              ),
+              child: TextField(
+                key: ValueKey(
+                    '$currentQuestionIndex-$i'), // Unique key for each TextField
+                controller: controllers[
+                    currentQuestionIndex], // Use the correct controller
+                onChanged: (value) {
+                  setState(() {}); // Optionally react to changes
+                },
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Answer",
+                  hintStyle: TextStyle(color: Colors.grey),
+                ),
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+    return widgets;
+  }
+}
+
+class MultiplayerResultScreen extends StatelessWidget {
+  final Map<String, dynamic> results;
+
+  const MultiplayerResultScreen({
+    Key? key,
+    required this.results,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text("Match Results")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+                "Your Score: ${results['correctAnswers']} / ${results['totalQuestions']}"),
+            Text("Opponent: ${results['opponentUsername']}"),
+            ElevatedButton(
+              onPressed: () =>
+                  Navigator.popUntil(context, (route) => route.isFirst),
+              child: Text("Back to Main Menu"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+void initializeSocket(BuildContext context, IO.Socket socket, String language) {
+  socket.onConnect((_) {
+    print('Connected to the server');
+    socket.emit('joinQueue', {
+      'username': Provider.of<ProfileProvider>(context, listen: false).username,
+      'language': language,
+    });
+  });
+
+  socket.on('matchFound', (data) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MultiplayerGameScreen(
+          opponentUsername: data['opponentUsername'],
+          matchId: data['matchId'],
+          language: data['language'],
+        ),
+      ),
+    );
+  });
+
+  socket.onDisconnect((_) {
+    print('Disconnected from the server');
+  });
+
+  if (!socket.connected) {
+    socket.connect();
+  }
+}
+
+class SearchingOpponentScreen extends StatefulWidget {
+  final IO.Socket socket;
+  final String username;
+  final String language;
+
+  const SearchingOpponentScreen({
+    Key? key,
+    required this.socket,
+    required this.username,
+    required this.language,
+  }) : super(key: key);
+
+  @override
+  _SearchingOpponentScreenState createState() =>
+      _SearchingOpponentScreenState();
+}
+
+class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Listen for battleStart event
+    widget.socket.on('battleStart', (data) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BattleScreen(battleData: data),
+        ),
+      );
+    });
+
+    // Optionally handle battleFull or other error events
+    widget.socket.on('battleFull', (data) {
+      _showErrorDialog('Battle is already full. Try another.');
+    });
+  }
+
+  @override
+  void dispose() {
+    // Remove listeners when the screen is disposed
+    widget.socket.off('battleStart');
+    widget.socket.off('battleFull');
+    super.dispose();
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Searching for Opponent...")),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            const Text(
+              'Searching for an opponent...',
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                widget.socket.emit('leaveQueue'); // Leave the queue
+              },
+              child: const Text("Cancel Search"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BattleScreen extends StatelessWidget {
+  final dynamic battleData;
+
+  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Battle - ${battleData['matchId']}"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Match ID: ${battleData['matchId']}"),
+            Text("Opponent: ${battleData['opponent']}"),
+            Text("Language: ${battleData['language']}"),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.popUntil(context, (route) => route.isFirst);
+              },
+              child: const Text("Back to Home"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

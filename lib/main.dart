@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:lingobattle/elements.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:provider/provider.dart';
@@ -233,21 +234,32 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: Consumer<ProfileProvider>(
-          builder: (context, profile, child) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Icon(Icons.stars, color: Colors.yellow),
-                  SizedBox(width: 8),
-                  Text(
-                      'Win Streak: ${profile.winStreak}'), // Updated dynamically
-                ],
-              ),
-              Text('EXP: ${profile.exp}'), // Updated dynamically
-            ],
-          ),
-        ),
+            builder: (context, profile, child) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: <Widget>[
+                        Icon(Icons.stars, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text(profile.username),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Icon(Icons.stars, color: Colors.yellow),
+                            SizedBox(width: 8),
+                            Text(
+                                'Win Streak: ${profile.winStreak}'), // Updated dynamically
+                          ],
+                        ),
+                        Text('EXP: ${profile.exp}'), // Updated dynamically
+                      ],
+                    ),
+                  ],
+                )),
         backgroundColor: Color.fromRGBO(245, 245, 245, 0.894),
       ),
       body: Stack(
@@ -273,7 +285,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                         toggleModal: _toggleModal,
                         setAuthenticated: _setAuthenticated)),
                 Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
-                SettingsPage(setAuthenticated: _setAuthenticated),
+                SettingsPage(
+                  setAuthenticated: _setAuthenticated,
+                  isLoggedIn: isLoggedIn,
+                ),
               ],
             ),
           ),
@@ -362,8 +377,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           ),
           Expanded(
             child: SalomonBottomBar(
-              margin: const EdgeInsets.symmetric(horizontal: 30),
-              backgroundColor: Colors.grey,
+              backgroundColor: Colors.grey[100],
               currentIndex: _currentIndex,
               onTap: (i) {
                 setState(() {
@@ -377,31 +391,34 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               },
               items: [
                 SalomonBottomBarItem(
-                  icon: Icon(
+                  icon: NeumorphicIcon(
                     CupertinoIcons.home,
-                    size: MediaQuery.of(context).size.width * 0.08,
-                    color: Colors.white,
+                    size: 40,
+                    style:
+                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                   ),
                   title: const Text("Play"),
-                  selectedColor: Colors.white,
+                  selectedColor: Colors.grey[600],
                 ),
                 SalomonBottomBarItem(
-                  icon: Icon(
+                  icon: NeumorphicIcon(
                     CupertinoIcons.wand_stars_inverse,
-                    size: MediaQuery.of(context).size.width * 0.08,
-                    color: Colors.white,
+                    size: 40,
+                    style:
+                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                   ),
                   title: const Text("Level"),
-                  selectedColor: Colors.white,
+                  selectedColor: Colors.grey[600],
                 ),
                 SalomonBottomBarItem(
-                  icon: Icon(
+                  icon: NeumorphicIcon(
                     CupertinoIcons.gear,
-                    size: MediaQuery.of(context).size.width * 0.08,
-                    color: Colors.white,
+                    size: 40,
+                    style:
+                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                   ),
                   title: const Text("Settings"),
-                  selectedColor: Colors.white,
+                  selectedColor: Colors.grey[600],
                 ),
               ],
             ),

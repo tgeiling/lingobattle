@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:provider/provider.dart';
 
 import 'auth.dart';
 import 'elements.dart';
-import 'level.dart';
+import 'game.dart';
+import 'provider.dart'; // For ProfileProvider
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -25,17 +25,16 @@ class StartPage extends StatefulWidget {
 }
 
 class _StartPageState extends State<StartPage> {
-  final List<String> flags = [
-    'assets/flags/english.png',
-    'assets/flags/german.png',
-    'assets/flags/spanish.png',
-    'assets/flags/dutch.png',
-    'assets/flags/swiss.png'
+  final List<Map<String, String>> flags = [
+    {'language': 'english', 'path': 'assets/flags/english.png'},
+    {'language': 'german', 'path': 'assets/flags/german.png'},
+    {'language': 'spanish', 'path': 'assets/flags/spanish.png'},
+    {'language': 'dutch', 'path': 'assets/flags/dutch.png'},
+    {'language': 'swiss', 'path': 'assets/flags/swiss.png'}
   ];
   late PageController _pageController;
   late IO.Socket socket;
   int currentIndex = 0;
-  bool isSearching = false;
 
   @override
   void initState() {
@@ -63,25 +62,6 @@ class _StartPageState extends State<StartPage> {
     // Listen for WebSocket events
     socket.onConnect((_) {
       print('Connected to WebSocket server');
-    });
-
-    socket.on('waitingForOpponent', (data) {
-      print('Waiting for opponent: ${data['message']}');
-    });
-
-    socket.on('battleStart', (data) {
-      print('Battle started: $data');
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BattleScreen(battleData: data),
-        ),
-      );
-    });
-
-    socket.on('battleFull', (data) {
-      print('Battle full: ${data['message']}');
-      _showErrorDialog('Battle is already full. Try another.');
     });
 
     socket.onDisconnect((_) {
@@ -119,25 +99,37 @@ class _StartPageState extends State<StartPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) =>
-              LoginScreen(setAuthenticated: widget.setAuthenticated)),
+        builder: (context) =>
+            LoginScreen(setAuthenticated: widget.setAuthenticated),
+      ),
     );
   }
 
   Future<void> _initiateBattle() async {
+    final username =
+        Provider.of<ProfileProvider>(context, listen: false).username;
+    final selectedLanguage = flags[currentIndex]['language'];
+
+    if (username.isEmpty) {
+      _showErrorDialog("Please set your username in the profile first.");
+      return;
+    }
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
+      MaterialPageRoute(
+        builder: (context) => SearchingOpponentScreen(
+          socket: socket,
+          username: username,
+          language: selectedLanguage!,
+        ),
+      ),
     );
 
-    // Join the battle using WebSocket
+    // Emit join battle event
     socket.emit('joinBattle', {
-      'username': 'Player1',
-      'battleId': '12345',
-    });
-
-    setState(() {
-      isSearching = true;
+      'username': username,
+      'language': selectedLanguage,
     });
   }
 
@@ -146,14 +138,14 @@ class _StartPageState extends State<StartPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Error'),
+          title: const Text('Error'),
           content: Text(message),
           actions: [
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('OK'),
+              child: const Text('OK'),
             ),
           ],
         );
@@ -166,33 +158,41 @@ class _StartPageState extends State<StartPage> {
     bool isLoggedIn = widget.isLoggedIn();
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color.fromRGBO(245, 245, 245, 0.894),
-              Color.fromRGBO(160, 160, 160, 0.886),
-            ],
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.arrow_left),
-                    onPressed: previousFlag,
-                    tooltip: 'Previous Flag',
-                    iconSize: 50,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                TextButton(
+                  onPressed: previousFlag,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
-                  Container(
-                    width: 200,
-                    height: 144,
+                  child: NeumorphicIcon(
+                    Icons.arrow_left,
+                    size: 60,
+                    style: NeumorphicStyle(
+                      color: Colors.grey[400],
+                      depth: 2,
+                    ),
+                  ),
+                ),
+                Neumorphic(
+                  padding: const EdgeInsets.all(24),
+                  style: NeumorphicStyle(
+                    shape: NeumorphicShape.concave,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                    depth: 8,
+                    lightSource: LightSource.topLeft,
+                  ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.38,
+                    height: MediaQuery.of(context).size.width * 0.3,
                     child: PageView.builder(
                       controller: _pageController,
                       onPageChanged: (index) {
@@ -203,99 +203,54 @@ class _StartPageState extends State<StartPage> {
                       itemCount: flags.length,
                       itemBuilder: (context, index) {
                         return Image.asset(
-                          flags[index],
+                          flags[index]['path']!,
                           fit: BoxFit.contain,
                         );
                       },
                     ),
                   ),
-                  IconButton(
-                    icon: Icon(Icons.arrow_right),
-                    onPressed: nextFlag,
-                    tooltip: 'Next Flag',
-                    iconSize: 50,
+                ),
+                TextButton(
+                  onPressed: nextFlag,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                   ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 10.0, horizontal: 110.0),
-                child: PressableButton(
-                  onPressed: _initiateBattle, // Start battle via WebSocket
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-                  child: Center(
-                      child: Text(
-                    "Start",
+                  child: NeumorphicIcon(
+                    Icons.arrow_right,
+                    size: 60,
+                    style: NeumorphicStyle(
+                      color: Colors.grey[400],
+                      depth: 2,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
+              child: PressableButton(
+                onPressed: _initiateBattle, // Start battle via WebSocket
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                child: Center(
+                  child: Text(
+                    "Start Battle",
                     style: Theme.of(context).textTheme.labelLarge,
-                  )),
+                  ),
                 ),
               ),
-              SizedBox(height: 20),
-              if (!isLoggedIn)
-                ElevatedButton(
-                  onPressed: _navigateToLogin,
-                  child: Text('Login'),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// New screen for searching opponent with SpinKit animation
-class SearchingOpponentScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SpinKitFadingCircle(
-              color: Colors.blue,
-              size: 50.0,
             ),
-            SizedBox(height: 20),
-            Text(
-              'Searching for an opponent...',
-              style: TextStyle(fontSize: 18),
-            ),
+            const SizedBox(height: 20),
+            if (!isLoggedIn)
+              ElevatedButton(
+                onPressed: _navigateToLogin,
+                child: const Text('Login'),
+              ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-// A sample battle screen to navigate after finding an opponent
-class BattleScreen extends StatelessWidget {
-  final dynamic battleData;
-
-  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Battle Screen"),
-      ),
-      body: Center(
-        child: Text(
-          'Battle started with players: ${battleData['players']}',
-          style: TextStyle(fontSize: 18),
         ),
       ),
     );

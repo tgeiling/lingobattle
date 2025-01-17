@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'auth.dart';
 
 class SettingsPage extends StatelessWidget {
+  final bool Function() isLoggedIn;
   final Function(bool) setAuthenticated;
 
   const SettingsPage({
     Key? key,
+    required this.isLoggedIn,
     required this.setAuthenticated,
   }) : super(key: key);
 
@@ -14,38 +17,38 @@ class SettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Settings',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.blue,
-        iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: ListView(
+        padding: const EdgeInsets.all(16.0),
         children: [
-          _SettingsTile(
-            title: 'Login',
-            icon: Icons.login,
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoginScreen(
-                    setAuthenticated: setAuthenticated,
+          if (!isLoggedIn())
+            _SettingsTile(
+              title: 'Login',
+              icon: Icons.login,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LoginScreen(
+                      setAuthenticated: setAuthenticated,
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-          _SettingsTile(
-            title: 'Logout',
-            icon: Icons.logout,
-            onTap: () {
-              final authService = AuthService();
-              authService.logout();
-              setAuthenticated(false);
-            },
-          ),
+                );
+              },
+            ),
+          if (isLoggedIn())
+            _SettingsTile(
+              title: 'Logout',
+              icon: Icons.logout,
+              onTap: () {
+                final authService = AuthService();
+                authService.logout();
+                setAuthenticated(false);
+              },
+            ),
           _SettingsTile(
             title: 'AGB',
             icon: Icons.article,
@@ -91,13 +94,23 @@ class _SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.blue),
-      title: Text(
-        title,
-        style: const TextStyle(color: Colors.black),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Neumorphic(
+        style: NeumorphicStyle(
+          depth: 8,
+          color: Colors.grey[200],
+          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+        ),
+        child: ListTile(
+          leading: Icon(icon, color: Colors.grey[600]),
+          title: Text(
+            title,
+            style: const TextStyle(color: Colors.black),
+          ),
+          onTap: onTap,
+        ),
       ),
-      onTap: onTap,
     );
   }
 }
@@ -111,8 +124,13 @@ class PlaceholderPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(
+          title,
+          style: const TextStyle(color: Colors.black),
+        ),
       ),
       body: Center(
         child: Text(title),

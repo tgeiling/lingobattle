@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:lingobattle/elements.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -77,16 +78,6 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
     final levels = levelNotifier.levels;
 
     return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color.fromRGBO(245, 245, 245, 0.894),
-            Color.fromRGBO(160, 160, 160, 0.886),
-          ],
-        ),
-      ),
       child: Column(
         children: [
           LanguageSelector(), // Language selector remains at the top
@@ -180,16 +171,21 @@ class LevelListItem extends StatelessWidget {
       buttonImage = 'assets/button_locked.png';
     }
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: isNext || isDone ? onTap : null,
-        splashColor: Colors.blue.withOpacity(0.2),
-        highlightColor: Colors.blue.withOpacity(0.1),
-        child: Column(
-          children: [
-            // List item
-            Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+      child: Neumorphic(
+        style: NeumorphicStyle(
+          depth: 8,
+          color: Colors.grey[200],
+          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+        ),
+        child: InkWell(
+          onTap: isNext || isDone ? onTap : null,
+          splashColor: Colors.blue.withOpacity(0.2),
+          highlightColor: Colors.blue.withOpacity(0.1),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // Button Image
@@ -231,22 +227,7 @@ class LevelListItem extends StatelessWidget {
                   ),
               ],
             ),
-            // Dotted Line
-            if (!isNext)
-              Padding(
-                padding: const EdgeInsets.only(left: 36),
-                child: SizedBox(
-                  height: 20,
-                  child: VerticalDivider(
-                    color: Colors.grey,
-                    thickness: 1,
-                    width: 1,
-                    endIndent: 0,
-                    indent: 0,
-                  ),
-                ),
-              ),
-          ],
+          ),
         ),
       ),
     );

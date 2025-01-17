@@ -307,6 +307,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    profileProvider.setUsername(_usernameController.text);
+
     bool success = await _authService.register(
       _usernameController.text,
       _passwordController.text,

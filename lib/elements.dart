@@ -5,9 +5,10 @@ import 'package:lingobattle/provider.dart';
 import 'package:lingobattle/start.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
 
 import 'auth.dart';
-import 'package:flutter/material.dart';
+import 'game.dart';
 
 class PressableButton extends StatefulWidget {
   final Widget child;
@@ -483,7 +484,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
   Future<void> _initiateBattle() async {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => SearchingOpponentScreen()),
+      MaterialPageRoute(builder: (context) => Text("123")),
     );
 
     // Call the backend to join the battle
@@ -502,7 +503,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => BattleScreen(battleData: battleData),
+            builder: (context) => Text("123"),
           ),
         );
       } else {
