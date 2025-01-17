@@ -11,11 +11,13 @@ import 'level.dart';
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
   final Function(String, int, bool) toggleModal;
+  final Function(bool) setAuthenticated;
 
   const StartPage({
     Key? key,
     required this.isLoggedIn,
     required this.toggleModal,
+    required this.setAuthenticated,
   }) : super(key: key);
 
   @override
@@ -117,9 +119,8 @@ class _StartPageState extends State<StartPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (context) => LoginScreen(setAuthenticated: (bool value) {
-                print("User is authenticated: $value");
-              })),
+          builder: (context) =>
+              LoginScreen(setAuthenticated: widget.setAuthenticated)),
     );
   }
 

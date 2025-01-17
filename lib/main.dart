@@ -269,7 +269,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               children: [
                 Center(
                     child: StartPage(
-                        isLoggedIn: isLoggedIn, toggleModal: _toggleModal)),
+                        isLoggedIn: isLoggedIn,
+                        toggleModal: _toggleModal,
+                        setAuthenticated: _setAuthenticated)),
                 Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
                 SettingsPage(setAuthenticated: _setAuthenticated),
               ],
