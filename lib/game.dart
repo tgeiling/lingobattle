@@ -491,8 +491,6 @@ class MultiplayerResultScreen extends StatelessWidget {
 void initializeSocket(BuildContext context, IO.Socket socket, String language) {
   socket.onConnect((_) {
     print('Connected to the server');
-    print(
-        'Joining queue with username: ${Provider.of<ProfileProvider>(context, listen: false).username}, language: $language');
     socket.emit('joinQueue', {
       'username': Provider.of<ProfileProvider>(context, listen: false).username,
       'language': language,
@@ -501,6 +499,23 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
 
   socket.on('matchFound', (data) {
     print('Match found: $data');
+    // Navigate to searching screen if desired
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchingOpponentScreen(
+          socket: socket,
+          username: data['username'],
+          language: data['language'],
+        ),
+      ),
+    );
+  });
+
+  // Listen for battleStart event
+  socket.on('battleStart', (data) {
+    print('Battle started with data: $data');
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -518,7 +533,6 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
   });
 
   if (!socket.connected) {
-    print('Socket not connected. Attempting to connect...');
     socket.connect();
   }
 }
@@ -559,6 +573,8 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
     widget.socket.on('battleFull', (data) {
       _showErrorDialog('Battle is already full. Try another.');
     });
+
+    initializeSocket(context, widget.socket, widget.language);
   }
 
   @override

@@ -159,24 +159,27 @@ const matchPlayers = () => {
       status: 'active',
     };
 
-    // Notify players of the match
-    io.to(player1.socket.id).emit('matchFound', {
+    console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
+    console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
+    console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
+
+    // Emit battleStart event to both players
+    io.to(player1.socket.id).emit('battleStart', {
       matchId: battleId,
       opponentUsername: player2.username,
       language: player1.language,
     });
 
-    io.to(player2.socket.id).emit('matchFound', {
+    io.to(player2.socket.id).emit('battleStart', {
       matchId: battleId,
       opponentUsername: player1.username,
       language: player2.language,
     });
 
-    console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
-    console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
-    console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
+    console.log(`[BATTLE STARTED] Battle ID: ${battleId}`);
   }
 };
+
 
 // Handle WebSocket connections
 io.on('connection', (socket) => {
