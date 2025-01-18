@@ -132,7 +132,6 @@ function authenticateToken(req, res, next) {
 
 
 
-
 // Socket.IO server setup
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
@@ -172,41 +171,50 @@ const matchPlayers = () => {
       language: player2.language,
     });
 
-    console.log(`Match created: ${battleId} between ${player1.username} and ${player2.username}`);
+    console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
+    console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
+    console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
   }
 };
 
 // Handle WebSocket connections
 io.on('connection', (socket) => {
-  console.log(`A user connected: ${socket.id}`);
+  console.log(`[CONNECTED] User connected: ${socket.id}`);
 
   // Join matchmaking queue
   socket.on('joinQueue', (data) => {
     const { username, language } = data;
+    console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
 
     // Add player to the matchmaking queue
     matchmakingQueue.push({ socket, username, language });
-    console.log(`${username} added to matchmaking queue.`);
+    console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
 
     // Attempt to match players
     matchPlayers();
 
     // Notify player they are waiting
     socket.emit('waitingForMatch', { message: 'Waiting for an opponent...' });
+    console.log(`[WAITING] Notified ${username} (${socket.id}) about waiting for an opponent.`);
 
     // Add a timeout to remove the player from the queue
     setTimeout(() => {
-      matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
-      socket.emit('timeout', { message: 'Matchmaking timeout. Please try again.' });
+      const isStillInQueue = matchmakingQueue.some((player) => player.socket.id === socket.id);
+      if (isStillInQueue) {
+        matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
+        socket.emit('timeout', { message: 'Matchmaking timeout. Please try again.' });
+        console.log(`[TIMEOUT] Player ${username} (${socket.id}) removed from the queue due to timeout.`);
+      }
     }, MATCH_TIMEOUT);
   });
 
   // Handle player disconnection
   socket.on('disconnect', () => {
-    console.log(`A user disconnected: ${socket.id}`);
+    console.log(`[DISCONNECTED] User disconnected: ${socket.id}`);
 
     // Remove player from the matchmaking queue
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
+    console.log(`[QUEUE STATUS] Player ${socket.id} removed from the queue. Current queue length: ${matchmakingQueue.length}`);
 
     // Check if the player was part of an active battle
     for (const battleId in activeBattles) {
@@ -214,18 +222,21 @@ io.on('connection', (socket) => {
       const playerIndex = battle.players.findIndex((player) => player.id === socket.id);
 
       if (playerIndex !== -1) {
-        // Remove player from battle
+        const disconnectedPlayer = battle.players[playerIndex];
         battle.players.splice(playerIndex, 1);
+        console.log(`[BATTLE UPDATE] Player ${disconnectedPlayer.username} (${disconnectedPlayer.id}) disconnected from Battle ID: ${battleId}`);
 
         // If no players remain, delete the battle
         if (battle.players.length === 0) {
           delete activeBattles[battleId];
-          console.log(`Battle ${battleId} removed.`);
+          console.log(`[BATTLE REMOVED] Battle ${battleId} removed as no players remain.`);
         } else {
           // Notify the remaining player
-          io.to(battle.players[0].id).emit('waitingForOpponent', {
+          const remainingPlayer = battle.players[0];
+          io.to(remainingPlayer.id).emit('waitingForOpponent', {
             message: 'Your opponent has disconnected. Waiting for a new player...',
           });
+          console.log(`[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent disconnection.`);
         }
       }
     }
@@ -234,11 +245,11 @@ io.on('connection', (socket) => {
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
-    console.log(`Player ${socket.id} left the matchmaking queue.`);
+    console.log(`[LEAVE QUEUE] Player ${socket.id} left the matchmaking queue. Current queue length: ${matchmakingQueue.length}`);
   });
 });
 
 // Start the server
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`[SERVER STARTED] Server is running on port ${PORT}`);
 });

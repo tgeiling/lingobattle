@@ -491,6 +491,8 @@ class MultiplayerResultScreen extends StatelessWidget {
 void initializeSocket(BuildContext context, IO.Socket socket, String language) {
   socket.onConnect((_) {
     print('Connected to the server');
+    print(
+        'Joining queue with username: ${Provider.of<ProfileProvider>(context, listen: false).username}, language: $language');
     socket.emit('joinQueue', {
       'username': Provider.of<ProfileProvider>(context, listen: false).username,
       'language': language,
@@ -498,6 +500,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
   });
 
   socket.on('matchFound', (data) {
+    print('Match found: $data');
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -515,6 +518,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
   });
 
   if (!socket.connected) {
+    print('Socket not connected. Attempting to connect...');
     socket.connect();
   }
 }
