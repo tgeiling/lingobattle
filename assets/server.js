@@ -134,6 +134,7 @@ function authenticateToken(req, res, next) {
 
 // Socket.IO server setup
 const server = http.createServer(app);
+
 const io = new Server(server, { cors: { origin: '*' } });
 
 // Active battles storage (in-memory)

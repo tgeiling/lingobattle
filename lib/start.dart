@@ -40,21 +40,20 @@ class _StartPageState extends State<StartPage> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: currentIndex);
-    _initializeSocket(); // Initialize WebSocket
+    _initializeSocket();
   }
 
   @override
   void dispose() {
     _pageController.dispose();
-    socket.dispose(); // Dispose the socket connection
+    socket.dispose();
     super.dispose();
   }
 
   // Initialize WebSocket connection
   void _initializeSocket() {
-    socket = IO.io('http://35.246.224.168', <String, dynamic>{
+    socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
       'transports': ['websocket'],
-      'autoConnect': false,
     });
 
     socket.connect();
@@ -127,7 +126,7 @@ class _StartPageState extends State<StartPage> {
     );
 
     // Emit join battle event
-    socket.emit('joinBattle', {
+    socket.emit('joinQueue', {
       'username': username,
       'language': selectedLanguage,
     });

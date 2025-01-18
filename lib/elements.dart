@@ -489,7 +489,7 @@ class _CustomBottomModalState extends State<CustomBottomModal> {
 
     // Call the backend to join the battle
     final url =
-        'http://35.246.224.168/joinBattle'; // Change with your backend IP/Port
+        'http://34.159.152.1/joinBattle'; // Change with your backend IP/Port
     try {
       final response = await http.post(
         Uri.parse(url),
