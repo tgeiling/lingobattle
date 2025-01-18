@@ -309,12 +309,14 @@ class MultiplayerQuestionsPool {
 }
 
 class MultiplayerGameScreen extends StatefulWidget {
+  final IO.Socket socket;
   final String opponentUsername;
   final String matchId;
   final String language;
 
   const MultiplayerGameScreen({
     Key? key,
+    required this.socket,
     required this.opponentUsername,
     required this.matchId,
     required this.language,
@@ -338,13 +340,32 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     controllers =
         List.generate(questions.length, (_) => TextEditingController());
     questionResults = List.filled(questions.length, false);
+
+    // Listen for the 'battleEnded' event
+    widget.socket.on('battleEnded', (data) {
+      print('Battle ended: $data');
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MultiplayerResultScreen(
+            results: {
+              'message': data['message'],
+              'result': data['result'],
+              'correctAnswers': correctAnswers,
+              'totalQuestions': questions.length,
+              'opponentUsername': widget.opponentUsername,
+            },
+          ),
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
-    for (var controller in controllers) {
-      controller.dispose();
-    }
+    // Remove listeners when the screen is disposed
+    widget.socket.off('battleEnded');
     super.dispose();
   }
 
@@ -372,7 +393,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _sendResultsToServer() {
     final results = {
-      'username': Provider.of<ProfileProvider>(context, listen: false).username,
+      'username': 'playerUsername', // Replace with actual username
       'opponentUsername': widget.opponentUsername,
       'language': widget.language,
       'matchId': widget.matchId,
@@ -380,8 +401,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'totalQuestions': questions.length,
     };
 
-    Provider.of<ProfileProvider>(context, listen: false)
-        .addExp(correctAnswers * 10);
+    // Emit the results to the server
+    widget.socket.emit('submitResults', results);
 
     Navigator.pushReplacement(
       context,
@@ -523,6 +544,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
           opponentUsername: data['opponentUsername'],
           matchId: data['matchId'],
           language: data['language'],
+          socket: socket,
         ),
       ),
     );

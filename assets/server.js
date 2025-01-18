@@ -230,17 +230,54 @@ io.on('connection', (socket) => {
         battle.players.splice(playerIndex, 1);
         console.log(`[BATTLE UPDATE] Player ${disconnectedPlayer.username} (${disconnectedPlayer.id}) disconnected from Battle ID: ${battleId}`);
 
-        // If no players remain, delete the battle
         if (battle.players.length === 0) {
+          // No players remain, remove the battle
           delete activeBattles[battleId];
           console.log(`[BATTLE REMOVED] Battle ${battleId} removed as no players remain.`);
         } else {
           // Notify the remaining player
           const remainingPlayer = battle.players[0];
-          io.to(remainingPlayer.id).emit('waitingForOpponent', {
-            message: 'Your opponent has disconnected. Waiting for a new player...',
+          io.to(remainingPlayer.id).emit('battleEnded', {
+            message: 'Your opponent has disconnected. The battle has ended.',
+            result: 'opponentDisconnected',
           });
           console.log(`[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent disconnection.`);
+        }
+      }
+    }
+  });
+
+  socket.on('submitResults', (data) => {
+    const { matchId, username, correctAnswers } = data;
+
+    if (activeBattles[matchId]) {
+      const battle = activeBattles[matchId];
+      const player = battle.players.find((p) => p.username === username);
+      if (player) {
+        player.correctAnswers = correctAnswers;
+
+        // Check if both players have submitted their results
+        if (battle.players.every((p) => p.correctAnswers !== undefined)) {
+          // Determine winner
+          const [player1, player2] = battle.players;
+          let winner = null;
+          if (player1.correctAnswers > player2.correctAnswers) {
+            winner = player1.username;
+          } else if (player2.correctAnswers > player1.correctAnswers) {
+            winner = player2.username;
+          }
+
+          // Notify both players
+          battle.players.forEach((p) => {
+            io.to(p.id).emit('battleResults', {
+              winner,
+              player1Score: player1.correctAnswers,
+              player2Score: player2.correctAnswers,
+            });
+          });
+
+          // Remove the battle
+          delete activeBattles[matchId];
         }
       }
     }
