@@ -332,7 +332,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   late List<MultiplayerQuestion> questions;
   late List<TextEditingController> controllers;
   late List<bool> questionResults;
-  late List<String> opponentProgress; // "unanswered", "correct", "wrong"
+  late List<String> opponentProgress; // Tracks opponent's progress
 
   @override
   void initState() {
@@ -345,7 +345,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     // Initialize opponent progress as "unanswered"
     opponentProgress = List<String>.filled(questions.length, "unanswered");
 
-    // Listen for real-time progress updates
+    // Listen for progress updates from the server
     widget.socket.on('progressUpdate', (data) {
       setState(() {
         int questionIndex = data['questionIndex'];
@@ -382,7 +382,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   void dispose() {
-    // Remove listeners when the screen is disposed
     widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
     super.dispose();
