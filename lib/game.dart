@@ -331,10 +331,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
   late List<TextEditingController> controllers;
-  late List<bool?>
-      yourProgress; // Your progress: true (correct), false (wrong), null (not answered)
-  late List<bool?> opponentProgress; // Opponent's progress
   late List<bool> questionResults;
+
+  // Track opponent progress
+  List<String> opponentProgress = []; // Initialize properly in `initState`
 
   @override
   void initState() {
@@ -344,21 +344,24 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         List.generate(questions.length, (_) => TextEditingController());
     questionResults = List.filled(questions.length, false);
 
-    // Initialize progress trackers
-    yourProgress = List.filled(questions.length, null);
-    opponentProgress = List.filled(questions.length, null);
+    // Initialize opponent progress as "unanswered"
+    opponentProgress = List<String>.filled(questions.length, "unanswered");
 
-    // Listen for the opponent's progress updates
+    // Listen for real-time progress updates
     widget.socket.on('progressUpdate', (data) {
       setState(() {
-        yourProgress =
-            (data['yourProgress'] as List).map((e) => e as bool?).toList();
-        opponentProgress =
-            (data['opponentProgress'] as List).map((e) => e as bool?).toList();
+        int questionIndex = data['questionIndex'];
+        String progressStatus = data['status']; // "correct" or "wrong"
+        if (questionIndex < opponentProgress.length) {
+          opponentProgress[questionIndex] = progressStatus;
+          print('Opponent progress updated: $opponentProgress');
+        } else {
+          print('Invalid questionIndex in progressUpdate: $questionIndex');
+        }
       });
     });
 
-    // Listen for the 'battleEnded' event
+    // Listen for battleEnded event
     widget.socket.on('battleEnded', (data) {
       print('Battle ended: $data');
 
@@ -372,8 +375,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               'correctAnswers': correctAnswers,
               'totalQuestions': questions.length,
               'opponentUsername': widget.opponentUsername,
-              'yourProgress': yourProgress,
-              'opponentProgress': opponentProgress,
             },
           ),
         ),
@@ -383,28 +384,35 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   void dispose() {
-    // Remove listeners when the screen is disposed
     widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
+    for (var controller in controllers) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void submitAnswer() {
     setState(() {
       List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
-      bool isCorrect = acceptableAnswers.any((answer) =>
-          controllers[currentQuestionIndex].text.toLowerCase() ==
-          answer.toLowerCase());
 
-      questionResults[currentQuestionIndex] = isCorrect;
-      yourProgress[currentQuestionIndex] = isCorrect;
+      String answerStatus = "wrong";
+      if (acceptableAnswers.any((answer) =>
+          controllers[currentQuestionIndex].text.toLowerCase() ==
+          answer.toLowerCase())) {
+        questionResults[currentQuestionIndex] = true;
+        correctAnswers++;
+        answerStatus = "correct";
+      } else {
+        questionResults[currentQuestionIndex] = false;
+      }
 
       // Emit progress to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
-        'username':
-            Provider.of<ProfileProvider>(context, listen: false).username,
-        'correct': isCorrect,
+        'username': 'playerUsername', // Replace with actual username
+        'questionIndex': currentQuestionIndex,
+        'status': answerStatus,
       });
 
       if (currentQuestionIndex < questions.length - 1) {
@@ -418,7 +426,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _sendResultsToServer() {
     final results = {
-      'username': Provider.of<ProfileProvider>(context, listen: false).username,
+      'username': 'playerUsername', // Replace with actual username
       'opponentUsername': widget.opponentUsername,
       'language': widget.language,
       'matchId': widget.matchId,
@@ -428,6 +436,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
     // Emit the results to the server
     widget.socket.emit('submitResults', results);
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MultiplayerResultScreen(results: results),
+      ),
+    );
   }
 
   @override
@@ -438,38 +453,16 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       ),
       body: Column(
         children: [
-          // Display progress for both players
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: List.generate(opponentProgress.length, (index) {
-                  return Icon(
-                    Icons.circle,
-                    size: 12,
-                    color: opponentProgress[index] == null
-                        ? Colors.black // Not answered
-                        : opponentProgress[index] == true
-                            ? Colors.green // Correct
-                            : Colors.red, // Wrong
-                  );
-                }),
-              ),
-              Row(
-                children: List.generate(yourProgress.length, (index) {
-                  return Icon(
-                    Icons.circle,
-                    size: 12,
-                    color: yourProgress[index] == null
-                        ? Colors.black // Not answered
-                        : yourProgress[index] == true
-                            ? Colors.green // Correct
-                            : Colors.red, // Wrong
-                  );
-                }),
-              ),
+              _buildProgressDots(questionResults, isOpponent: false),
+              _buildProgressDots(
+                  opponentProgress.map((e) => e == "correct").toList(),
+                  isOpponent: true),
             ],
           ),
+          const SizedBox(height: 20),
           Text("Question ${currentQuestionIndex + 1} of ${questions.length}"),
           Wrap(
             alignment: WrapAlignment.start,
@@ -479,6 +472,24 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           ElevatedButton(onPressed: submitAnswer, child: Text("Submit Answer")),
         ],
       ),
+    );
+  }
+
+  Widget _buildProgressDots(List<bool> progress, {bool isOpponent = false}) {
+    return Row(
+      children: progress
+          .map((answered) => Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: answered
+                      ? (isOpponent ? Colors.red : Colors.green)
+                      : Colors.grey,
+                ),
+              ))
+          .toList(),
     );
   }
 
@@ -509,7 +520,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                     '$currentQuestionIndex-$i'), // Unique key for each TextField
                 controller: controllers[currentQuestionIndex],
                 onChanged: (value) {
-                  setState(() {}); // Optionally react to changes
+                  setState(() {});
                 },
                 decoration: const InputDecoration(
                   border: InputBorder.none,
