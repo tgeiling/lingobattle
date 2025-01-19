@@ -244,20 +244,23 @@ io.on('connection', (socket) => {
 
   // Handle progress updates
   socket.on('submitAnswer', (data) => {
-    const { matchId, username, questionIndex, status } = data;
-  
+    const { matchId, username, questionIndex, isCorrect } = data;
+
     if (activeBattles[matchId]) {
-      const battle = activeBattles[matchId];
-      const opponent = battle.players.find((p) => p.username !== username);
-  
-      if (opponent) {
-        io.to(opponent.id).emit('progressUpdate', {
-          questionIndex,
-          status, // "correct" or "wrong"
-        });
-      }
+        const battle = activeBattles[matchId];
+        const player = battle.players.find((p) => p.username === username);
+
+        if (player) {
+            player.progress[questionIndex] = isCorrect; // Update player's progress
+            battle.players.forEach((p) => {
+                io.to(p.id).emit('updateProgress', {
+                    progress: battle.players.map((player) => player.progress),
+                });
+            });
+        }
     }
-  });
+});
+
   
 
   // Submit results
