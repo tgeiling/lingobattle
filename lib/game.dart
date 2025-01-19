@@ -331,6 +331,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
   late List<TextEditingController> controllers;
+  late List<bool?>
+      yourProgress; // Your progress: true (correct), false (wrong), null (not answered)
+  late List<bool?> opponentProgress; // Opponent's progress
   late List<bool> questionResults;
 
   @override
@@ -340,6 +343,20 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     controllers =
         List.generate(questions.length, (_) => TextEditingController());
     questionResults = List.filled(questions.length, false);
+
+    // Initialize progress trackers
+    yourProgress = List.filled(questions.length, null);
+    opponentProgress = List.filled(questions.length, null);
+
+    // Listen for the opponent's progress updates
+    widget.socket.on('progressUpdate', (data) {
+      setState(() {
+        yourProgress =
+            (data['yourProgress'] as List).map((e) => e as bool?).toList();
+        opponentProgress =
+            (data['opponentProgress'] as List).map((e) => e as bool?).toList();
+      });
+    });
 
     // Listen for the 'battleEnded' event
     widget.socket.on('battleEnded', (data) {
@@ -355,6 +372,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               'correctAnswers': correctAnswers,
               'totalQuestions': questions.length,
               'opponentUsername': widget.opponentUsername,
+              'yourProgress': yourProgress,
+              'opponentProgress': opponentProgress,
             },
           ),
         ),
@@ -365,6 +384,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void dispose() {
     // Remove listeners when the screen is disposed
+    widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
     super.dispose();
   }
@@ -372,15 +392,20 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void submitAnswer() {
     setState(() {
       List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
-
-      if (acceptableAnswers.any((answer) =>
+      bool isCorrect = acceptableAnswers.any((answer) =>
           controllers[currentQuestionIndex].text.toLowerCase() ==
-          answer.toLowerCase())) {
-        questionResults[currentQuestionIndex] = true;
-        correctAnswers++;
-      } else {
-        questionResults[currentQuestionIndex] = false;
-      }
+          answer.toLowerCase());
+
+      questionResults[currentQuestionIndex] = isCorrect;
+      yourProgress[currentQuestionIndex] = isCorrect;
+
+      // Emit progress to the server
+      widget.socket.emit('submitAnswer', {
+        'matchId': widget.matchId,
+        'username':
+            Provider.of<ProfileProvider>(context, listen: false).username,
+        'correct': isCorrect,
+      });
 
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
@@ -393,7 +418,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _sendResultsToServer() {
     final results = {
-      'username': 'playerUsername', // Replace with actual username
+      'username': Provider.of<ProfileProvider>(context, listen: false).username,
       'opponentUsername': widget.opponentUsername,
       'language': widget.language,
       'matchId': widget.matchId,
@@ -403,13 +428,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
     // Emit the results to the server
     widget.socket.emit('submitResults', results);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MultiplayerResultScreen(results: results),
-      ),
-    );
   }
 
   @override
@@ -420,6 +438,38 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       ),
       body: Column(
         children: [
+          // Display progress for both players
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Row(
+                children: List.generate(opponentProgress.length, (index) {
+                  return Icon(
+                    Icons.circle,
+                    size: 12,
+                    color: opponentProgress[index] == null
+                        ? Colors.black // Not answered
+                        : opponentProgress[index] == true
+                            ? Colors.green // Correct
+                            : Colors.red, // Wrong
+                  );
+                }),
+              ),
+              Row(
+                children: List.generate(yourProgress.length, (index) {
+                  return Icon(
+                    Icons.circle,
+                    size: 12,
+                    color: yourProgress[index] == null
+                        ? Colors.black // Not answered
+                        : yourProgress[index] == true
+                            ? Colors.green // Correct
+                            : Colors.red, // Wrong
+                  );
+                }),
+              ),
+            ],
+          ),
           Text("Question ${currentQuestionIndex + 1} of ${questions.length}"),
           Wrap(
             alignment: WrapAlignment.start,
@@ -457,8 +507,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               child: TextField(
                 key: ValueKey(
                     '$currentQuestionIndex-$i'), // Unique key for each TextField
-                controller: controllers[
-                    currentQuestionIndex], // Use the correct controller
+                controller: controllers[currentQuestionIndex],
                 onChanged: (value) {
                   setState(() {}); // Optionally react to changes
                 },
@@ -497,6 +546,35 @@ class MultiplayerResultScreen extends StatelessWidget {
             Text(
                 "Your Score: ${results['correctAnswers']} / ${results['totalQuestions']}"),
             Text("Opponent: ${results['opponentUsername']}"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Column(
+                  children: List.generate(
+                      results['totalQuestions'],
+                      (index) => Icon(
+                            Icons.circle,
+                            color: results['opponentProgress'][index] == null
+                                ? Colors.black
+                                : results['opponentProgress'][index] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                          )),
+                ),
+                Column(
+                  children: List.generate(
+                      results['totalQuestions'],
+                      (index) => Icon(
+                            Icons.circle,
+                            color: results['yourProgress'][index] == null
+                                ? Colors.black
+                                : results['yourProgress'][index] == true
+                                    ? Colors.green
+                                    : Colors.red,
+                          )),
+                ),
+              ],
+            ),
             ElevatedButton(
               onPressed: () =>
                   Navigator.popUntil(context, (route) => route.isFirst),
@@ -556,6 +634,37 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
 
   if (!socket.connected) {
     socket.connect();
+  }
+}
+
+class BattleScreen extends StatelessWidget {
+  final dynamic battleData;
+
+  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Battle - ${battleData['matchId']}"),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Match ID: ${battleData['matchId']}"),
+            Text("Opponent: ${battleData['opponent']}"),
+            Text("Language: ${battleData['language']}"),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.popUntil(context, (route) => route.isFirst);
+              },
+              child: const Text("Back to Home"),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -648,37 +757,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
                 widget.socket.emit('leaveQueue'); // Leave the queue
               },
               child: const Text("Cancel Search"),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class BattleScreen extends StatelessWidget {
-  final dynamic battleData;
-
-  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Battle - ${battleData['matchId']}"),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Match ID: ${battleData['matchId']}"),
-            Text("Opponent: ${battleData['opponent']}"),
-            Text("Language: ${battleData['language']}"),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
-              },
-              child: const Text("Back to Home"),
             ),
           ],
         ),

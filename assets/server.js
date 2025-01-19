@@ -180,7 +180,6 @@ const matchPlayers = () => {
   }
 };
 
-
 // Handle WebSocket connections
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
@@ -196,10 +195,6 @@ io.on('connection', (socket) => {
 
     // Attempt to match players
     matchPlayers();
-
-    // Notify player they are waiting
-    socket.emit('waitingForMatch', { message: 'Waiting for an opponent...' });
-    console.log(`[WAITING] Notified ${username} (${socket.id}) about waiting for an opponent.`);
 
     // Add a timeout to remove the player from the queue
     setTimeout(() => {
@@ -247,6 +242,36 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Handle progress updates
+  socket.on('submitAnswer', (data) => {
+    const { matchId, username, correct } = data;
+
+    if (activeBattles[matchId]) {
+      const battle = activeBattles[matchId];
+
+      // Update player's progress
+      const player = battle.players.find((p) => p.username === username);
+      if (player) {
+        player.progress = player.progress || [];
+        player.progress.push(correct);
+        console.log(`[PROGRESS UPDATE] ${username} updated progress: ${player.progress}`);
+
+        // Share progress with both players
+        const [player1, player2] = battle.players;
+        const yourProgress = player1.id === player.id ? player1.progress : player2.progress;
+        const opponentProgress = player1.id === player.id ? player2.progress : player1.progress;
+
+        battle.players.forEach((p) => {
+          io.to(p.id).emit('progressUpdate', {
+            yourProgress,
+            opponentProgress,
+          });
+        });
+      }
+    }
+  });
+
+  // Submit results
   socket.on('submitResults', (data) => {
     const { matchId, username, correctAnswers } = data;
 
