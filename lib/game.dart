@@ -432,6 +432,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'matchId': widget.matchId,
       'correctAnswers': correctAnswers,
       'totalQuestions': questions.length,
+      'opponentProgress':
+          List.filled(questions.length, null), // Default opponent progress
+      'yourProgress':
+          questionResults.map((result) => result ? true : false).toList(),
     };
 
     // Emit the results to the server
@@ -548,6 +552,9 @@ class MultiplayerResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final opponentProgress = results['opponentProgress'] ?? [];
+    final yourProgress = results['yourProgress'] ?? [];
+
     return Scaffold(
       appBar: AppBar(title: Text("Match Results")),
       body: Center(
@@ -557,39 +564,49 @@ class MultiplayerResultScreen extends StatelessWidget {
             Text(
                 "Your Score: ${results['correctAnswers']} / ${results['totalQuestions']}"),
             Text("Opponent: ${results['opponentUsername']}"),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                // Opponent progress column
                 Column(
                   children: List.generate(
-                      results['totalQuestions'],
-                      (index) => Icon(
-                            Icons.circle,
-                            color: results['opponentProgress'][index] == null
-                                ? Colors.black
-                                : results['opponentProgress'][index] == true
-                                    ? Colors.green
-                                    : Colors.red,
-                          )),
+                    results['totalQuestions'],
+                    (index) => Icon(
+                      Icons.circle,
+                      color: index < opponentProgress.length
+                          ? opponentProgress[index] == null
+                              ? Colors.black
+                              : opponentProgress[index] == true
+                                  ? Colors.green
+                                  : Colors.red
+                          : Colors.grey,
+                    ),
+                  ),
                 ),
+                // Your progress column
                 Column(
                   children: List.generate(
-                      results['totalQuestions'],
-                      (index) => Icon(
-                            Icons.circle,
-                            color: results['yourProgress'][index] == null
-                                ? Colors.black
-                                : results['yourProgress'][index] == true
-                                    ? Colors.green
-                                    : Colors.red,
-                          )),
+                    results['totalQuestions'],
+                    (index) => Icon(
+                      Icons.circle,
+                      color: index < yourProgress.length
+                          ? yourProgress[index] == null
+                              ? Colors.black
+                              : yourProgress[index] == true
+                                  ? Colors.green
+                                  : Colors.red
+                          : Colors.grey,
+                    ),
+                  ),
                 ),
               ],
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () =>
                   Navigator.popUntil(context, (route) => route.isFirst),
-              child: Text("Back to Main Menu"),
+              child: const Text("Back to Main Menu"),
             ),
           ],
         ),
