@@ -350,13 +350,19 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     // Listen for progress updates from the server
     widget.socket.on('progressUpdate', (data) {
       setState(() {
-        int questionIndex = data['questionIndex'];
-        String progressStatus = data['status']; // "correct" or "wrong"
-        if (questionIndex < opponentProgress.length) {
-          opponentProgress[questionIndex] = progressStatus;
-          print('Opponent progress updated: $opponentProgress');
-        } else {
-          print('Invalid questionIndex in progressUpdate: $questionIndex');
+        try {
+          int questionIndex = data['questionIndex'];
+          String progressStatus = data['status']; // "correct" or "wrong"
+
+          if (questionIndex >= 0 && questionIndex < opponentProgress.length) {
+            // Update the opponent's progress
+            opponentProgress[questionIndex] = progressStatus;
+            print('Opponent progress updated: $opponentProgress');
+          } else {
+            print('Invalid questionIndex in progressUpdate: $questionIndex');
+          }
+        } catch (e) {
+          print('Error in progressUpdate handler: $e');
         }
       });
     });

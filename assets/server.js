@@ -165,12 +165,14 @@ const matchPlayers = () => {
 
     // Emit battleStart event to both players
     io.to(player1.socket.id).emit('battleStart', {
+      username: player1.username,
       matchId: battleId,
       opponentUsername: player2.username,
       language: player1.language,
     });
 
     io.to(player2.socket.id).emit('battleStart', {
+      username: player2.username,
       matchId: battleId,
       opponentUsername: player1.username,
       language: player2.language,
@@ -242,17 +244,24 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle progress updates
   socket.on('submitAnswer', (data) => {
     const { matchId, username, questionIndex, status } = data;
-
+  
+    console.log(`[SUBMIT ANSWER] Received answer from ${username} for question ${questionIndex}`);
+  
+    // Check if the match exists in active battles
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
+      const currentPlayer = battle.players.find((p) => p.username === username);
       const opponent = battle.players.find((p) => p.username !== username);
-
-      // Send progress update to opponent
-      if (opponent) {
-
+  
+      if (currentPlayer && opponent) {
+        // Update progress for the current player
+        currentPlayer.progress = currentPlayer.progress || [];
+        currentPlayer.progress[questionIndex] = status; // "correct" or "wrong"
+        console.log(`[PLAYER PROGRESS] ${username}:`, currentPlayer.progress);
+  
+        // Notify the opponent about the progress
         io.to(opponent.id).emit('progressUpdate', {
           questionIndex,
           status, // "correct" or "wrong"
@@ -260,9 +269,14 @@ io.on('connection', (socket) => {
         console.log(
           `[PROGRESS UPDATE] Sent progress of ${username} to opponent ${opponent.username}`
         );
+      } else {
+        console.log(`[ERROR] Player or opponent not found in battle ${matchId}`);
       }
+    } else {
+      console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
   });
+  
   
 
   // Submit results
