@@ -310,6 +310,7 @@ class MultiplayerQuestionsPool {
 
 class MultiplayerGameScreen extends StatefulWidget {
   final IO.Socket socket;
+  final String username;
   final String opponentUsername;
   final String matchId;
   final String language;
@@ -317,6 +318,7 @@ class MultiplayerGameScreen extends StatefulWidget {
   const MultiplayerGameScreen({
     Key? key,
     required this.socket,
+    required this.username,
     required this.opponentUsername,
     required this.matchId,
     required this.language,
@@ -401,7 +403,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       // Emit the player's progress to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
-        'username': 'playerUsername', // Replace with actual username
+        'username': widget.username, // Replace with actual username
         'questionIndex': currentQuestionIndex,
         'status': isCorrect ? "correct" : "wrong",
       });
@@ -644,6 +646,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
       context,
       MaterialPageRoute(
         builder: (context) => MultiplayerGameScreen(
+          username: data['username'],
           opponentUsername: data['opponentUsername'],
           matchId: data['matchId'],
           language: data['language'],

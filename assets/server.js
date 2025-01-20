@@ -245,13 +245,14 @@ io.on('connection', (socket) => {
   // Handle progress updates
   socket.on('submitAnswer', (data) => {
     const { matchId, username, questionIndex, status } = data;
-  
+
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
       const opponent = battle.players.find((p) => p.username !== username);
-  
+
       // Send progress update to opponent
       if (opponent) {
+
         io.to(opponent.id).emit('progressUpdate', {
           questionIndex,
           status, // "correct" or "wrong"
