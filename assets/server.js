@@ -38,7 +38,6 @@ const MatchResultSchema = new mongoose.Schema({
     {
       username: { type: String, required: true },
       correctAnswers: { type: Number, required: true },
-      progress: { type: [String], default: [] }, // Tracks "correct", "wrong", "unanswered"
     },
   ],
   createdAt: { type: Date, default: Date.now },
@@ -195,12 +194,10 @@ const matchPlayers = async () => {
       players: [
         { 
           username: player1.username, 
-          progress: Array(10).fill('unanswered'), 
           correctAnswers: 0 // Default value
         },
         { 
           username: player2.username, 
-          progress: Array(10).fill('unanswered'), 
           correctAnswers: 0 // Default value
         },
       ],
@@ -316,27 +313,6 @@ io.on('connection', (socket) => {
           `[PROGRESS UPDATE] Sent progress of ${username} to opponent ${opponent.username}`
         );
   
-        // Save progress to MongoDB
-        try {
-          const match = await MatchResult.findOne({ matchId });
-  
-          if (match) {
-            // Update the current player's progress in the database
-            const playerInDB = match.players.find((p) => p.username === username);
-  
-            if (playerInDB) {
-              playerInDB.progress[questionIndex] = status;
-              await match.save();
-              console.log(`[DATABASE UPDATE] Updated progress for ${username} in match ${matchId}`);
-            } else {
-              console.log(`[DATABASE ERROR] Player ${username} not found in database match record`);
-            }
-          } else {
-            console.log(`[DATABASE ERROR] Match ID ${matchId} not found in database`);
-          }
-        } catch (err) {
-          console.error(`[DATABASE ERROR] Failed to update match progress: ${err}`);
-        }
       } else {
         console.log(`[ERROR] Player or opponent not found in battle ${matchId}`);
       }
@@ -373,12 +349,10 @@ io.on('connection', (socket) => {
                     {
                       username: player1.username,
                       correctAnswers: player1.correctAnswers,
-                      progress: player1.progress,
                     },
                     {
                       username: player2.username,
                       correctAnswers: player2.correctAnswers,
-                      progress: player2.progress,
                     },
                   ],
                 },
@@ -411,12 +385,10 @@ io.on('connection', (socket) => {
                 winner,
                 player1: {
                   username: player1.username,
-                  progress: player1.progress,
                   correctAnswers: player1.correctAnswers,
                 },
                 player2: {
                   username: player2.username,
-                  progress: player2.progress,
                   correctAnswers: player2.correctAnswers,
                 },
               },
