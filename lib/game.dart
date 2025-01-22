@@ -264,6 +264,18 @@ class MultiplayerQuestionsPool {
         question: "The largest planet in the solar system is _____",
         answers: ["Jupiter"],
       ),
+      MultiplayerQuestion(
+        question: "The capital of France is _____",
+        answers: ["Paris"],
+      ),
+      MultiplayerQuestion(
+        question: "The largest planet in the solar system is _____",
+        answers: ["Jupiter"],
+      ),
+      MultiplayerQuestion(
+        question: "The capital of France is _____",
+        answers: ["Paris"],
+      ),
     ],
     'spanish': [
       MultiplayerQuestion(
@@ -433,6 +445,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'matchId': widget.matchId,
       'username': widget.username,
       'correctAnswers': correctAnswers,
+      'progress': questionResults, // Sending the player's progress
     };
 
     // Emit the results to the server
