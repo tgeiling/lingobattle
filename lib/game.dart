@@ -375,11 +375,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => MultiplayerResultScreen(
-            results: {
-              'message': data['message'],
-              'result': data['result'],
-              'totalQuestions': questions.length,
-            },
+            results: data['result'], // Pass the full result from the server
           ),
         ),
       );
@@ -426,23 +422,14 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _sendResultsToServer() {
     final results = {
-      'username': 'playerUsername', // Replace with actual username
-      'opponentUsername': widget.opponentUsername,
-      'language': widget.language,
       'matchId': widget.matchId,
+      'username': widget.username,
       'correctAnswers': correctAnswers,
-      'totalQuestions': questions.length,
+      'progress': questionResults, // Sending the player's progress
     };
 
     // Emit the results to the server
     widget.socket.emit('submitResults', results);
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MultiplayerResultScreen(results: results),
-      ),
-    );
   }
 
   @override
