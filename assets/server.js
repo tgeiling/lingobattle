@@ -193,12 +193,21 @@ const matchPlayers = async () => {
     const matchResult = new MatchResult({
       matchId: battleId,
       players: [
-        { username: player1.username, progress: Array(10).fill('unanswered') },
-        { username: player2.username, progress: Array(10).fill('unanswered') },
+        { 
+          username: player1.username, 
+          progress: Array(10).fill('unanswered'), 
+          correctAnswers: 0 // Default value
+        },
+        { 
+          username: player2.username, 
+          progress: Array(10).fill('unanswered'), 
+          correctAnswers: 0 // Default value
+        },
       ],
       language: player1.language,
     });
     await matchResult.save();
+    
 
     // Emit battleStart event to both players
     io.to(player1.socket.id).emit('battleStart', {
@@ -354,26 +363,30 @@ io.on('connection', (socket) => {
         if (battle.players.every((p) => p.correctAnswers !== undefined)) {
           const [player1, player2] = battle.players;
   
-          // Save results to the database
+          // Save or update match results in the database
           try {
-            const matchResult = new MatchResult({
-              matchId,
-              players: [
-                {
-                  username: player1.username,
-                  correctAnswers: player1.correctAnswers,
-                  progress: player1.progress,
+            const matchResult = await MatchResult.findOneAndUpdate(
+              { matchId }, // Find the document by matchId
+              {
+                $set: {
+                  players: [
+                    {
+                      username: player1.username,
+                      correctAnswers: player1.correctAnswers,
+                      progress: player1.progress,
+                    },
+                    {
+                      username: player2.username,
+                      correctAnswers: player2.correctAnswers,
+                      progress: player2.progress,
+                    },
+                  ],
                 },
-                {
-                  username: player2.username,
-                  correctAnswers: player2.correctAnswers,
-                  progress: player2.progress,
-                },
-              ],
-            });
+              },
+              { upsert: true, new: true } // Upsert ensures a new document is created if it doesn't exist
+            );
   
-            await matchResult.save();
-            console.log(`[MATCH SAVED] Results saved for match ${matchId}`);
+            console.log(`[MATCH SAVED] Results saved for match ${matchId}:`, matchResult);
           } catch (err) {
             console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
           }
@@ -417,9 +430,7 @@ io.on('connection', (socket) => {
     } else {
       console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
-  });
-  
-  
+  });  
 
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {
