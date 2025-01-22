@@ -375,7 +375,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         context,
         MaterialPageRoute(
           builder: (context) => MultiplayerResultScreen(
-            results: data['result'], // Pass the full result from the server
+            results: data['result'],
           ),
         ),
       );
@@ -401,6 +401,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       // Update the current question's result
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
 
+      // Update correctAnswers dynamically
+      correctAnswers =
+          questionResults.where((result) => result == "correct").length;
+
       // Emit progress update to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
@@ -421,6 +425,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _sendResultsToServer() {
+    // Calculate the total number of correct answers
+    correctAnswers =
+        questionResults.where((result) => result == "correct").length;
+
     final results = {
       'matchId': widget.matchId,
       'username': widget.username,

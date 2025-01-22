@@ -369,6 +369,10 @@ io.on('connection', (socket) => {
   
           // Determine winner
           let winner = null;
+          console.log("#####################################");
+          console.log("Player1 Answers: " + player1.correctAnswers);
+          console.log("Player2 Answers: " + player2.correctAnswers);
+          console.log("#####################################");
           if (player1.correctAnswers > player2.correctAnswers) {
             winner = player1.username;
           } else if (player2.correctAnswers > player1.correctAnswers) {
