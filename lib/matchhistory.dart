@@ -51,7 +51,8 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
         setState(() {
           isLoading = false;
         });
-        _showErrorDialog('Failed to fetch match history: ${response.body}');
+        _showErrorDialog(
+            'Failed to fetch match history. Error: ${response.reasonPhrase}');
       }
     } catch (e) {
       setState(() {
@@ -100,17 +101,25 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                       orElse: () => null,
                     );
 
-                    return ListTile(
-                      title: Text('Match ID: ${match['matchId']}'),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Opponent: ${opponent?['username'] ?? 'N/A'}'),
-                          Text('Your Score: ${player?['correctAnswers'] ?? 0}'),
-                          Text(
-                              'Opponent Score: ${opponent?['correctAnswers'] ?? 0}'),
-                          Text('Language: ${match['language']}'),
-                        ],
+                    return Card(
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      child: ListTile(
+                        title: Text('Match ID: ${match['matchId']}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                'Opponent: ${opponent?['username'] ?? 'Unknown'}'),
+                            Text(
+                                'Your Score: ${player?['correctAnswers'] ?? 0}'),
+                            Text(
+                                'Opponent Score: ${opponent?['correctAnswers'] ?? 0}'),
+                            Text('Language: ${match['language']}'),
+                            const SizedBox(height: 6),
+                          ],
+                        ),
                       ),
                     );
                   },

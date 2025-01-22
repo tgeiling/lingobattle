@@ -37,15 +37,14 @@ const MatchResultSchema = new mongoose.Schema({
   players: [
     {
       username: { type: String, required: true },
-      progress: { type: [String], default: [] }, // "unanswered", "correct", or "wrong"
+      correctAnswers: { type: Number, required: true },
+      progress: { type: [String], default: [] }, // Tracks "correct", "wrong", "unanswered"
     },
   ],
-  language: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
 const MatchResult = mongoose.model('MatchResult', MatchResultSchema);
-
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lingobattle_secret';
 
@@ -347,6 +346,7 @@ io.on('connection', (socket) => {
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
       const player = battle.players.find((p) => p.username === username);
+  
       if (player) {
         player.correctAnswers = correctAnswers;
   
@@ -356,27 +356,24 @@ io.on('connection', (socket) => {
   
           // Save results to the database
           try {
-            const matchResult = await MatchResult.findOneAndUpdate(
-              { matchId },
-              {
-                players: [
-                  {
-                    username: player1.username,
-                    progress: player1.progress,
-                    correctAnswers: player1.correctAnswers,
-                  },
-                  {
-                    username: player2.username,
-                    progress: player2.progress,
-                    correctAnswers: player2.correctAnswers,
-                  },
-                ],
-                language: battle.language,
-              },
-              { upsert: true, new: true }
-            );
+            const matchResult = new MatchResult({
+              matchId,
+              players: [
+                {
+                  username: player1.username,
+                  correctAnswers: player1.correctAnswers,
+                  progress: player1.progress,
+                },
+                {
+                  username: player2.username,
+                  correctAnswers: player2.correctAnswers,
+                  progress: player2.progress,
+                },
+              ],
+            });
   
-            console.log(`[MATCH SAVED] Results saved for match ${matchId}:`, matchResult);
+            await matchResult.save();
+            console.log(`[MATCH SAVED] Results saved for match ${matchId}`);
           } catch (err) {
             console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
           }
@@ -421,6 +418,7 @@ io.on('connection', (socket) => {
       console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
   });
+  
   
 
   // Leave matchmaking queue
