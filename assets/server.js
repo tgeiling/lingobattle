@@ -144,6 +144,20 @@ function authenticateToken(req, res, next) {
   }
 }
 
+app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    const matches = await MatchResult.find({
+      'players.username': username,
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json(matches);
+  } catch (error) {
+    console.error('Error fetching match history:', error);
+    res.status(500).json({ message: 'Failed to fetch match history' });
+  }
+});
 
 
 // Socket.IO server setup

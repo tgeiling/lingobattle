@@ -6,7 +6,8 @@ import 'package:provider/provider.dart';
 import 'auth.dart';
 import 'elements.dart';
 import 'game.dart';
-import 'provider.dart'; // For ProfileProvider
+import 'provider.dart';
+import 'matchhistory.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -156,11 +157,55 @@ class _StartPageState extends State<StartPage> {
   Widget build(BuildContext context) {
     bool isLoggedIn = widget.isLoggedIn();
 
+    final profilProvider = Provider.of<ProfileProvider>(context, listen: false);
+
     return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            if (isLoggedIn)
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          MatchHistoryScreen(username: profilProvider.username),
+                    ),
+                  );
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Neumorphic(
+                      style: NeumorphicStyle(
+                        depth: 4,
+                        intensity: 0.8,
+                        shape: NeumorphicShape.concave,
+                        boxShape: NeumorphicBoxShape.circle(),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Icon(
+                          Icons.history, // History icon
+                          size: 32,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'View History',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[800],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
