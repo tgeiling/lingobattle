@@ -41,6 +41,7 @@ const MatchResultSchema = new mongoose.Schema({
       progress: { type: [String], default: [] }, // Tracks "correct", "wrong", "unanswered"
     },
   ],
+  language: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

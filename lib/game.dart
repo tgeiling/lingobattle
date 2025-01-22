@@ -388,6 +388,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         MaterialPageRoute(
           builder: (context) => MultiplayerResultScreen(
             results: data['result'],
+            language: widget.language,
           ),
         ),
       );
@@ -557,10 +558,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
 class MultiplayerResultScreen extends StatelessWidget {
   final Map<String, dynamic> results;
+  final String language;
 
   const MultiplayerResultScreen({
     Key? key,
     required this.results,
+    required this.language,
   }) : super(key: key);
 
   @override
