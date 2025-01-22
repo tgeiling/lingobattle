@@ -545,53 +545,61 @@ class MultiplayerResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final resultData = results['result'];
-    final player1 = resultData['player1'];
-    final player2 = resultData['player2'];
-    final winner = resultData['winner'];
+    // Access data directly from results
+    final player1 = results['player1'];
+    final player2 = results['player2'];
+    final winner = results['winner'];
 
     return Scaffold(
-      appBar: AppBar(title: Text("Match Results")),
+      appBar: AppBar(title: const Text("Match Results")),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Winner: ${winner ?? 'Draw'}"),
+            Text("Winner: ${winner ?? "Draw"}"),
             const SizedBox(height: 20),
-            Text(
-                "${player1['username']} - Score: ${player1['correctAnswers']}"),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                player1['progress'].length,
-                (index) => Icon(
-                  Icons.circle,
-                  color: player1['progress'][index] == "unanswered"
-                      ? Colors.black
-                      : player1['progress'][index] == "correct"
-                          ? Colors.green
-                          : Colors.red,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Player 1 progress
+                Column(
+                  children: [
+                    Text("Player 1: ${player1['username']}"),
+                    ...List.generate(
+                      player1['progress'].length,
+                      (index) => Icon(
+                        Icons.circle,
+                        color: player1['progress'][index] == "correct"
+                            ? Colors.green
+                            : player1['progress'][index] == "wrong"
+                                ? Colors.red
+                                : Colors.black,
+                      ),
+                    ),
+                    Text("Score: ${player1['correctAnswers']}"),
+                  ],
                 ),
-              ),
+                // Player 2 progress
+                Column(
+                  children: [
+                    Text("Player 2: ${player2['username']}"),
+                    ...List.generate(
+                      player2['progress'].length,
+                      (index) => Icon(
+                        Icons.circle,
+                        color: player2['progress'][index] == "correct"
+                            ? Colors.green
+                            : player2['progress'][index] == "wrong"
+                                ? Colors.red
+                                : Colors.black,
+                      ),
+                    ),
+                    Text("Score: ${player2['correctAnswers']}"),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 20),
-            Text(
-                "${player2['username']} - Score: ${player2['correctAnswers']}"),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                player2['progress'].length,
-                (index) => Icon(
-                  Icons.circle,
-                  color: player2['progress'][index] == "unanswered"
-                      ? Colors.black
-                      : player2['progress'][index] == "correct"
-                          ? Colors.green
-                          : Colors.red,
-                ),
-              ),
-            ),
-            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () =>
                   Navigator.popUntil(context, (route) => route.isFirst),
