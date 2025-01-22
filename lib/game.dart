@@ -378,9 +378,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             results: {
               'message': data['message'],
               'result': data['result'],
-              'correctAnswers': correctAnswers,
               'totalQuestions': questions.length,
-              'opponentUsername': widget.opponentUsername,
             },
           ),
         ),
@@ -560,8 +558,10 @@ class MultiplayerResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final opponentProgress = results['opponentProgress'] ?? [];
-    final yourProgress = results['yourProgress'] ?? [];
+    final resultData = results['result'];
+    final player1 = resultData['player1'];
+    final player2 = resultData['player2'];
+    final winner = resultData['winner'];
 
     return Scaffold(
       appBar: AppBar(title: Text("Match Results")),
@@ -569,48 +569,42 @@ class MultiplayerResultScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-                "Your Score: ${results['correctAnswers']} / ${results['totalQuestions']}"),
-            Text("Opponent: ${results['opponentUsername']}"),
+            Text("Winner: ${winner ?? 'Draw'}"),
             const SizedBox(height: 20),
+            Text(
+                "${player1['username']} - Score: ${player1['correctAnswers']}"),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Opponent progress column
-                Column(
-                  children: List.generate(
-                    results['totalQuestions'],
-                    (index) => Icon(
-                      Icons.circle,
-                      color: index < opponentProgress.length
-                          ? opponentProgress[index] == null
-                              ? Colors.black
-                              : opponentProgress[index] == true
-                                  ? Colors.green
-                                  : Colors.red
-                          : Colors.grey,
-                    ),
-                  ),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                player1['progress'].length,
+                (index) => Icon(
+                  Icons.circle,
+                  color: player1['progress'][index] == "unanswered"
+                      ? Colors.black
+                      : player1['progress'][index] == "correct"
+                          ? Colors.green
+                          : Colors.red,
                 ),
-                // Your progress column
-                Column(
-                  children: List.generate(
-                    results['totalQuestions'],
-                    (index) => Icon(
-                      Icons.circle,
-                      color: index < yourProgress.length
-                          ? yourProgress[index] == null
-                              ? Colors.black
-                              : yourProgress[index] == true
-                                  ? Colors.green
-                                  : Colors.red
-                          : Colors.grey,
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 20),
+            Text(
+                "${player2['username']} - Score: ${player2['correctAnswers']}"),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                player2['progress'].length,
+                (index) => Icon(
+                  Icons.circle,
+                  color: player2['progress'][index] == "unanswered"
+                      ? Colors.black
+                      : player2['progress'][index] == "correct"
+                          ? Colors.green
+                          : Colors.red,
+                ),
+              ),
+            ),
+            const SizedBox(height: 30),
             ElevatedButton(
               onPressed: () =>
                   Navigator.popUntil(context, (route) => route.isFirst),

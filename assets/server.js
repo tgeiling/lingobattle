@@ -32,6 +32,20 @@ const UserSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', UserSchema);
 
+const MatchResultSchema = new mongoose.Schema({
+  matchId: { type: String, required: true, unique: true },
+  players: [
+    {
+      username: { type: String, required: true },
+      progress: { type: [String], default: [] }, // "unanswered", "correct", or "wrong"
+    },
+  ],
+  language: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const MatchResult = mongoose.model('MatchResult', MatchResultSchema);
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lingobattle_secret';
 
@@ -145,7 +159,7 @@ let matchmakingQueue = []; // Players waiting for a match
 const MATCH_TIMEOUT = 60000; // 1 minute
 
 // Matchmaking handler
-const matchPlayers = () => {
+const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
     const player1 = matchmakingQueue.shift();
     const player2 = matchmakingQueue.shift();
@@ -162,6 +176,16 @@ const matchPlayers = () => {
     console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
     console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
     console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
+
+    const matchResult = new MatchResult({
+      matchId: battleId,
+      players: [
+        { username: player1.username, progress: Array(10).fill('unanswered') },
+        { username: player2.username, progress: Array(10).fill('unanswered') },
+      ],
+      language: player1.language,
+    });
+    await matchResult.save();
 
     // Emit battleStart event to both players
     io.to(player1.socket.id).emit('battleStart', {
@@ -244,7 +268,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('submitAnswer', (data) => {
+  socket.on('submitAnswer', async (data) => {
     const { matchId, username, questionIndex, status } = data;
   
     console.log(`[SUBMIT ANSWER] Received answer from ${username} for question ${questionIndex}`);
@@ -269,52 +293,117 @@ io.on('connection', (socket) => {
         console.log(
           `[PROGRESS UPDATE] Sent progress of ${username} to opponent ${opponent.username}`
         );
+  
+        // Save progress to MongoDB
+        try {
+          const match = await MatchResult.findOne({ matchId });
+  
+          if (match) {
+            // Update the current player's progress in the database
+            const playerInDB = match.players.find((p) => p.username === username);
+  
+            if (playerInDB) {
+              playerInDB.progress[questionIndex] = status;
+              await match.save();
+              console.log(`[DATABASE UPDATE] Updated progress for ${username} in match ${matchId}`);
+            } else {
+              console.log(`[DATABASE ERROR] Player ${username} not found in database match record`);
+            }
+          } else {
+            console.log(`[DATABASE ERROR] Match ID ${matchId} not found in database`);
+          }
+        } catch (err) {
+          console.error(`[DATABASE ERROR] Failed to update match progress: ${err}`);
+        }
       } else {
         console.log(`[ERROR] Player or opponent not found in battle ${matchId}`);
       }
     } else {
       console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
-  });
-  
+  });  
   
 
   // Submit results
-  socket.on('submitResults', (data) => {
+  socket.on('submitResults', async (data) => {
     const { matchId, username, correctAnswers } = data;
-
+  
+    console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId}`);
+  
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
       const player = battle.players.find((p) => p.username === username);
       if (player) {
         player.correctAnswers = correctAnswers;
-
+  
         // Check if both players have submitted their results
         if (battle.players.every((p) => p.correctAnswers !== undefined)) {
-          // Determine winner
           const [player1, player2] = battle.players;
+  
+          // Save results to the database
+          try {
+            const matchResult = await MatchResult.findOneAndUpdate(
+              { matchId },
+              {
+                players: [
+                  {
+                    username: player1.username,
+                    progress: player1.progress,
+                    correctAnswers: player1.correctAnswers,
+                  },
+                  {
+                    username: player2.username,
+                    progress: player2.progress,
+                    correctAnswers: player2.correctAnswers,
+                  },
+                ],
+                language: battle.language,
+              },
+              { upsert: true, new: true }
+            );
+  
+            console.log(`[MATCH SAVED] Results saved for match ${matchId}:`, matchResult);
+          } catch (err) {
+            console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
+          }
+  
+          // Determine winner
           let winner = null;
           if (player1.correctAnswers > player2.correctAnswers) {
             winner = player1.username;
           } else if (player2.correctAnswers > player1.correctAnswers) {
             winner = player2.username;
           }
-
+  
           // Notify both players
           battle.players.forEach((p) => {
-            io.to(p.id).emit('battleResults', {
-              winner,
-              player1Score: player1.correctAnswers,
-              player2Score: player2.correctAnswers,
+            io.to(p.id).emit('battleEnded', {
+              message: 'Match finished!',
+              result: {
+                winner,
+                player1: {
+                  username: player1.username,
+                  progress: player1.progress,
+                  correctAnswers: player1.correctAnswers,
+                },
+                player2: {
+                  username: player2.username,
+                  progress: player2.progress,
+                  correctAnswers: player2.correctAnswers,
+                },
+              },
             });
           });
-
-          // Remove the battle
+  
+          // Remove the battle from active battles
           delete activeBattles[matchId];
         }
       }
+    } else {
+      console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
   });
+  
 
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {
