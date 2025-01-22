@@ -349,7 +349,7 @@ io.on('connection', (socket) => {
 
   // Submit results
   socket.on('submitResults', async (data) => {
-    const { matchId, username, correctAnswers } = data;
+    const { matchId, username, correctAnswers, language} = data;
   
     console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId}`);
   
@@ -382,6 +382,7 @@ io.on('connection', (socket) => {
                       progress: player2.progress,
                     },
                   ],
+                  language: language,
                 },
               },
               { upsert: true, new: true } // Upsert ensures a new document is created if it doesn't exist

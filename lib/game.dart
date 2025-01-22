@@ -446,6 +446,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'matchId': widget.matchId,
       'username': widget.username,
       'correctAnswers': correctAnswers,
+      'language': widget.language,
       'progress': questionResults, // Sending the player's progress
     };
 
