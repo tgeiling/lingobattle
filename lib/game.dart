@@ -333,7 +333,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
   late List<TextEditingController> controllers;
-  late List<bool> questionResults;
+  late List<String> questionResults;
   late List<String> opponentProgress; // Tracks opponent's progress
 
   @override
@@ -342,7 +342,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
     controllers =
         List.generate(questions.length, (_) => TextEditingController());
-    questionResults = List.filled(questions.length, false);
+    questionResults = List<String>.filled(questions.length, "unanswered");
 
     // Initialize opponent progress as "unanswered"
     opponentProgress = List<String>.filled(questions.length, "unanswered");
@@ -404,16 +404,19 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             answer.toLowerCase(),
       );
 
-      questionResults[currentQuestionIndex] = isCorrect;
+      // Update the current question's result
+      questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
 
-      // Emit the player's progress to the server
+      // Emit progress update to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
-        'username': widget.username, // Replace with actual username
+        'username': widget.username,
         'questionIndex': currentQuestionIndex,
-        'status': isCorrect ? "correct" : "wrong",
+        'status': questionResults[
+            currentQuestionIndex], // Send as "correct" or "wrong"
       });
 
+      // Move to the next question or end
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
         controllers[currentQuestionIndex].clear();
@@ -477,9 +480,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                   questions.length,
                   (index) => Icon(
                     Icons.circle,
-                    color: questionResults[index] == false
+                    color: questionResults[index] == "unanswered"
                         ? Colors.black
-                        : questionResults[index]
+                        : questionResults[index] == "correct"
                             ? Colors.green
                             : Colors.red,
                   ),
