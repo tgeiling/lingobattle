@@ -424,7 +424,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'matchId': widget.matchId,
         'username': widget.username,
         'questionIndex': currentQuestionIndex,
-        'status': questionResults[questionIndex],
+        'status': questionResults[currentQuestionIndex],
       });
 
       // Move to the next question or end
