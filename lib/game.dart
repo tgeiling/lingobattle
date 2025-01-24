@@ -537,117 +537,129 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Battle in ${widget.language}"),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return WillPopScope(
+        onWillPop: () async {
+          // Emit "left game" event to the server
+          widget.socket.emit('playerLeft', {
+            'matchId': widget.matchId,
+            'username': widget.username,
+          });
+
+          final shouldLeave = await _showLeaveConfirmationDialog(context);
+          return shouldLeave;
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text("Battle in ${widget.language}"),
+          ),
+          body: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Row(
-                children: List.generate(
-                  questions.length,
-                  (index) => Icon(
-                    Icons.circle,
-                    color: opponentProgress[index] == "unanswered"
-                        ? Colors.black
-                        : opponentProgress[index] == "correct"
-                            ? Colors.green
-                            : Colors.red,
-                  ),
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  questions.length,
-                  (index) => Icon(
-                    Icons.circle,
-                    color: questionResults[index] == "unanswered"
-                        ? Colors.black
-                        : questionResults[index] == "correct"
-                            ? Colors.green
-                            : Colors.red,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: _buildSentenceWithGap(questions[currentQuestionIndex]),
-          ),
-          const SizedBox(height: 20),
-          GestureDetector(
-            onTap: () {
-              FocusScope.of(context).requestFocus(FocusNode());
-              _textInputController.selection = TextSelection.collapsed(
-                offset: _textInputController.text.length,
-              );
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _letterBoxes.length,
-                (index) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: -2,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                        BorderRadius.circular(4),
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Row(
+                    children: List.generate(
+                      questions.length,
+                      (index) => Icon(
+                        Icons.circle,
+                        color: opponentProgress[index] == "unanswered"
+                            ? Colors.black
+                            : opponentProgress[index] == "correct"
+                                ? Colors.green
+                                : Colors.red,
                       ),
                     ),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          _letterBoxes[index],
-                          style: const TextStyle(fontSize: 18),
+                  ),
+                  Row(
+                    children: List.generate(
+                      questions.length,
+                      (index) => Icon(
+                        Icons.circle,
+                        color: questionResults[index] == "unanswered"
+                            ? Colors.black
+                            : questionResults[index] == "correct"
+                                ? Colors.green
+                                : Colors.red,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Wrap(
+                alignment: WrapAlignment.center,
+                children:
+                    _buildSentenceWithGap(questions[currentQuestionIndex]),
+              ),
+              const SizedBox(height: 20),
+              GestureDetector(
+                onTap: () {
+                  FocusScope.of(context).requestFocus(FocusNode());
+                  _textInputController.selection = TextSelection.collapsed(
+                    offset: _textInputController.text.length,
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    _letterBoxes.length,
+                    (index) => Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Neumorphic(
+                        style: NeumorphicStyle(
+                          depth: -2,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(4),
+                          ),
+                        ),
+                        child: SizedBox(
+                          width: 40,
+                          height: 40,
+                          child: Center(
+                            child: Text(
+                              _letterBoxes[index],
+                              style: const TextStyle(fontSize: 18),
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-          ),
-          Opacity(
-            opacity: 0,
-            child: TextField(
-              controller: _textInputController,
-              onChanged: _handleInput,
-              autofocus: true,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (currentWordIndex > 0)
-                ElevatedButton(
-                  onPressed: _previousWord,
-                  child: const Text("Back to Last Word"),
+              Opacity(
+                opacity: 0,
+                child: TextField(
+                  controller: _textInputController,
+                  onChanged: _handleInput,
+                  autofocus: true,
                 ),
-              const SizedBox(width: 10),
-              ElevatedButton(
-                onPressed: _nextWord,
-                child: Text(
-                  currentWordIndex <
-                          questions[currentQuestionIndex].answers.length - 1
-                      ? "Next Word"
-                      : "Submit Answer",
-                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (currentWordIndex > 0)
+                    ElevatedButton(
+                      onPressed: _previousWord,
+                      child: const Text("Back to Last Word"),
+                    ),
+                  const SizedBox(width: 10),
+                  ElevatedButton(
+                    onPressed: _nextWord,
+                    child: Text(
+                      currentWordIndex <
+                              questions[currentQuestionIndex].answers.length - 1
+                          ? "Next Word"
+                          : "Submit Answer",
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-        ],
-      ),
-    );
+        ));
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
@@ -680,6 +692,28 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       }
     }
     return widgets;
+  }
+
+  Future<bool> _showLeaveConfirmationDialog(BuildContext context) async {
+    return await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Leave Game"),
+            content: const Text(
+                "Are you sure you want to leave the game? This will count as a loss."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // Cancel
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true), // Confirm
+                child: const Text("Leave"),
+              ),
+            ],
+          ),
+        ) ??
+        false; // Return false if the dialog is dismissed
   }
 }
 

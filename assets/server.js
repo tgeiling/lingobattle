@@ -344,12 +344,45 @@ io.on('connection', (socket) => {
     } else {
       console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
-  });  
+  }); 
+
+  socket.on('playerLeft', (data) => {
+    const { matchId, username } = data;
+
+    console.log(`[PLAYER LEFT] Player ${username} (${socket.id}) left the match ${matchId}`);
+
+    // Check if the player is part of an active battle
+    if (activeBattles[matchId]) {
+      const battle = activeBattles[matchId];
+      const playerIndex = battle.players.findIndex((player) => player.id === socket.id);
+
+      if (playerIndex !== -1) {
+        const leavingPlayer = battle.players[playerIndex];
+        battle.players.splice(playerIndex, 1); // Remove the player from the battle
+
+        if (battle.players.length === 0) {
+          // Remove the battle if no players remain
+          delete activeBattles[matchId];
+          console.log(`[BATTLE REMOVED] Battle ${matchId} removed as no players remain.`);
+        } else {
+          // Notify the remaining player
+          const remainingPlayer = battle.players[0];
+          io.to(remainingPlayer.id).emit('battleEnded', {
+            message: 'Your opponent has left the game. You win by default!',
+            result: 'opponentLeft',
+          });
+          console.log(`[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent leaving.`);
+        }
+      }
+    } else {
+      console.log(`[ERROR] Match ID ${matchId} not found in active battles.`);
+    }
+  });
   
 
   // Submit results
   socket.on('submitResults', async (data) => {
-    const { matchId, username, correctAnswers, language} = data;
+    const { matchId, username, correctAnswers, language } = data;
   
     console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId}`);
   
@@ -364,10 +397,10 @@ io.on('connection', (socket) => {
         if (battle.players.every((p) => p.correctAnswers !== undefined)) {
           const [player1, player2] = battle.players;
   
-          // Save or update match results in the database
           try {
+            // Save or update match results in the database
             const matchResult = await MatchResult.findOneAndUpdate(
-              { matchId }, // Find the document by matchId
+              { matchId }, // Query: Match by matchId
               {
                 $set: {
                   players: [
@@ -385,7 +418,7 @@ io.on('connection', (socket) => {
                   language: language,
                 },
               },
-              { upsert: true, new: true } // Upsert ensures a new document is created if it doesn't exist
+              { upsert: true, new: true } // Options: Create if not exists, return the updated document
             );
   
             console.log(`[MATCH SAVED] Results saved for match ${matchId}:`, matchResult);
@@ -399,6 +432,7 @@ io.on('connection', (socket) => {
           console.log("Player1 Answers: " + player1.correctAnswers);
           console.log("Player2 Answers: " + player2.correctAnswers);
           console.log("#####################################");
+  
           if (player1.correctAnswers > player2.correctAnswers) {
             winner = player1.username;
           } else if (player2.correctAnswers > player1.correctAnswers) {
@@ -432,7 +466,8 @@ io.on('connection', (socket) => {
     } else {
       console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
-  });  
+  });
+  
 
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {
