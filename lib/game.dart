@@ -394,44 +394,54 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _onBattleEnded(data) {
-    final String message = data['message'] ?? 'The battle has ended.';
-    final String result = data['result'] ?? 'unknown';
+    try {
+      final String message = data['message'] ?? 'The battle has ended.';
+      final result = data['result'];
 
-    if (result == 'opponentDisconnected') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MultiplayerResultScreen(
-            results: {
-              'message': message,
-              'result': 'winByDisconnect',
-              'player1': {
-                'username': widget.username,
-                'correctAnswers': correctAnswers,
-                'progress': questionResults,
+      // Check if result is a map or opponentDisconnected
+      if (result == 'opponentDisconnected') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: {
+                'message': message,
+                'result': 'winByDisconnect',
+                'player1': {
+                  'username': widget.username,
+                  'correctAnswers': correctAnswers,
+                  'progress': questionResults,
+                },
+                'player2': {
+                  'username': widget.opponentUsername,
+                  'correctAnswers': 0,
+                  'progress':
+                      List<String>.filled(questionResults.length, 'unanswered'),
+                },
+                'winner': widget.username,
               },
-              'player2': {
-                'username': widget.opponentUsername,
-                'correctAnswers': 0,
-                'progress':
-                    List<String>.filled(questionResults.length, 'unanswered'),
+              language: widget.language,
+            ),
+          ),
+        );
+      } else if (result is Map<String, dynamic>) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: {
+                'message': message,
+                ...result,
               },
-              'winner': widget.username,
-            },
-            language: widget.language,
+              language: widget.language,
+            ),
           ),
-        ),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MultiplayerResultScreen(
-            results: data['result'],
-            language: widget.language,
-          ),
-        ),
-      );
+        );
+      } else {
+        print('Unexpected result format: $result');
+      }
+    } catch (e) {
+      print('Error handling battleEnded event: $e');
     }
   }
 
@@ -639,10 +649,10 @@ class MultiplayerResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Access data directly from results
-    final player1 = results['player1'];
-    final player2 = results['player2'];
-    final winner = results['winner'];
+    // Safely access data
+    final player1 = results['player1'] ?? {};
+    final player2 = results['player2'] ?? {};
+    final winner = results['winner'] ?? "Draw";
     final message = results['message'] ?? "Match concluded";
 
     return Scaffold(
@@ -664,7 +674,7 @@ class MultiplayerResultScreen extends StatelessWidget {
 
             // Winner Information
             Text(
-              "Winner: ${winner ?? "Draw"}",
+              "Winner: ${winner}",
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -680,13 +690,13 @@ class MultiplayerResultScreen extends StatelessWidget {
                 Column(
                   children: [
                     Text(
-                      "Player 1: ${player1['username']}",
+                      "Player 1: ${player1['username'] ?? 'Unknown'}",
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
                       children: List.generate(
-                        player1['progress'].length,
+                        (player1['progress'] ?? []).length,
                         (index) => Icon(
                           Icons.circle,
                           color: player1['progress'][index] == "correct"
@@ -700,7 +710,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "Score: ${player1['correctAnswers']}",
+                      "Score: ${player1['correctAnswers'] ?? 0}",
                       style: const TextStyle(fontSize: 16),
                     ),
                   ],
@@ -710,13 +720,13 @@ class MultiplayerResultScreen extends StatelessWidget {
                 Column(
                   children: [
                     Text(
-                      "Player 2: ${player2['username']}",
+                      "Player 2: ${player2['username'] ?? 'Unknown'}",
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
                     Wrap(
                       children: List.generate(
-                        player2['progress'].length,
+                        (player2['progress'] ?? []).length,
                         (index) => Icon(
                           Icons.circle,
                           color: player2['progress'][index] == "correct"
@@ -730,7 +740,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      "Score: ${player2['correctAnswers']}",
+                      "Score: ${player2['correctAnswers'] ?? 0}",
                       style: const TextStyle(fontSize: 16),
                     ),
                   ],
