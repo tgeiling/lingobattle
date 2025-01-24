@@ -352,6 +352,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void initState() {
     super.initState();
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+
     controllers =
         List.generate(questions.length, (_) => TextEditingController());
     questionResults = List<String>.filled(questions.length, "unanswered");
@@ -423,8 +424,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'matchId': widget.matchId,
         'username': widget.username,
         'questionIndex': currentQuestionIndex,
-        'status': questionResults[
-            currentQuestionIndex], // Send as "correct" or "wrong"
+        'status': questionResults[questionIndex],
       });
 
       // Move to the next question or end
@@ -438,10 +438,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _sendResultsToServer() {
-    // Calculate the total number of correct answers
-    correctAnswers =
-        questionResults.where((result) => result == "correct").length;
-
     final results = {
       'matchId': widget.matchId,
       'username': widget.username,
@@ -450,7 +446,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'progress': questionResults, // Sending the player's progress
     };
 
-    // Emit the results to the server
     widget.socket.emit('submitResults', results);
   }
 
@@ -458,15 +453,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Match in ${widget.language}"),
+        title: Text("Battle in ${widget.language}"),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Add the Row for progress tracking here
+          // Progress indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Opponent's progress
               Row(
                 children: List.generate(
                   questions.length,
@@ -480,8 +475,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
-              // Your progress
               Row(
                 children: List.generate(
                   questions.length,
@@ -498,14 +491,56 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Text("Question ${currentQuestionIndex + 1} of ${questions.length}"),
+          // Question with fillable gaps
           Wrap(
-            alignment: WrapAlignment.start,
-            children:
-                _buildSentenceWithGap(questions[currentQuestionIndex].question),
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: _buildSentenceWithGap(questions[currentQuestionIndex]
+                .question), // Modified to build sentence with gaps
           ),
+          const SizedBox(height: 20),
+          // Input boxes for letters
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              questions[currentQuestionIndex].answers[0].length,
+              (index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Neumorphic(
+                  padding: const EdgeInsets.all(10),
+                  style: NeumorphicStyle(
+                    depth: -3,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                  ),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: TextField(
+                        controller: controllers[currentQuestionIndex],
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        decoration: const InputDecoration(
+                          counterText: "",
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (value) {
+                          setState(() {}); // Update the sentence dynamically
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           ElevatedButton(
-              onPressed: submitAnswer, child: const Text("Submit Answer")),
+            onPressed: submitAnswer,
+            child: const Text("Submit Answer"),
+          ),
         ],
       ),
     );
@@ -515,38 +550,26 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     List<String> parts = sentence.split("_____");
     List<Widget> widgets = [];
     for (int i = 0; i < parts.length; i++) {
-      widgets.add(
-        Text(
-          parts[i],
-          style: const TextStyle(fontSize: 18, color: Colors.black87),
-        ),
-      );
+      widgets.add(Text(
+        parts[i],
+        style: const TextStyle(fontSize: 18, color: Colors.black),
+      ));
       if (i < parts.length - 1) {
         widgets.add(
           SizedBox(
-            width: 100,
+            width: 80,
+            height: 30,
             child: Neumorphic(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
               style: NeumorphicStyle(
                 depth: -2,
                 boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
-                color: Colors.white,
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
               ),
-              child: TextField(
-                key: ValueKey(
-                    '$currentQuestionIndex-$i'), // Unique key for each TextField
-                controller: controllers[
-                    currentQuestionIndex], // Use the correct controller
-                onChanged: (value) {
-                  setState(() {}); // Optionally react to changes
-                },
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Answer",
-                  hintStyle: TextStyle(color: Colors.grey),
+              child: Center(
+                child: Text(
+                  controllers[currentQuestionIndex].text,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
-                style: const TextStyle(color: Colors.black),
               ),
             ),
           ),

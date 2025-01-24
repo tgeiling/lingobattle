@@ -160,12 +160,14 @@ class _StartPageState extends State<StartPage> {
     final profilProvider = Provider.of<ProfileProvider>(context, listen: false);
 
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            if (isLoggedIn)
-              GestureDetector(
+      body: Stack(
+        children: [
+          // Top-right "View History" button
+          if (isLoggedIn)
+            Positioned(
+              top: 16, // Adjust as needed
+              right: 16, // Adjust as needed
+              child: GestureDetector(
                 onTap: () {
                   Navigator.push(
                     context,
@@ -206,96 +208,105 @@ class _StartPageState extends State<StartPage> {
                   ],
                 ),
               ),
-            Row(
+            ),
+
+          // Main content
+          Center(
+            child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                TextButton(
-                  onPressed: previousFlag,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    TextButton(
+                      onPressed: previousFlag,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: NeumorphicIcon(
+                        Icons.arrow_left,
+                        size: 60,
+                        style: NeumorphicStyle(
+                          color: Colors.grey[400],
+                          depth: 2,
+                        ),
+                      ),
+                    ),
+                    Neumorphic(
+                      padding: const EdgeInsets.all(24),
+                      style: NeumorphicStyle(
+                        shape: NeumorphicShape.concave,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12)),
+                        depth: 8,
+                        lightSource: LightSource.topLeft,
+                      ),
+                      child: SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.38,
+                        height: MediaQuery.of(context).size.width * 0.3,
+                        child: PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (index) {
+                            setState(() {
+                              currentIndex = index;
+                            });
+                          },
+                          itemCount: flags.length,
+                          itemBuilder: (context, index) {
+                            return Image.asset(
+                              flags[index]['path']!,
+                              fit: BoxFit.contain,
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: nextFlag,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                      ),
+                      child: NeumorphicIcon(
+                        Icons.arrow_right,
+                        size: 60,
+                        style: NeumorphicStyle(
+                          color: Colors.grey[400],
+                          depth: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 10.0, horizontal: 110.0),
+                  child: PressableButton(
+                    onPressed: _initiateBattle, // Start battle via WebSocket
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                  ),
-                  child: NeumorphicIcon(
-                    Icons.arrow_left,
-                    size: 60,
-                    style: NeumorphicStyle(
-                      color: Colors.grey[400],
-                      depth: 2,
+                        vertical: 12, horizontal: 18),
+                    child: Center(
+                      child: Text(
+                        "Start Battle",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                     ),
                   ),
                 ),
-                Neumorphic(
-                  padding: const EdgeInsets.all(24),
-                  style: NeumorphicStyle(
-                    shape: NeumorphicShape.concave,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                    depth: 8,
-                    lightSource: LightSource.topLeft,
+                const SizedBox(height: 20),
+                if (!isLoggedIn)
+                  ElevatedButton(
+                    onPressed: _navigateToLogin,
+                    child: const Text('Login'),
                   ),
-                  child: SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.38,
-                    height: MediaQuery.of(context).size.width * 0.3,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) {
-                        setState(() {
-                          currentIndex = index;
-                        });
-                      },
-                      itemCount: flags.length,
-                      itemBuilder: (context, index) {
-                        return Image.asset(
-                          flags[index]['path']!,
-                          fit: BoxFit.contain,
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                TextButton(
-                  onPressed: nextFlag,
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                  ),
-                  child: NeumorphicIcon(
-                    Icons.arrow_right,
-                    size: 60,
-                    style: NeumorphicStyle(
-                      color: Colors.grey[400],
-                      depth: 2,
-                    ),
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 20),
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
-              child: PressableButton(
-                onPressed: _initiateBattle, // Start battle via WebSocket
-                padding:
-                    const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
-                child: Center(
-                  child: Text(
-                    "Start Battle",
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            if (!isLoggedIn)
-              ElevatedButton(
-                onPressed: _navigateToLogin,
-                child: const Text('Login'),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
