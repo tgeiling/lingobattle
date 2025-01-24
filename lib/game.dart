@@ -342,6 +342,7 @@ class MultiplayerGameScreen extends StatefulWidget {
 
 class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int currentQuestionIndex = 0;
+  int currentWordIndex = 0; // Tracks which word (gap) is being filled
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
   late List<String> questionResults;
@@ -365,9 +366,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _initializeLetterBoxes() {
-    // Fill the letter boxes for the current question with placeholders
-    final answerLength = questions[currentQuestionIndex].answers[0].length;
-    _letterBoxes = List.filled(answerLength, "");
+    // Fill the letter boxes for the current word with placeholders
+    final currentAnswer =
+        questions[currentQuestionIndex].answers[currentWordIndex];
+    _letterBoxes = List.filled(currentAnswer.length, "");
   }
 
   @override
@@ -398,7 +400,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       final String message = data['message'] ?? 'The battle has ended.';
       final result = data['result'];
 
-      // Check if result is a map or opponentDisconnected
       if (result == 'opponentDisconnected') {
         Navigator.pushReplacement(
           context,
@@ -447,7 +448,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _handleInput(String value) {
     setState(() {
-      // Update letter boxes with the typed input
       final input = value.split('');
       for (int i = 0; i < input.length; i++) {
         if (i < _letterBoxes.length) {
@@ -456,17 +456,38 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           _letterBoxes.add(input[i]); // Add new boxes for longer words
         }
       }
-
-      // Clear unused boxes if input is shorter than current letter boxes
       if (input.length < _letterBoxes.length) {
         _letterBoxes = _letterBoxes.sublist(0, input.length);
       }
     });
   }
 
+  void _nextWord() {
+    if (currentWordIndex < questions[currentQuestionIndex].answers.length - 1) {
+      setState(() {
+        currentWordIndex++;
+        _initializeLetterBoxes();
+        _textInputController.clear();
+      });
+    } else {
+      submitAnswer();
+    }
+  }
+
+  void _previousWord() {
+    if (currentWordIndex > 0) {
+      setState(() {
+        currentWordIndex--;
+        _initializeLetterBoxes();
+        _textInputController.clear();
+      });
+    }
+  }
+
   void submitAnswer() {
     setState(() {
-      final correctAnswer = questions[currentQuestionIndex].answers[0];
+      final correctAnswer =
+          questions[currentQuestionIndex].answers[currentWordIndex];
       final typedAnswer = _textInputController.text.trim();
 
       bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
@@ -483,6 +504,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
+        currentWordIndex = 0;
         _textInputController.clear();
         _initializeLetterBoxes();
       } else {
@@ -544,6 +566,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           ),
           const SizedBox(height: 20),
           // Display question with gaps
+          Text(
+              "Word ${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
           Wrap(
             alignment: WrapAlignment.center,
             children: _buildSentenceWithGap(questions[currentQuestionIndex]),
@@ -595,9 +619,23 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: submitAnswer,
-            child: const Text("Submit Answer"),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (currentWordIndex > 0)
+                ElevatedButton(
+                  onPressed: _previousWord,
+                  child: const Text("Back to Last Word"),
+                ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: _nextWord,
+                child: Text(currentWordIndex <
+                        questions[currentQuestionIndex].answers.length - 1
+                    ? "Next Word"
+                    : "Submit Answer"),
+              ),
+            ],
           ),
         ],
       ),
@@ -624,7 +662,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               ),
               child: Center(
                 child: Text(
-                  _letterBoxes.join(), // Display typed letters in the gap
+                  currentWordIndex == i
+                      ? _letterBoxes.join()
+                      : "", // Update the correct gap
                   style: const TextStyle(fontSize: 18, color: Colors.black),
                 ),
               ),
