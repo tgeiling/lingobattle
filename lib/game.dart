@@ -348,9 +348,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   late List<String> questionResults;
   late List<String> opponentProgress;
   late TextEditingController _textInputController;
-  late List<String> _letterBoxes; // Tracks current letters in the boxes
-  late List<String?>
-      _currentSentenceInputs; // Stores inputs for all blanks in the sentence
+  late List<String> _letterBoxes;
+  late List<String?> _currentSentenceInputs;
 
   @override
   void initState() {
@@ -360,7 +359,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     opponentProgress = List<String>.filled(questions.length, "unanswered");
     _textInputController = TextEditingController();
 
-    // Initialize letter boxes and inputs
     _initializeWordHandling();
 
     widget.socket.on('progressUpdate', _onProgressUpdate);
@@ -368,20 +366,26 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _initializeWordHandling() {
-    // Initialize inputs for all blanks in the current sentence
     _currentSentenceInputs = List<String?>.filled(
       questions[currentQuestionIndex].answers.length,
       null,
     );
-    // Initialize letter boxes for the first blank
     _updateLetterBoxesForCurrentWord();
   }
 
   void _updateLetterBoxesForCurrentWord() {
-    final wordLength =
-        questions[currentQuestionIndex].answers[currentWordIndex].length;
-    _letterBoxes = List.filled(wordLength, "");
-    _textInputController.text = _currentSentenceInputs[currentWordIndex] ?? "";
+    // Ensure currentWordIndex is within bounds
+    if (currentWordIndex >= 0 &&
+        currentWordIndex < questions[currentQuestionIndex].answers.length) {
+      final wordLength =
+          questions[currentQuestionIndex].answers[currentWordIndex].length;
+      _letterBoxes = List.filled(wordLength, "");
+      _textInputController.text =
+          _currentSentenceInputs[currentWordIndex] ?? "";
+    } else {
+      print(
+          "Error: currentWordIndex ($currentWordIndex) is out of bounds for answers.");
+    }
   }
 
   @override
@@ -460,7 +464,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _handleInput(String value) {
     setState(() {
-      // Update letter boxes with the typed input
       final input = value.split('');
       for (int i = 0; i < input.length; i++) {
         if (i < _letterBoxes.length) {
@@ -542,7 +545,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Progress indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -575,13 +577,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Display question with gaps
           Wrap(
             alignment: WrapAlignment.center,
             children: _buildSentenceWithGap(questions[currentQuestionIndex]),
           ),
           const SizedBox(height: 20),
-          // Letter boxes with keyboard handling
           GestureDetector(
             onTap: () {
               FocusScope.of(context).requestFocus(FocusNode());
@@ -617,7 +617,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               ),
             ),
           ),
-          // Hidden TextField for typing
           Opacity(
             opacity: 0,
             child: TextField(
