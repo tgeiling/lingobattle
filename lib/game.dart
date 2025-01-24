@@ -346,6 +346,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
   late TextEditingController textController;
+  late FocusNode focusNode; // To manage keyboard focus
   late List<String> questionResults;
   late List<String> opponentProgress; // Tracks opponent's progress
   late List<String> gaps; // Gaps to fill in the current question
@@ -356,6 +357,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
 
     textController = TextEditingController();
+    focusNode = FocusNode();
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
 
@@ -425,6 +427,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
     textController.dispose();
+    focusNode.dispose();
     super.dispose();
   }
 
@@ -477,86 +480,90 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       appBar: AppBar(
         title: Text("Battle in ${widget.language}"),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Progress indicators
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Row(
-                children: List.generate(
-                  questions.length,
-                  (index) => Icon(
-                    Icons.circle,
-                    color: opponentProgress[index] == "unanswered"
-                        ? Colors.black
-                        : opponentProgress[index] == "correct"
-                            ? Colors.green
-                            : Colors.red,
-                  ),
-                ),
-              ),
-              Row(
-                children: List.generate(
-                  questions.length,
-                  (index) => Icon(
-                    Icons.circle,
-                    color: questionResults[index] == "unanswered"
-                        ? Colors.black
-                        : questionResults[index] == "correct"
-                            ? Colors.green
-                            : Colors.red,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          // Display the question with dynamic gaps
-          Text.rich(
-            TextSpan(
-              children: _buildSentenceWithGaps(
-                  questions[currentQuestionIndex].question),
-            ),
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18),
-          ),
-          const SizedBox(height: 20),
-          // Word Progress: 1/n (only when more than one word)
-          if (gaps.length > 1)
-            Text(
-              "Word ${currentAnswerIndex + 1}/${gaps.length}",
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          const SizedBox(height: 10),
-          // Input for typing the current word
-          GestureDetector(
-            onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                gaps[currentAnswerIndex].length,
-                (index) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Neumorphic(
-                    padding: const EdgeInsets.all(10),
-                    style: NeumorphicStyle(
-                      depth: -3,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                          BorderRadius.circular(8)),
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).requestFocus(focusNode),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Progress indicators
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Row(
+                  children: List.generate(
+                    questions.length,
+                    (index) => Icon(
+                      Icons.circle,
+                      color: opponentProgress[index] == "unanswered"
+                          ? Colors.black
+                          : opponentProgress[index] == "correct"
+                              ? Colors.green
+                              : Colors.red,
                     ),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          index < textController.text.length
-                              ? textController.text[index].toUpperCase()
-                              : '',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Row(
+                  children: List.generate(
+                    questions.length,
+                    (index) => Icon(
+                      Icons.circle,
+                      color: questionResults[index] == "unanswered"
+                          ? Colors.black
+                          : questionResults[index] == "correct"
+                              ? Colors.green
+                              : Colors.red,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Display the question with dynamic gaps
+            Text.rich(
+              TextSpan(
+                children: _buildSentenceWithGaps(
+                    questions[currentQuestionIndex].question),
+              ),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 20),
+            // Word Progress: 1/n (only when more than one word)
+            if (gaps.length > 1)
+              Text(
+                "Word ${currentAnswerIndex + 1}/${gaps.length}",
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            const SizedBox(height: 10),
+            // Input for typing the current word
+            GestureDetector(
+              onTap: () => FocusScope.of(context).requestFocus(focusNode),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  gaps[currentAnswerIndex].length,
+                  (index) => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Neumorphic(
+                      padding: const EdgeInsets.all(10),
+                      style: NeumorphicStyle(
+                        depth: -3,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(8)),
+                      ),
+                      child: SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: Center(
+                          child: Text(
+                            index < textController.text.length
+                                ? textController.text[index].toUpperCase()
+                                : '',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
@@ -565,26 +572,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          // Hidden text field to handle input
-          TextField(
-            controller: textController,
-            autofocus: true,
-            maxLength: gaps[currentAnswerIndex].length,
-            decoration: const InputDecoration(border: InputBorder.none),
-            onChanged: (_) {
-              setState(() {});
-            },
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: submitWord,
-            child: Text(currentAnswerIndex == gaps.length - 1
-                ? "Submit Answer"
-                : "Next Word"),
-          ),
-        ],
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: submitWord,
+              child: Text(currentAnswerIndex == gaps.length - 1
+                  ? "Submit Answer"
+                  : "Next Word"),
+            ),
+          ],
+        ),
       ),
     );
   }
