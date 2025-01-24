@@ -374,7 +374,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _updateLetterBoxesForCurrentWord() {
-    // Ensure currentWordIndex is within bounds
     if (currentWordIndex >= 0 &&
         currentWordIndex < questions[currentQuestionIndex].answers.length) {
       final wordLength =
@@ -470,6 +469,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           _letterBoxes[i] = input[i];
         }
       }
+      _currentSentenceInputs[currentWordIndex] = value.trim();
     });
   }
 
@@ -501,18 +501,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void submitAnswer() {
     setState(() {
-      // Combine all entered words into a single string
       final typedAnswer = _currentSentenceInputs.join(" ").trim();
       final correctAnswer =
           questions[currentQuestionIndex].answers.join(" ").trim();
 
-      // Check if the typed answer matches the correct answer
       bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
       correctAnswers =
           questionResults.where((result) => result == "correct").length;
 
-      // Emit the answer progress to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
         'username': widget.username,
@@ -520,12 +517,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'status': questionResults[currentQuestionIndex],
       });
 
-      // Move to the next question or end the game
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        _initializeWordHandling(); // Reset for the next question
+        _initializeWordHandling();
       } else {
-        _sendResultsToServer(); // End the game and send results
+        _sendResultsToServer();
       }
     });
   }
