@@ -539,13 +539,42 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   Widget build(BuildContext context) {
     return WillPopScope(
         onWillPop: () async {
-          // Emit "left game" event to the server
-          widget.socket.emit('playerLeft', {
-            'matchId': widget.matchId,
-            'username': widget.username,
-          });
-
+          // Show confirmation dialog
           final shouldLeave = await _showLeaveConfirmationDialog(context);
+          if (shouldLeave) {
+            // Emit "playerLeft" event to the server
+            widget.socket.emit('playerLeft', {
+              'matchId': widget.matchId,
+              'username': widget.username,
+            });
+
+            // Navigate to the match result screen with a loss
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MultiplayerResultScreen(
+                  results: {
+                    'message': 'You left the game.',
+                    'result': 'lossByLeave',
+                    'player1': {
+                      'username': widget.username,
+                      'correctAnswers': correctAnswers,
+                      'progress': questionResults,
+                    },
+                    'player2': {
+                      'username': widget.opponentUsername,
+                      'correctAnswers': 0, // You can adjust this if needed
+                      'progress': List<String>.filled(
+                          questionResults.length, 'unanswered'), // Placeholder
+                    },
+                    'winner': widget.opponentUsername,
+                  },
+                  language: widget.language,
+                ),
+              ),
+            );
+          }
+
           return shouldLeave;
         },
         child: Scaffold(

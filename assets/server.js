@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
+const { v4: uuidv4 } = require('uuid');
 
 // Create express app
 const app = express();
@@ -172,11 +173,14 @@ let matchmakingQueue = []; // Players waiting for a match
 // Timeout period for matchmaking (in milliseconds)
 const MATCH_TIMEOUT = 60000; // 1 minute
 
-// Matchmaking handler
 const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
     const player1 = matchmakingQueue.shift();
     const player2 = matchmakingQueue.shift();
+
+    // Clear timeouts for both players
+    clearTimeout(player1.timeout);
+    clearTimeout(player2.timeout);
 
     const battleId = `${player1.socket.id}-${player2.socket.id}`;
     activeBattles[battleId] = {
@@ -191,24 +195,33 @@ const matchPlayers = async () => {
     console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
     console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
 
-    const matchResult = new MatchResult({
-      matchId: battleId,
-      players: [
-        { 
-          username: player1.username, 
-          progress: Array(5).fill('unanswered'), 
-          correctAnswers: 0 // Default value
+    try {
+      const matchResult = await MatchResult.findOneAndUpdate(
+        { matchId: battleId }, // Query by matchId
+        {
+          $set: {
+            players: [
+              {
+                username: player1.username,
+                progress: Array(5).fill('unanswered'),
+                correctAnswers: 0,
+              },
+              {
+                username: player2.username,
+                progress: Array(5).fill('unanswered'),
+                correctAnswers: 0,
+              },
+            ],
+            language: player1.language,
+          },
         },
-        { 
-          username: player2.username, 
-          progress: Array(5).fill('unanswered'), 
-          correctAnswers: 0 // Default value
-        },
-      ],
-      language: player1.language,
-    });
-    await matchResult.save();
-    
+        { upsert: true, new: true } // Create or update
+      );
+
+      console.log(`[MATCH CREATED] Saved match result to database for matchId: ${battleId}`);
+    } catch (err) {
+      console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
+    }
 
     // Emit battleStart event to both players
     io.to(player1.socket.id).emit('battleStart', {
@@ -229,6 +242,7 @@ const matchPlayers = async () => {
   }
 };
 
+
 // Handle WebSocket connections
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
@@ -237,23 +251,28 @@ io.on('connection', (socket) => {
   socket.on('joinQueue', (data) => {
     const { username, language } = data;
     console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
-
-    // Add player to the matchmaking queue
-    matchmakingQueue.push({ socket, username, language });
+  
+    // Create a player object with a reference to the timeout
+    const player = {
+      socket,
+      username,
+      language,
+      timeout: setTimeout(() => {
+        const isStillInQueue = matchmakingQueue.some((p) => p.socket.id === socket.id);
+        if (isStillInQueue) {
+          matchmakingQueue = matchmakingQueue.filter((p) => p.socket.id !== socket.id);
+          socket.emit('timeout', { message: 'Matchmaking timeout. Please try again.' });
+          console.log(`[TIMEOUT] Player ${username} (${socket.id}) removed from the queue due to timeout.`);
+        }
+      }, MATCH_TIMEOUT),
+    };
+  
+    // Add the player to the matchmaking queue
+    matchmakingQueue.push(player);
     console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
-
+  
     // Attempt to match players
     matchPlayers();
-
-    // Add a timeout to remove the player from the queue
-    setTimeout(() => {
-      const isStillInQueue = matchmakingQueue.some((player) => player.socket.id === socket.id);
-      if (isStillInQueue) {
-        matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
-        socket.emit('timeout', { message: 'Matchmaking timeout. Please try again.' });
-        console.log(`[TIMEOUT] Player ${username} (${socket.id}) removed from the queue due to timeout.`);
-      }
-    }, MATCH_TIMEOUT);
   });
 
   // Handle player disconnection
@@ -348,36 +367,36 @@ io.on('connection', (socket) => {
 
   socket.on('playerLeft', (data) => {
     const { matchId, username } = data;
-
-    console.log(`[PLAYER LEFT] Player ${username} (${socket.id}) left the match ${matchId}`);
-
-    // Check if the player is part of an active battle
+  
+    console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
+  
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
-      const playerIndex = battle.players.findIndex((player) => player.id === socket.id);
-
+      const playerIndex = battle.players.findIndex((p) => p.username === username);
+  
       if (playerIndex !== -1) {
-        const leavingPlayer = battle.players[playerIndex];
-        battle.players.splice(playerIndex, 1); // Remove the player from the battle
-
+        const disconnectedPlayer = battle.players[playerIndex];
+        battle.players.splice(playerIndex, 1);
+  
         if (battle.players.length === 0) {
-          // Remove the battle if no players remain
+          // No players remain, remove the battle
           delete activeBattles[matchId];
-          console.log(`[BATTLE REMOVED] Battle ${matchId} removed as no players remain.`);
+          console.log(`[BATTLE REMOVED] Match ${matchId} removed as no players remain.`);
         } else {
-          // Notify the remaining player
+          // Notify the remaining player about the opponent's departure
           const remainingPlayer = battle.players[0];
           io.to(remainingPlayer.id).emit('battleEnded', {
-            message: 'Your opponent has left the game. You win by default!',
+            message: `${username} left the game.`,
             result: 'opponentLeft',
           });
-          console.log(`[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent leaving.`);
+          console.log(
+            `[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent leaving.`
+          );
         }
       }
-    } else {
-      console.log(`[ERROR] Match ID ${matchId} not found in active battles.`);
     }
   });
+  
   
 
   // Submit results
