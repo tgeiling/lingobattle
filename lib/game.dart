@@ -494,15 +494,18 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void submitAnswer() {
     setState(() {
+      // Combine all entered words into a single string
       final typedAnswer = _currentSentenceInputs.join(" ").trim();
       final correctAnswer =
           questions[currentQuestionIndex].answers.join(" ").trim();
 
+      // Check if the typed answer matches the correct answer
       bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
       correctAnswers =
           questionResults.where((result) => result == "correct").length;
 
+      // Emit the answer progress to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
         'username': widget.username,
@@ -510,11 +513,14 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'status': questionResults[currentQuestionIndex],
       });
 
+      // Reset UI for the next question or end the game
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        _initializeWordHandling();
+        currentWordIndex = 0; // Reset to the first word
+        _textInputController.clear(); // Clear input
+        _initializeWordHandling(); // Reset sentence inputs and boxes
       } else {
-        _sendResultsToServer();
+        _sendResultsToServer(); // End the game and send results
       }
     });
   }
