@@ -342,153 +342,134 @@ class MultiplayerGameScreen extends StatefulWidget {
 
 class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int currentQuestionIndex = 0;
+  int currentAnswerIndex = 0; // Tracks the current word being typed
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
+  late List<TextEditingController> controllers;
   late List<String> questionResults;
-  late List<String> opponentProgress;
-  late TextEditingController _textInputController;
-  late List<String> _letterBoxes; // Tracks current letters in the boxes
+  late List<String> opponentProgress; // Tracks opponent's progress
+  late List<String> gaps; // Gaps to fill in the current question
 
   @override
   void initState() {
     super.initState();
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+
+    controllers =
+        List.generate(questions.length, (_) => TextEditingController());
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
-    _textInputController = TextEditingController();
 
-    // Initialize letter boxes for the current question
-    _initializeLetterBoxes();
+    // Split the current question's answers into gaps
+    gaps = questions[currentQuestionIndex].answers;
 
-    widget.socket.on('progressUpdate', _onProgressUpdate);
-    widget.socket.on('battleEnded', _onBattleEnded);
-  }
+    widget.socket.on('progressUpdate', (data) {
+      setState(() {
+        try {
+          int questionIndex = data['questionIndex'];
+          String progressStatus = data['status']; // "correct" or "wrong"
 
-  void _initializeLetterBoxes() {
-    // Fill the letter boxes for the current question with placeholders
-    final answerLength = questions[currentQuestionIndex].answers[0].length;
-    _letterBoxes = List.filled(answerLength, "");
+          if (questionIndex >= 0 && questionIndex < opponentProgress.length) {
+            opponentProgress[questionIndex] = progressStatus;
+          }
+        } catch (e) {
+          print('Error in progressUpdate handler: $e');
+        }
+      });
+    });
+
+    widget.socket.on('battleEnded', (data) {
+      final String message = data['message'] ?? 'The battle has ended.';
+      final String result = data['result'] ?? 'unknown';
+
+      if (result == 'opponentDisconnected') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: {
+                'message': message,
+                'result': 'winByDisconnect',
+                'player1': {
+                  'username': widget.username,
+                  'correctAnswers': correctAnswers,
+                  'progress': questionResults,
+                },
+                'player2': {
+                  'username': widget.opponentUsername,
+                  'correctAnswers': 0,
+                  'progress':
+                      List<String>.filled(questionResults.length, 'unanswered'),
+                },
+                'winner': widget.username,
+              },
+              language: widget.language,
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: data['result'],
+              language: widget.language,
+            ),
+          ),
+        );
+      }
+    });
   }
 
   @override
   void dispose() {
-    widget.socket.off('progressUpdate', _onProgressUpdate);
-    widget.socket.off('battleEnded', _onBattleEnded);
-    _textInputController.dispose();
+    widget.socket.off('progressUpdate');
+    widget.socket.off('battleEnded');
     super.dispose();
   }
 
-  void _onProgressUpdate(data) {
+  void submitWord() {
     setState(() {
-      try {
-        int questionIndex = data['questionIndex'];
-        String progressStatus = data['status'];
+      String currentWord = gaps[currentAnswerIndex];
+      bool isCorrect =
+          controllers[currentQuestionIndex].text.trim().toLowerCase() ==
+              currentWord.toLowerCase();
 
-        if (questionIndex >= 0 && questionIndex < opponentProgress.length) {
-          opponentProgress[questionIndex] = progressStatus;
-        }
-      } catch (e) {
-        print('Error in progressUpdate handler: $e');
-      }
-    });
-  }
-
-  void _onBattleEnded(data) {
-    final String message = data['message'] ?? 'The battle has ended.';
-    final String result = data['result'] ?? 'unknown';
-
-    if (result == 'opponentDisconnected') {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MultiplayerResultScreen(
-            results: {
-              'message': message,
-              'result': 'winByDisconnect',
-              'player1': {
-                'username': widget.username,
-                'correctAnswers': correctAnswers,
-                'progress': questionResults,
-              },
-              'player2': {
-                'username': widget.opponentUsername,
-                'correctAnswers': 0,
-                'progress':
-                    List<String>.filled(questionResults.length, 'unanswered'),
-              },
-              'winner': widget.username,
-            },
-            language: widget.language,
-          ),
-        ),
-      );
-    } else {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MultiplayerResultScreen(
-            results: data['result'],
-            language: widget.language,
-          ),
-        ),
-      );
-    }
-  }
-
-  void _handleInput(String value) {
-    setState(() {
-      // Update letter boxes with the typed input
-      final input = value.split('');
-      for (int i = 0; i < input.length; i++) {
-        if (i < _letterBoxes.length) {
-          _letterBoxes[i] = input[i];
-        } else {
-          _letterBoxes.add(input[i]); // Add new boxes for longer words
-        }
+      if (isCorrect) {
+        correctAnswers++;
       }
 
-      // Clear unused boxes if input is shorter than current letter boxes
-      if (input.length < _letterBoxes.length) {
-        _letterBoxes = _letterBoxes.sublist(0, input.length);
-      }
-    });
-  }
-
-  void submitAnswer() {
-    setState(() {
-      final correctAnswer = questions[currentQuestionIndex].answers[0];
-      final typedAnswer = _textInputController.text.trim();
-
-      bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
-      correctAnswers =
-          questionResults.where((result) => result == "correct").length;
 
-      widget.socket.emit('submitAnswer', {
-        'matchId': widget.matchId,
-        'username': widget.username,
-        'questionIndex': currentQuestionIndex,
-        'status': questionResults[currentQuestionIndex],
-      });
+      // Clear the text field for the next word
+      controllers[currentQuestionIndex].clear();
 
-      if (currentQuestionIndex < questions.length - 1) {
-        currentQuestionIndex++;
-        _textInputController.clear();
-        _initializeLetterBoxes();
+      if (currentAnswerIndex < gaps.length - 1) {
+        // Move to the next gap
+        currentAnswerIndex++;
       } else {
-        _sendResultsToServer();
+        // Move to the next question if all gaps are filled
+        if (currentQuestionIndex < questions.length - 1) {
+          currentQuestionIndex++;
+          currentAnswerIndex = 0;
+          gaps = questions[currentQuestionIndex].answers;
+        } else {
+          _sendResultsToServer();
+        }
       }
     });
   }
 
   void _sendResultsToServer() {
-    widget.socket.emit('submitResults', {
+    final results = {
       'matchId': widget.matchId,
       'username': widget.username,
       'correctAnswers': correctAnswers,
       'language': widget.language,
       'progress': questionResults,
-    });
+    };
+
+    widget.socket.emit('submitResults', results);
   }
 
   @override
@@ -533,40 +514,49 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Display question with gaps
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: _buildSentenceWithGap(questions[currentQuestionIndex]),
+          // Display the question with dynamic gaps
+          Text.rich(
+            TextSpan(
+              children: _buildSentenceWithGaps(
+                  questions[currentQuestionIndex].question),
+            ),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 20),
-          // Letter boxes with keyboard handling
-          GestureDetector(
-            onTap: () {
-              FocusScope.of(context).requestFocus(FocusNode());
-              _textInputController.selection = TextSelection.collapsed(
-                offset: _textInputController.text.length,
-              );
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                _letterBoxes.length,
-                (index) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: -2,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                        BorderRadius.circular(4),
-                      ),
-                    ),
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Text(
-                          _letterBoxes[index],
-                          style: const TextStyle(fontSize: 18),
+          // Word Progress: 1/n
+          Text(
+            "Word ${currentAnswerIndex + 1}/${gaps.length}",
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 10),
+          // Input for typing the current word
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              gaps[currentAnswerIndex].length,
+              (index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Neumorphic(
+                  padding: const EdgeInsets.all(10),
+                  style: NeumorphicStyle(
+                    depth: -3,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                  ),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: Text(
+                        index < controllers[currentQuestionIndex].text.length
+                            ? controllers[currentQuestionIndex]
+                                .text[index]
+                                .toUpperCase()
+                            : '',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -575,55 +565,36 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               ),
             ),
           ),
-          // Hidden TextField for typing
-          Opacity(
-            opacity: 0,
-            child: TextField(
-              controller: _textInputController,
-              onChanged: _handleInput,
-              autofocus: true,
-            ),
-          ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: submitAnswer,
-            child: const Text("Submit Answer"),
+            onPressed: submitWord,
+            child: Text(currentAnswerIndex == gaps.length - 1
+                ? "Submit Answer"
+                : "Next Word"),
           ),
         ],
       ),
     );
   }
 
-  List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
-    List<String> parts = question.question.split("_____");
-    List<Widget> widgets = [];
+  List<InlineSpan> _buildSentenceWithGaps(String sentence) {
+    List<String> parts = sentence.split("_____");
+    List<InlineSpan> spans = [];
     for (int i = 0; i < parts.length; i++) {
-      widgets.add(Text(
-        parts[i],
-        style: const TextStyle(fontSize: 18, color: Colors.black),
-      ));
+      spans.add(TextSpan(text: parts[i]));
       if (i < parts.length - 1) {
-        widgets.add(
-          SizedBox(
-            width: 80,
-            child: Neumorphic(
-              style: NeumorphicStyle(
-                depth: -2,
-                boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
-              ),
-              child: Center(
-                child: Text(
-                  _letterBoxes.join(), // Display typed letters in the gap
-                  style: const TextStyle(fontSize: 18, color: Colors.black),
-                ),
-              ),
-            ),
+        spans.add(TextSpan(
+          text: (currentAnswerIndex == i
+              ? controllers[currentQuestionIndex].text
+              : gaps[i]),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: currentAnswerIndex == i ? Colors.blue : Colors.grey,
           ),
-        );
+        ));
       }
     }
-    return widgets;
+    return spans;
   }
 }
 
