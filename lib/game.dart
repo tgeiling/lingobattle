@@ -345,7 +345,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int currentAnswerIndex = 0; // Tracks the current word being typed
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
-  late List<TextEditingController> controllers;
+  late TextEditingController textController;
   late List<String> questionResults;
   late List<String> opponentProgress; // Tracks opponent's progress
   late List<String> gaps; // Gaps to fill in the current question
@@ -355,8 +355,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     super.initState();
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
 
-    controllers =
-        List.generate(questions.length, (_) => TextEditingController());
+    textController = TextEditingController();
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
 
@@ -425,6 +424,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void dispose() {
     widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
+    textController.dispose();
     super.dispose();
   }
 
@@ -432,8 +432,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     setState(() {
       String currentWord = gaps[currentAnswerIndex];
       bool isCorrect =
-          controllers[currentQuestionIndex].text.trim().toLowerCase() ==
-              currentWord.toLowerCase();
+          textController.text.trim().toLowerCase() == currentWord.toLowerCase();
 
       if (isCorrect) {
         correctAnswers++;
@@ -442,7 +441,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
 
       // Clear the text field for the next word
-      controllers[currentQuestionIndex].clear();
+      textController.clear();
 
       if (currentAnswerIndex < gaps.length - 1) {
         // Move to the next gap
@@ -524,39 +523,41 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             style: const TextStyle(fontSize: 18),
           ),
           const SizedBox(height: 20),
-          // Word Progress: 1/n
-          Text(
-            "Word ${currentAnswerIndex + 1}/${gaps.length}",
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
+          // Word Progress: 1/n (only when more than one word)
+          if (gaps.length > 1)
+            Text(
+              "Word ${currentAnswerIndex + 1}/${gaps.length}",
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           const SizedBox(height: 10),
           // Input for typing the current word
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              gaps[currentAnswerIndex].length,
-              (index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Neumorphic(
-                  padding: const EdgeInsets.all(10),
-                  style: NeumorphicStyle(
-                    depth: -3,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
-                  ),
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Center(
-                      child: Text(
-                        index < controllers[currentQuestionIndex].text.length
-                            ? controllers[currentQuestionIndex]
-                                .text[index]
-                                .toUpperCase()
-                            : '',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+          GestureDetector(
+            onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                gaps[currentAnswerIndex].length,
+                (index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Neumorphic(
+                    padding: const EdgeInsets.all(10),
+                    style: NeumorphicStyle(
+                      depth: -3,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                          BorderRadius.circular(8)),
+                    ),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          index < textController.text.length
+                              ? textController.text[index].toUpperCase()
+                              : '',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
@@ -564,6 +565,17 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ),
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+          // Hidden text field to handle input
+          TextField(
+            controller: textController,
+            autofocus: true,
+            maxLength: gaps[currentAnswerIndex].length,
+            decoration: const InputDecoration(border: InputBorder.none),
+            onChanged: (_) {
+              setState(() {});
+            },
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -584,9 +596,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       spans.add(TextSpan(text: parts[i]));
       if (i < parts.length - 1) {
         spans.add(TextSpan(
-          text: (currentAnswerIndex == i
-              ? controllers[currentQuestionIndex].text
-              : gaps[i]),
+          text: (currentAnswerIndex == i ? textController.text : gaps[i]),
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: currentAnswerIndex == i ? Colors.blue : Colors.grey,
