@@ -381,9 +381,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       _letterBoxes = List.filled(wordLength, "");
       _textInputController.text =
           _currentSentenceInputs[currentWordIndex] ?? "";
-    } else {
-      print(
-          "Error: currentWordIndex ($currentWordIndex) is out of bounds for answers.");
     }
   }
 
@@ -453,8 +450,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ),
           ),
         );
-      } else {
-        print('Unexpected result format: $result');
       }
     } catch (e) {
       print('Error handling battleEnded event: $e');
@@ -464,10 +459,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void _handleInput(String value) {
     setState(() {
       final input = value.split('');
-      for (int i = 0; i < input.length; i++) {
-        if (i < _letterBoxes.length) {
-          _letterBoxes[i] = input[i];
-        }
+      for (int i = 0; i < _letterBoxes.length; i++) {
+        _letterBoxes[i] = i < input.length ? input[i] : "";
       }
       _currentSentenceInputs[currentWordIndex] = value.trim();
     });
