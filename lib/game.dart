@@ -344,113 +344,126 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
   late List<MultiplayerQuestion> questions;
-  late List<TextEditingController> controllers;
   late List<String> questionResults;
-  late List<String> opponentProgress; // Tracks opponent's progress
+  late List<String> opponentProgress;
+  late TextEditingController _textInputController;
+  late List<String> _letterBoxes; // Tracks current letters in the boxes
 
   @override
   void initState() {
     super.initState();
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
-
-    controllers =
-        List.generate(questions.length, (_) => TextEditingController());
     questionResults = List<String>.filled(questions.length, "unanswered");
-
-    // Initialize opponent progress as "unanswered"
     opponentProgress = List<String>.filled(questions.length, "unanswered");
+    _textInputController = TextEditingController();
 
-    // Listen for progress updates from the server
-    widget.socket.on('progressUpdate', (data) {
-      setState(() {
-        try {
-          int questionIndex = data['questionIndex'];
-          String progressStatus = data['status']; // "correct" or "wrong"
+    // Initialize letter boxes for the current question
+    _initializeLetterBoxes();
 
-          if (questionIndex >= 0 && questionIndex < opponentProgress.length) {
-            // Update the opponent's progress
-            opponentProgress[questionIndex] = progressStatus;
-            print('Opponent progress updated: $opponentProgress');
-          } else {
-            print('Invalid questionIndex in progressUpdate: $questionIndex');
-          }
-        } catch (e) {
-          print('Error in progressUpdate handler: $e');
-        }
-      });
-    });
+    widget.socket.on('progressUpdate', _onProgressUpdate);
+    widget.socket.on('battleEnded', _onBattleEnded);
+  }
 
-    widget.socket.on('battleEnded', (data) {
-      print('Battle ended: $data');
-
-      final String message = data['message'] ?? 'The battle has ended.';
-      final String result = data['result'] ?? 'unknown';
-
-      // If the opponent disconnects, display a win result
-      if (result == 'opponentDisconnected') {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MultiplayerResultScreen(
-              results: {
-                'message': message,
-                'result': 'winByDisconnect',
-                'player1': {
-                  'username': widget.username,
-                  'correctAnswers': correctAnswers,
-                  'progress': questionResults,
-                },
-                'player2': {
-                  'username': widget.opponentUsername,
-                  'correctAnswers': 0,
-                  'progress': List<String>.filled(questionResults.length,
-                      'unanswered'), // Opponent has no progress
-                },
-                'winner': widget.username,
-              },
-              language: widget.language,
-            ),
-          ),
-        );
-      } else {
-        // Handle other cases of battle ending
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MultiplayerResultScreen(
-              results: data['result'], // Pass the result data directly
-              language: widget.language,
-            ),
-          ),
-        );
-      }
-    });
+  void _initializeLetterBoxes() {
+    // Fill the letter boxes for the current question with placeholders
+    final answerLength = questions[currentQuestionIndex].answers[0].length;
+    _letterBoxes = List.filled(answerLength, "");
   }
 
   @override
   void dispose() {
-    widget.socket.off('progressUpdate');
-    widget.socket.off('battleEnded');
+    widget.socket.off('progressUpdate', _onProgressUpdate);
+    widget.socket.off('battleEnded', _onBattleEnded);
+    _textInputController.dispose();
     super.dispose();
+  }
+
+  void _onProgressUpdate(data) {
+    setState(() {
+      try {
+        int questionIndex = data['questionIndex'];
+        String progressStatus = data['status'];
+
+        if (questionIndex >= 0 && questionIndex < opponentProgress.length) {
+          opponentProgress[questionIndex] = progressStatus;
+        }
+      } catch (e) {
+        print('Error in progressUpdate handler: $e');
+      }
+    });
+  }
+
+  void _onBattleEnded(data) {
+    final String message = data['message'] ?? 'The battle has ended.';
+    final String result = data['result'] ?? 'unknown';
+
+    if (result == 'opponentDisconnected') {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MultiplayerResultScreen(
+            results: {
+              'message': message,
+              'result': 'winByDisconnect',
+              'player1': {
+                'username': widget.username,
+                'correctAnswers': correctAnswers,
+                'progress': questionResults,
+              },
+              'player2': {
+                'username': widget.opponentUsername,
+                'correctAnswers': 0,
+                'progress':
+                    List<String>.filled(questionResults.length, 'unanswered'),
+              },
+              'winner': widget.username,
+            },
+            language: widget.language,
+          ),
+        ),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MultiplayerResultScreen(
+            results: data['result'],
+            language: widget.language,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleInput(String value) {
+    setState(() {
+      // Update letter boxes with the typed input
+      final input = value.split('');
+      for (int i = 0; i < input.length; i++) {
+        if (i < _letterBoxes.length) {
+          _letterBoxes[i] = input[i];
+        } else {
+          _letterBoxes.add(input[i]); // Add new boxes for longer words
+        }
+      }
+
+      // Clear unused boxes if input is shorter than current letter boxes
+      if (input.length < _letterBoxes.length) {
+        _letterBoxes = _letterBoxes.sublist(0, input.length);
+      }
+    });
   }
 
   void submitAnswer() {
     setState(() {
-      List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
-      bool isCorrect = acceptableAnswers.any(
-        (answer) =>
-            controllers[currentQuestionIndex].text.toLowerCase() ==
-            answer.toLowerCase(),
-      );
+      final correctAnswer = questions[currentQuestionIndex].answers[0];
+      final typedAnswer = _textInputController.text.trim();
 
-      // Update the current question's result
+      bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
-
-      // Update correctAnswers dynamically
       correctAnswers =
           questionResults.where((result) => result == "correct").length;
 
-      // Emit progress update to the server
       widget.socket.emit('submitAnswer', {
         'matchId': widget.matchId,
         'username': widget.username,
@@ -458,10 +471,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'status': questionResults[currentQuestionIndex],
       });
 
-      // Move to the next question or end
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        controllers[currentQuestionIndex].clear();
+        _textInputController.clear();
+        _initializeLetterBoxes();
       } else {
         _sendResultsToServer();
       }
@@ -469,15 +482,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _sendResultsToServer() {
-    final results = {
+    widget.socket.emit('submitResults', {
       'matchId': widget.matchId,
       'username': widget.username,
       'correctAnswers': correctAnswers,
       'language': widget.language,
-      'progress': questionResults, // Sending the player's progress
-    };
-
-    widget.socket.emit('submitResults', results);
+      'progress': questionResults,
+    });
   }
 
   @override
@@ -522,49 +533,55 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Question with fillable gaps
+          // Display question with gaps
           Wrap(
             alignment: WrapAlignment.center,
-            spacing: 8,
-            runSpacing: 8,
-            children: _buildSentenceWithGap(questions[currentQuestionIndex]
-                .question), // Modified to build sentence with gaps
+            children: _buildSentenceWithGap(questions[currentQuestionIndex]),
           ),
           const SizedBox(height: 20),
-          // Input boxes for letters
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(
-              questions[currentQuestionIndex].answers[0].length,
-              (index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Neumorphic(
-                  padding: const EdgeInsets.all(10),
-                  style: NeumorphicStyle(
-                    depth: -3,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
-                  ),
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Center(
-                      child: TextField(
-                        controller: controllers[currentQuestionIndex],
-                        textAlign: TextAlign.center,
-                        maxLength: 1,
-                        decoration: const InputDecoration(
-                          counterText: "",
-                          border: InputBorder.none,
+          // Letter boxes with keyboard handling
+          GestureDetector(
+            onTap: () {
+              FocusScope.of(context).requestFocus(FocusNode());
+              _textInputController.selection = TextSelection.collapsed(
+                offset: _textInputController.text.length,
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                _letterBoxes.length,
+                (index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: -2,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(4),
+                      ),
+                    ),
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Text(
+                          _letterBoxes[index],
+                          style: const TextStyle(fontSize: 18),
                         ),
-                        onChanged: (value) {
-                          setState(() {}); // Update the sentence dynamically
-                        },
                       ),
                     ),
                   ),
                 ),
               ),
+            ),
+          ),
+          // Hidden TextField for typing
+          Opacity(
+            opacity: 0,
+            child: TextField(
+              controller: _textInputController,
+              onChanged: _handleInput,
+              autofocus: true,
             ),
           ),
           const SizedBox(height: 20),
@@ -577,8 +594,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     );
   }
 
-  List<Widget> _buildSentenceWithGap(String sentence) {
-    List<String> parts = sentence.split("_____");
+  List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
+    List<String> parts = question.question.split("_____");
     List<Widget> widgets = [];
     for (int i = 0; i < parts.length; i++) {
       widgets.add(Text(
@@ -589,19 +606,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         widgets.add(
           SizedBox(
             width: 80,
-            height: 30,
             child: Neumorphic(
               style: NeumorphicStyle(
                 depth: -2,
                 boxShape:
                     NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
               ),
-              child: Center(
-                child: Text(
-                  controllers[currentQuestionIndex].text,
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
-                ),
-              ),
+              child: const Center(child: Text("_____")),
             ),
           ),
         );
