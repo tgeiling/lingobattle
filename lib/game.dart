@@ -342,13 +342,15 @@ class MultiplayerGameScreen extends StatefulWidget {
 
 class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   int currentQuestionIndex = 0;
-  int currentWordIndex = 0; // Tracks which word (gap) is being filled
   int correctAnswers = 0;
+  int currentWordIndex = 0;
   late List<MultiplayerQuestion> questions;
   late List<String> questionResults;
   late List<String> opponentProgress;
   late TextEditingController _textInputController;
   late List<String> _letterBoxes; // Tracks current letters in the boxes
+  late List<String?>
+      _currentSentenceInputs; // Stores inputs for all blanks in the sentence
 
   @override
   void initState() {
@@ -358,18 +360,28 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     opponentProgress = List<String>.filled(questions.length, "unanswered");
     _textInputController = TextEditingController();
 
-    // Initialize letter boxes for the current question
-    _initializeLetterBoxes();
+    // Initialize letter boxes and inputs
+    _initializeWordHandling();
 
     widget.socket.on('progressUpdate', _onProgressUpdate);
     widget.socket.on('battleEnded', _onBattleEnded);
   }
 
-  void _initializeLetterBoxes() {
-    // Fill the letter boxes for the current word with placeholders
-    final currentAnswer =
-        questions[currentQuestionIndex].answers[currentWordIndex];
-    _letterBoxes = List.filled(currentAnswer.length, "");
+  void _initializeWordHandling() {
+    // Initialize inputs for all blanks in the current sentence
+    _currentSentenceInputs = List<String?>.filled(
+      questions[currentQuestionIndex].answers.length,
+      null,
+    );
+    // Initialize letter boxes for the first blank
+    _updateLetterBoxesForCurrentWord();
+  }
+
+  void _updateLetterBoxesForCurrentWord() {
+    final wordLength =
+        questions[currentQuestionIndex].answers[currentWordIndex].length;
+    _letterBoxes = List.filled(wordLength, "");
+    _textInputController.text = _currentSentenceInputs[currentWordIndex] ?? "";
   }
 
   @override
@@ -448,16 +460,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void _handleInput(String value) {
     setState(() {
+      // Update letter boxes with the typed input
       final input = value.split('');
       for (int i = 0; i < input.length; i++) {
         if (i < _letterBoxes.length) {
           _letterBoxes[i] = input[i];
-        } else {
-          _letterBoxes.add(input[i]); // Add new boxes for longer words
         }
-      }
-      if (input.length < _letterBoxes.length) {
-        _letterBoxes = _letterBoxes.sublist(0, input.length);
       }
     });
   }
@@ -465,9 +473,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void _nextWord() {
     if (currentWordIndex < questions[currentQuestionIndex].answers.length - 1) {
       setState(() {
+        _currentSentenceInputs[currentWordIndex] =
+            _textInputController.text.trim();
         currentWordIndex++;
-        _initializeLetterBoxes();
-        _textInputController.clear(); // Clear the text field
+        _textInputController.clear();
+        _updateLetterBoxesForCurrentWord();
       });
     } else {
       submitAnswer();
@@ -477,9 +487,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void _previousWord() {
     if (currentWordIndex > 0) {
       setState(() {
+        _currentSentenceInputs[currentWordIndex] =
+            _textInputController.text.trim();
         currentWordIndex--;
-        _initializeLetterBoxes();
-        _textInputController.clear(); // Clear the text field
+        _textInputController.clear();
+        _updateLetterBoxesForCurrentWord();
       });
     }
   }
@@ -487,8 +499,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void submitAnswer() {
     setState(() {
       final correctAnswer =
-          questions[currentQuestionIndex].answers[currentWordIndex];
-      final typedAnswer = _textInputController.text.trim();
+          questions[currentQuestionIndex].answers.join(" ").trim();
+      final typedAnswer = _currentSentenceInputs.join(" ").trim();
 
       bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
@@ -504,9 +516,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        currentWordIndex = 0;
-        _textInputController.clear();
-        _initializeLetterBoxes();
+        _initializeWordHandling();
       } else {
         _sendResultsToServer();
       }
@@ -565,10 +575,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Display `Word 1/n` only if there is more than one word
-          if (questions[currentQuestionIndex].answers.length > 1)
-            Text(
-                "Word ${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+          // Display question with gaps
           Wrap(
             alignment: WrapAlignment.center,
             children: _buildSentenceWithGap(questions[currentQuestionIndex]),
@@ -631,10 +638,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               const SizedBox(width: 10),
               ElevatedButton(
                 onPressed: _nextWord,
-                child: Text(currentWordIndex <
-                        questions[currentQuestionIndex].answers.length - 1
-                    ? "Next Word"
-                    : "Submit Answer"),
+                child: Text(
+                  currentWordIndex <
+                          questions[currentQuestionIndex].answers.length - 1
+                      ? "Next Word"
+                      : "Submit Answer",
+                ),
               ),
             ],
           ),
@@ -663,9 +672,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               ),
               child: Center(
                 child: Text(
-                  currentWordIndex == i
-                      ? _letterBoxes.join()
-                      : "", // Update the correct gap
+                  _currentSentenceInputs[i] ?? "",
                   style: const TextStyle(fontSize: 18, color: Colors.black),
                 ),
               ),
