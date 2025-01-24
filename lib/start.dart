@@ -244,7 +244,7 @@ class _StartPageState extends State<StartPage> {
                         lightSource: LightSource.topLeft,
                       ),
                       child: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.38,
+                        width: MediaQuery.of(context).size.width * 0.35,
                         height: MediaQuery.of(context).size.width * 0.3,
                         child: PageView.builder(
                           controller: _pageController,
