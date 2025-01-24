@@ -467,7 +467,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       setState(() {
         currentWordIndex++;
         _initializeLetterBoxes();
-        _textInputController.clear();
+        _textInputController.clear(); // Clear the text field
       });
     } else {
       submitAnswer();
@@ -479,7 +479,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       setState(() {
         currentWordIndex--;
         _initializeLetterBoxes();
-        _textInputController.clear();
+        _textInputController.clear(); // Clear the text field
       });
     }
   }
@@ -565,9 +565,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          // Display question with gaps
-          Text(
-              "Word ${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+          // Display `Word 1/n` only if there is more than one word
+          if (questions[currentQuestionIndex].answers.length > 1)
+            Text(
+                "Word ${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
           Wrap(
             alignment: WrapAlignment.center,
             children: _buildSentenceWithGap(questions[currentQuestionIndex]),
