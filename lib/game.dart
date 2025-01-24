@@ -352,6 +352,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void initState() {
     super.initState();
     questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+
     controllers =
         List.generate(questions.length, (_) => TextEditingController());
     questionResults = List<String>.filled(questions.length, "unanswered");
@@ -379,19 +380,50 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       });
     });
 
-    // Listen for battleEnded event
     widget.socket.on('battleEnded', (data) {
       print('Battle ended: $data');
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => MultiplayerResultScreen(
-            results: data['result'],
-            language: widget.language,
+      final String message = data['message'] ?? 'The battle has ended.';
+      final String result = data['result'] ?? 'unknown';
+
+      // If the opponent disconnects, display a win result
+      if (result == 'opponentDisconnected') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: {
+                'message': message,
+                'result': 'winByDisconnect',
+                'player1': {
+                  'username': widget.username,
+                  'correctAnswers': correctAnswers,
+                  'progress': questionResults,
+                },
+                'player2': {
+                  'username': widget.opponentUsername,
+                  'correctAnswers': 0,
+                  'progress': List<String>.filled(questionResults.length,
+                      'unanswered'), // Opponent has no progress
+                },
+                'winner': widget.username,
+              },
+              language: widget.language,
+            ),
           ),
-        ),
-      );
+        );
+      } else {
+        // Handle other cases of battle ending
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MultiplayerResultScreen(
+              results: data['result'], // Pass the result data directly
+              language: widget.language,
+            ),
+          ),
+        );
+      }
     });
   }
 
@@ -423,8 +455,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'matchId': widget.matchId,
         'username': widget.username,
         'questionIndex': currentQuestionIndex,
-        'status': questionResults[
-            currentQuestionIndex], // Send as "correct" or "wrong"
+        'status': questionResults[currentQuestionIndex],
       });
 
       // Move to the next question or end
@@ -438,10 +469,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _sendResultsToServer() {
-    // Calculate the total number of correct answers
-    correctAnswers =
-        questionResults.where((result) => result == "correct").length;
-
     final results = {
       'matchId': widget.matchId,
       'username': widget.username,
@@ -450,7 +477,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       'progress': questionResults, // Sending the player's progress
     };
 
-    // Emit the results to the server
     widget.socket.emit('submitResults', results);
   }
 
@@ -458,15 +484,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Match in ${widget.language}"),
+        title: Text("Battle in ${widget.language}"),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Add the Row for progress tracking here
+          // Progress indicators
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Opponent's progress
               Row(
                 children: List.generate(
                   questions.length,
@@ -480,8 +506,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 20),
-              // Your progress
               Row(
                 children: List.generate(
                   questions.length,
@@ -498,14 +522,56 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Text("Question ${currentQuestionIndex + 1} of ${questions.length}"),
+          // Question with fillable gaps
           Wrap(
-            alignment: WrapAlignment.start,
-            children:
-                _buildSentenceWithGap(questions[currentQuestionIndex].question),
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: _buildSentenceWithGap(questions[currentQuestionIndex]
+                .question), // Modified to build sentence with gaps
           ),
+          const SizedBox(height: 20),
+          // Input boxes for letters
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              questions[currentQuestionIndex].answers[0].length,
+              (index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Neumorphic(
+                  padding: const EdgeInsets.all(10),
+                  style: NeumorphicStyle(
+                    depth: -3,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
+                  ),
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: TextField(
+                        controller: controllers[currentQuestionIndex],
+                        textAlign: TextAlign.center,
+                        maxLength: 1,
+                        decoration: const InputDecoration(
+                          counterText: "",
+                          border: InputBorder.none,
+                        ),
+                        onChanged: (value) {
+                          setState(() {}); // Update the sentence dynamically
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           ElevatedButton(
-              onPressed: submitAnswer, child: const Text("Submit Answer")),
+            onPressed: submitAnswer,
+            child: const Text("Submit Answer"),
+          ),
         ],
       ),
     );
@@ -515,38 +581,26 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     List<String> parts = sentence.split("_____");
     List<Widget> widgets = [];
     for (int i = 0; i < parts.length; i++) {
-      widgets.add(
-        Text(
-          parts[i],
-          style: const TextStyle(fontSize: 18, color: Colors.black87),
-        ),
-      );
+      widgets.add(Text(
+        parts[i],
+        style: const TextStyle(fontSize: 18, color: Colors.black),
+      ));
       if (i < parts.length - 1) {
         widgets.add(
           SizedBox(
-            width: 100,
+            width: 80,
+            height: 30,
             child: Neumorphic(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
               style: NeumorphicStyle(
                 depth: -2,
                 boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
-                color: Colors.white,
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
               ),
-              child: TextField(
-                key: ValueKey(
-                    '$currentQuestionIndex-$i'), // Unique key for each TextField
-                controller: controllers[
-                    currentQuestionIndex], // Use the correct controller
-                onChanged: (value) {
-                  setState(() {}); // Optionally react to changes
-                },
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Answer",
-                  hintStyle: TextStyle(color: Colors.grey),
+              child: Center(
+                child: Text(
+                  controllers[currentQuestionIndex].text,
+                  style: const TextStyle(fontSize: 16, color: Colors.black),
                 ),
-                style: const TextStyle(color: Colors.black),
               ),
             ),
           ),
@@ -573,6 +627,7 @@ class MultiplayerResultScreen extends StatelessWidget {
     final player1 = results['player1'];
     final player2 = results['player2'];
     final winner = results['winner'];
+    final message = results['message'] ?? "Match concluded";
 
     return Scaffold(
       appBar: AppBar(title: const Text("Match Results")),
@@ -580,50 +635,96 @@ class MultiplayerResultScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Winner: ${winner ?? "Draw"}"),
+            // Display the result message
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 20),
+
+            // Winner Information
+            Text(
+              "Winner: ${winner ?? "Draw"}",
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Progress Visualization for both players
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 // Player 1 progress
                 Column(
                   children: [
-                    Text("Player 1: ${player1['username']}"),
-                    ...List.generate(
-                      player1['progress'].length,
-                      (index) => Icon(
-                        Icons.circle,
-                        color: player1['progress'][index] == "correct"
-                            ? Colors.green
-                            : player1['progress'][index] == "wrong"
-                                ? Colors.red
-                                : Colors.black,
+                    Text(
+                      "Player 1: ${player1['username']}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      children: List.generate(
+                        player1['progress'].length,
+                        (index) => Icon(
+                          Icons.circle,
+                          color: player1['progress'][index] == "correct"
+                              ? Colors.green
+                              : player1['progress'][index] == "wrong"
+                                  ? Colors.red
+                                  : Colors.black,
+                          size: 16,
+                        ),
                       ),
                     ),
-                    Text("Score: ${player1['correctAnswers']}"),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Score: ${player1['correctAnswers']}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ],
                 ),
+
                 // Player 2 progress
                 Column(
                   children: [
-                    Text("Player 2: ${player2['username']}"),
-                    ...List.generate(
-                      player2['progress'].length,
-                      (index) => Icon(
-                        Icons.circle,
-                        color: player2['progress'][index] == "correct"
-                            ? Colors.green
-                            : player2['progress'][index] == "wrong"
-                                ? Colors.red
-                                : Colors.black,
+                    Text(
+                      "Player 2: ${player2['username']}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      children: List.generate(
+                        player2['progress'].length,
+                        (index) => Icon(
+                          Icons.circle,
+                          color: player2['progress'][index] == "correct"
+                              ? Colors.green
+                              : player2['progress'][index] == "wrong"
+                                  ? Colors.red
+                                  : Colors.black,
+                          size: 16,
+                        ),
                       ),
                     ),
-                    Text("Score: ${player2['correctAnswers']}"),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Score: ${player2['correctAnswers']}",
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+
+            const SizedBox(height: 30),
+
+            // Back to Main Menu button
             ElevatedButton(
               onPressed: () =>
                   Navigator.popUntil(context, (route) => route.isFirst),
