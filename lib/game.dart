@@ -261,8 +261,8 @@ class MultiplayerQuestionsPool {
         answers: ["Paris"],
       ),
       MultiplayerQuestion(
-        question: "The largest planet in the solar system is _____",
-        answers: ["Jupiter"],
+        question: "The largest planet in the _____ system is _____",
+        answers: ["solar", "Jupiter"],
       ),
       MultiplayerQuestion(
         question: "The capital of France is _____",
@@ -612,7 +612,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 boxShape:
                     NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
               ),
-              child: const Center(child: Text("_____")),
+              child: Center(
+                child: Text(
+                  _letterBoxes.join(), // Display typed letters in the gap
+                  style: const TextStyle(fontSize: 18, color: Colors.black),
+                ),
+              ),
             ),
           ),
         );
