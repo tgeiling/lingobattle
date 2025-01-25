@@ -257,24 +257,24 @@ class MultiplayerQuestionsPool {
   static final Map<String, List<MultiplayerQuestion>> questionsByLanguage = {
     'english': [
       MultiplayerQuestion(
-        question: "The capital of France is _____",
-        answers: ["Paris"],
+        question: "The capital of Italy is _____",
+        answers: ["Rome"],
       ),
       MultiplayerQuestion(
-        question: "The largest planet in the _____ system is _____",
-        answers: ["solar", "Jupiter"],
+        question: "The chemical symbol for water is _____",
+        answers: ["H2O"],
       ),
       MultiplayerQuestion(
-        question: "The capital of France is _____",
-        answers: ["Paris"],
+        question: "The fastest animal in the sky is the _____ falcon",
+        answers: ["peregrine"],
       ),
       MultiplayerQuestion(
-        question: "The largest planet in the solar system is _____",
-        answers: ["Jupiter"],
+        question: "The Great Wall of China was built to protect against _____",
+        answers: ["invasions"],
       ),
       MultiplayerQuestion(
-        question: "The capital of France is _____",
-        answers: ["Paris"],
+        question: "The largest ocean on Earth is the _____ Ocean",
+        answers: ["Pacific"],
       ),
     ],
     'spanish': [
@@ -582,117 +582,133 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           return shouldLeave;
         },
         child: Scaffold(
-          appBar: AppBar(
-            title: Text("Battle in ${widget.language}"),
-          ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            appBar: AppBar(
+              title: Text("Battle in ${widget.language}"),
+            ),
+            resizeToAvoidBottomInset: true,
+            body: SingleChildScrollView(
+              // Makes the content scrollable
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Row(
-                    children: List.generate(
-                      questions.length,
-                      (index) => Icon(
-                        Icons.circle,
-                        color: opponentProgress[index] == "unanswered"
-                            ? Colors.black
-                            : opponentProgress[index] == "correct"
-                                ? Colors.green
-                                : Colors.red,
-                      ),
-                    ),
-                  ),
-                  Row(
-                    children: List.generate(
-                      questions.length,
-                      (index) => Icon(
-                        Icons.circle,
-                        color: questionResults[index] == "unanswered"
-                            ? Colors.black
-                            : questionResults[index] == "correct"
-                                ? Colors.green
-                                : Colors.red,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Wrap(
-                alignment: WrapAlignment.center,
-                children:
-                    _buildSentenceWithGap(questions[currentQuestionIndex]),
-              ),
-              const SizedBox(height: 20),
-              GestureDetector(
-                onTap: () {
-                  FocusScope.of(context).requestFocus(FocusNode());
-                  _textInputController.selection = TextSelection.collapsed(
-                    offset: _textInputController.text.length,
-                  );
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _letterBoxes.length,
-                    (index) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Neumorphic(
-                        style: NeumorphicStyle(
-                          depth: -2,
-                          boxShape: NeumorphicBoxShape.roundRect(
-                            BorderRadius.circular(4),
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Row(
+                        children: List.generate(
+                          questions.length,
+                          (index) => Icon(
+                            Icons.circle,
+                            color: opponentProgress[index] == "unanswered"
+                                ? Colors.black
+                                : opponentProgress[index] == "correct"
+                                    ? Colors.green
+                                    : Colors.red,
                           ),
                         ),
-                        child: SizedBox(
-                          width: 40,
-                          height: 40,
-                          child: Center(
-                            child: Text(
-                              _letterBoxes[index],
-                              style: const TextStyle(fontSize: 18),
+                      ),
+                      Row(
+                        children: List.generate(
+                          questions.length,
+                          (index) => Icon(
+                            Icons.circle,
+                            color: questionResults[index] == "unanswered"
+                                ? Colors.black
+                                : questionResults[index] == "correct"
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    children:
+                        _buildSentenceWithGap(questions[currentQuestionIndex]),
+                  ),
+                  const SizedBox(height: 60),
+                  if (questions[currentQuestionIndex].answers.length > 1)
+                    Text(
+                        "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+                  GestureDetector(
+                    onTap: () {
+                      FocusScope.of(context).requestFocus(FocusNode());
+                      _textInputController.selection = TextSelection.collapsed(
+                        offset: _textInputController.text.length,
+                      );
+                    },
+                    child: Container(
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 8, // Horizontal spacing between items
+                          runSpacing: 8, // Vertical spacing between rows
+                          children: List.generate(
+                            _letterBoxes.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 4),
+                              child: Neumorphic(
+                                style: NeumorphicStyle(
+                                  depth: -2,
+                                  boxShape: NeumorphicBoxShape.roundRect(
+                                    BorderRadius.circular(4),
+                                  ),
+                                ),
+                                child: SizedBox(
+                                  width:
+                                      (55.0 - questions.length).clamp(20, 55),
+                                  height:
+                                      (65.0 - questions.length).clamp(30, 65),
+                                  child: Center(
+                                    child: Text(
+                                      _letterBoxes[index],
+                                      style: const TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
+                        )),
+                  ),
+                  Opacity(
+                    opacity: 0,
+                    child: TextField(
+                      controller: _textInputController,
+                      onChanged: _handleInput,
+                      autofocus: true,
                     ),
                   ),
-                ),
-              ),
-              Opacity(
-                opacity: 0,
-                child: TextField(
-                  controller: _textInputController,
-                  onChanged: _handleInput,
-                  autofocus: true,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (currentWordIndex > 0)
-                    ElevatedButton(
-                      onPressed: _previousWord,
-                      child: const Text("Back to Last Word"),
-                    ),
-                  const SizedBox(width: 10),
-                  ElevatedButton(
-                    onPressed: _nextWord,
-                    child: Text(
-                      currentWordIndex <
-                              questions[currentQuestionIndex].answers.length - 1
-                          ? "Next Word"
-                          : "Submit Answer",
-                    ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (currentWordIndex > 0)
+                        ElevatedButton(
+                          onPressed: _previousWord,
+                          child: const Text("Back to Last Word"),
+                        ),
+                      const SizedBox(width: 10),
+                      ElevatedButton(
+                        onPressed: _nextWord,
+                        child: Text(
+                          currentWordIndex <
+                                  questions[currentQuestionIndex]
+                                          .answers
+                                          .length -
+                                      1
+                              ? "Next Word"
+                              : "Submit Answer",
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-            ],
-          ),
-        ));
+            )));
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {

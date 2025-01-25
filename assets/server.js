@@ -390,7 +390,7 @@ io.on('connection', (socket) => {
           const remainingPlayer = battle.players[0];
           io.to(remainingPlayer.id).emit('battleEnded', {
             message: `${username} has left the game. You win!`,
-            result: 'opponentLeft', // Indicate the opponent left
+            result: 'playerLeft', // Indicate the opponent left
           });
   
           console.log(
@@ -408,13 +408,13 @@ io.on('connection', (socket) => {
                     progress: p.progress || Array(5).fill('unanswered'),
                     correctAnswers: p.correctAnswers || 0,
                   })),
-                  status: 'opponentLeft',
+                  status: 'playerLeft',
                 },
               },
               { upsert: true, new: true }
             );
   
-            console.log(`[DATABASE UPDATED] Match ${matchId} status saved as 'opponentLeft'.`);
+            console.log(`[DATABASE UPDATED] Match ${matchId} status saved as 'playerLeft'.`);
           } catch (err) {
             console.error(`[DATABASE ERROR] Failed to save match ${matchId}: ${err}`);
           }
