@@ -370,32 +370,63 @@ io.on('connection', (socket) => {
   
     console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
   
+    // Check if the match exists in active battles
     if (activeBattles[matchId]) {
       const battle = activeBattles[matchId];
+  
+      // Find the player who left
       const playerIndex = battle.players.findIndex((p) => p.username === username);
   
       if (playerIndex !== -1) {
         const disconnectedPlayer = battle.players[playerIndex];
-        battle.players.splice(playerIndex, 1);
+        battle.players.splice(playerIndex, 1); // Remove the player who left
   
         if (battle.players.length === 0) {
-          // No players remain, remove the battle
+          // If no players remain, delete the battle
           delete activeBattles[matchId];
           console.log(`[BATTLE REMOVED] Match ${matchId} removed as no players remain.`);
         } else {
           // Notify the remaining player about the opponent's departure
           const remainingPlayer = battle.players[0];
           io.to(remainingPlayer.id).emit('battleEnded', {
-            message: `${username} left the game.`,
-            result: 'opponentLeft',
+            message: `${username} has left the game. You win!`,
+            result: 'opponentLeft', // Indicate the opponent left
           });
+  
           console.log(
             `[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent leaving.`
           );
+  
+          // Optionally, save the state to the database
+          try {
+            const matchResult = MatchResult.findOneAndUpdate(
+              { matchId },
+              {
+                $set: {
+                  players: battle.players.map((p) => ({
+                    username: p.username,
+                    progress: p.progress || Array(5).fill('unanswered'),
+                    correctAnswers: p.correctAnswers || 0,
+                  })),
+                  status: 'opponentLeft',
+                },
+              },
+              { upsert: true, new: true }
+            );
+  
+            console.log(`[DATABASE UPDATED] Match ${matchId} status saved as 'opponentLeft'.`);
+          } catch (err) {
+            console.error(`[DATABASE ERROR] Failed to save match ${matchId}: ${err}`);
+          }
         }
+      } else {
+        console.log(`[ERROR] Player ${username} not found in match ${matchId}.`);
       }
+    } else {
+      console.log(`[ERROR] Match ${matchId} not found in active battles.`);
     }
   });
+  
   
   
 

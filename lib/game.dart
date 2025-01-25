@@ -412,14 +412,17 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       final String message = data['message'] ?? 'The battle has ended.';
       final result = data['result'];
 
-      if (result == 'opponentDisconnected') {
+      if (result == 'opponentDisconnected' || result == 'playerLeft') {
+        // Handle both opponent disconnect and player leaving
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => MultiplayerResultScreen(
               results: {
                 'message': message,
-                'result': 'winByDisconnect',
+                'result': result == 'playerLeft'
+                    ? 'winByOpponentLeft'
+                    : 'winByDisconnect',
                 'player1': {
                   'username': widget.username,
                   'correctAnswers': correctAnswers,
@@ -438,6 +441,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           ),
         );
       } else if (result is Map<String, dynamic>) {
+        // Handle normal battle results
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
