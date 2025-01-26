@@ -644,25 +644,24 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           double maxWidth = constraints.maxWidth;
-                          int maxBoxesPerRow = (maxWidth / 55)
-                              .floor(); // Maximum boxes per row with default size
-                          int rows =
-                              (_letterBoxes.length / maxBoxesPerRow).ceil();
 
-                          // Adjust size to fit within two rows
-                          double boxWidth = 55.0;
-                          double boxHeight = 65.0;
-                          if (rows > 2) {
-                            maxBoxesPerRow = (_letterBoxes.length / 2).ceil();
-                            boxWidth = maxWidth / maxBoxesPerRow -
-                                8; // Adjust width based on spacing
-                            boxHeight = boxWidth * 1.2; // Maintain aspect ratio
-                          }
+                          // Calculate box size to fit within two rows
+                          int maxBoxesPerRow = (_letterBoxes.length <= 9)
+                              ? _letterBoxes.length
+                              : (_letterBoxes.length / 2).ceil();
+                          double boxWidth =
+                              maxWidth / maxBoxesPerRow - 8; // Subtract spacing
+                          double boxHeight =
+                              boxWidth * 1.2; // Maintain aspect ratio
+
+                          // Ensure the dimensions are clamped to a minimum and maximum
+                          boxWidth = boxWidth.clamp(20, 55);
+                          boxHeight = boxHeight.clamp(30, 65);
 
                           return Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: 8, // Horizontal spacing between items
-                            runSpacing: 8, // Vertical spacing between rows
+                            spacing: 8, // Horizontal spacing
+                            runSpacing: 8, // Vertical spacing
                             children: List.generate(
                               _letterBoxes.length,
                               (index) => Padding(
@@ -676,8 +675,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                                     ),
                                   ),
                                   child: SizedBox(
-                                    width: boxWidth.clamp(20, 55),
-                                    height: boxHeight.clamp(30, 65),
+                                    width: boxWidth,
+                                    height: boxHeight,
                                     child: Center(
                                       child: Text(
                                         _letterBoxes[index],
