@@ -640,39 +640,58 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       );
                     },
                     child: Container(
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        child: Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 8, // Horizontal spacing between items
-                          runSpacing: 8, // Vertical spacing between rows
-                          children: List.generate(
-                            _letterBoxes.length,
-                            (index) => Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 4),
-                              child: Neumorphic(
-                                style: NeumorphicStyle(
-                                  depth: -2,
-                                  boxShape: NeumorphicBoxShape.roundRect(
-                                    BorderRadius.circular(4),
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          double maxWidth = constraints.maxWidth;
+                          int maxBoxesPerRow = (maxWidth / 55)
+                              .floor(); // Maximum boxes per row with default size
+                          int rows =
+                              (_letterBoxes.length / maxBoxesPerRow).ceil();
+
+                          // Adjust size to fit within two rows
+                          double boxWidth = 55.0;
+                          double boxHeight = 65.0;
+                          if (rows > 2) {
+                            maxBoxesPerRow = (_letterBoxes.length / 2).ceil();
+                            boxWidth = maxWidth / maxBoxesPerRow -
+                                8; // Adjust width based on spacing
+                            boxHeight = boxWidth * 1.2; // Maintain aspect ratio
+                          }
+
+                          return Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 8, // Horizontal spacing between items
+                            runSpacing: 8, // Vertical spacing between rows
+                            children: List.generate(
+                              _letterBoxes.length,
+                              (index) => Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                child: Neumorphic(
+                                  style: NeumorphicStyle(
+                                    depth: -2,
+                                    boxShape: NeumorphicBoxShape.roundRect(
+                                      BorderRadius.circular(4),
+                                    ),
                                   ),
-                                ),
-                                child: SizedBox(
-                                  width:
-                                      (55.0 - questions.length).clamp(20, 55),
-                                  height:
-                                      (65.0 - questions.length).clamp(30, 65),
-                                  child: Center(
-                                    child: Text(
-                                      _letterBoxes[index],
-                                      style: const TextStyle(fontSize: 18),
+                                  child: SizedBox(
+                                    width: boxWidth.clamp(20, 55),
+                                    height: boxHeight.clamp(30, 65),
+                                    child: Center(
+                                      child: Text(
+                                        _letterBoxes[index],
+                                        style: const TextStyle(fontSize: 18),
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        )),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                   Opacity(
                     opacity: 0,
