@@ -645,23 +645,44 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                         builder: (context, constraints) {
                           double maxWidth = constraints.maxWidth;
 
-                          // Calculate box size to fit within two rows
-                          int maxBoxesPerRow = (_letterBoxes.length <= 9)
-                              ? _letterBoxes.length
-                              : (_letterBoxes.length / 2).ceil();
-                          double boxWidth =
-                              maxWidth / maxBoxesPerRow - 8; // Subtract spacing
+                          // Calculate dynamic box dimensions
+                          int maxBoxesPerRow = _letterBoxes.length > 9
+                              ? (_letterBoxes.length / 2).ceil()
+                              : _letterBoxes.length;
+                          double boxWidth = maxWidth / maxBoxesPerRow -
+                              8; // Subtract default spacing
                           double boxHeight =
                               boxWidth * 1.2; // Maintain aspect ratio
 
-                          // Ensure the dimensions are clamped to a minimum and maximum
-                          boxWidth = boxWidth.clamp(20, 55);
-                          boxHeight = boxHeight.clamp(30, 65);
+                          // Calculate dynamic spacing
+                          double totalHorizontalSpace =
+                              maxWidth - (boxWidth * maxBoxesPerRow);
+                          double spacing = (totalHorizontalSpace /
+                                  (maxBoxesPerRow - 1))
+                              .clamp(4, 16); // Clamp to ensure minimum spacing
+                          double runSpacing = spacing *
+                              0.6; // Maintain proportion for vertical spacing
+
+                          // Smooth reduction factor for 9+ letters
+                          if (_letterBoxes.length > 9) {
+                            double reductionFactor =
+                                (_letterBoxes.length / 14).clamp(1.0, 1.5);
+                            boxWidth /= reductionFactor;
+                            boxHeight /= reductionFactor;
+                            spacing /= reductionFactor;
+                            runSpacing /= reductionFactor;
+                          }
+
+                          // Clamp dimensions to avoid being too small or too large
+                          boxWidth = boxWidth.clamp(30, 55);
+                          boxHeight = boxHeight.clamp(40, 65);
+                          spacing = spacing.clamp(4, 16);
+                          runSpacing = runSpacing.clamp(2, 12);
 
                           return Wrap(
                             alignment: WrapAlignment.center,
-                            spacing: 8, // Horizontal spacing
-                            runSpacing: 8, // Vertical spacing
+                            spacing: spacing, // Dynamic horizontal spacing
+                            runSpacing: runSpacing, // Dynamic vertical spacing
                             children: List.generate(
                               _letterBoxes.length,
                               (index) => Padding(
