@@ -5,6 +5,7 @@ import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:google_fonts/google_fonts.dart';
 
 import 'level.dart';
 import 'provider.dart';
@@ -645,39 +646,50 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                         builder: (context, constraints) {
                           double maxWidth = constraints.maxWidth;
 
-                          // Calculate dynamic box dimensions
-                          int maxBoxesPerRow = _letterBoxes.length > 9
-                              ? (_letterBoxes.length / 2).ceil()
-                              : _letterBoxes.length;
-                          double boxWidth = maxWidth / maxBoxesPerRow -
-                              8; // Subtract default spacing
-                          double boxHeight =
-                              boxWidth * 1.2; // Maintain aspect ratio
+                          // Define thresholds and base dimensions
+                          const int minBoxesBeforeReduction =
+                              5; // Start reducing after 5 boxes
+                          const double minBoxWidth =
+                              40; // Slightly larger minimum width
+                          const double maxBoxWidth = 55;
+                          const double minBoxHeight =
+                              50; // Slightly larger minimum height
+                          const double maxBoxHeight = 65;
+                          const double minSpacing =
+                              6; // Larger minimum spacing for better aesthetics
+                          const double maxSpacing = 16;
+                          const double minRunSpacing = 4;
+                          const double maxRunSpacing = 12;
 
-                          // Calculate dynamic spacing
-                          double totalHorizontalSpace =
-                              maxWidth - (boxWidth * maxBoxesPerRow);
-                          double spacing = (totalHorizontalSpace /
-                                  (maxBoxesPerRow - 1))
-                              .clamp(4, 16); // Clamp to ensure minimum spacing
-                          double runSpacing = spacing *
-                              0.6; // Maintain proportion for vertical spacing
+                          // Calculate reduction factor
+                          int totalBoxes = _letterBoxes.length;
+                          double reductionFactor =
+                              ((totalBoxes - minBoxesBeforeReduction) / 10)
+                                  .clamp(0.0, 0.8);
 
-                          // Smooth reduction factor for 9+ letters
-                          if (_letterBoxes.length > 9) {
-                            double reductionFactor =
-                                (_letterBoxes.length / 14).clamp(1.0, 1.5);
-                            boxWidth /= reductionFactor;
-                            boxHeight /= reductionFactor;
-                            spacing /= reductionFactor;
-                            runSpacing /= reductionFactor;
+                          // Interpolate values based on reduction factor
+                          double boxWidth = maxBoxWidth -
+                              (maxBoxWidth - minBoxWidth) * reductionFactor;
+                          double boxHeight = maxBoxHeight -
+                              (maxBoxHeight - minBoxHeight) * reductionFactor;
+                          double spacing = maxSpacing -
+                              (maxSpacing - minSpacing) * reductionFactor;
+                          double runSpacing = maxRunSpacing -
+                              (maxRunSpacing - minRunSpacing) * reductionFactor;
+
+                          // Calculate maximum boxes per row
+                          int maxBoxesPerRow =
+                              (maxWidth / (boxWidth + spacing)).floor();
+                          maxBoxesPerRow = maxBoxesPerRow.clamp(
+                              1, totalBoxes); // Ensure at least one box per row
+
+                          // Adjust box dimensions if more than one row
+                          if (totalBoxes > maxBoxesPerRow) {
+                            double scalingFactor = totalBoxes / maxBoxesPerRow;
+                            boxWidth /= scalingFactor.clamp(
+                                1.0, 1.2); // Gentler scaling
+                            boxHeight /= scalingFactor.clamp(1.0, 1.2);
                           }
-
-                          // Clamp dimensions to avoid being too small or too large
-                          boxWidth = boxWidth.clamp(30, 55);
-                          boxHeight = boxHeight.clamp(40, 65);
-                          spacing = spacing.clamp(4, 16);
-                          runSpacing = runSpacing.clamp(2, 12);
 
                           return Wrap(
                             alignment: WrapAlignment.center,
@@ -685,23 +697,26 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                             runSpacing: runSpacing, // Dynamic vertical spacing
                             children: List.generate(
                               _letterBoxes.length,
-                              (index) => Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                child: Neumorphic(
-                                  style: NeumorphicStyle(
-                                    depth: -2,
-                                    boxShape: NeumorphicBoxShape.roundRect(
-                                      BorderRadius.circular(4),
-                                    ),
+                              (index) => Neumorphic(
+                                style: NeumorphicStyle(
+                                  depth: -2,
+                                  boxShape: NeumorphicBoxShape.roundRect(
+                                    BorderRadius.circular(4),
                                   ),
-                                  child: SizedBox(
-                                    width: boxWidth,
-                                    height: boxHeight,
-                                    child: Center(
-                                      child: Text(
-                                        _letterBoxes[index],
-                                        style: const TextStyle(fontSize: 18),
+                                ),
+                                child: SizedBox(
+                                  width: boxWidth,
+                                  height: boxHeight,
+                                  child: Center(
+                                    child: Text(
+                                      _letterBoxes[index],
+                                      style: GoogleFonts.pressStart2p(
+                                        fontSize:
+                                            boxWidth * 0.5, // Dynamic font size
+                                        fontWeight:
+                                            FontWeight.bold, // Bold font
+                                        color:
+                                            Colors.grey[800], // Dark gray color
                                       ),
                                     ),
                                   ),
