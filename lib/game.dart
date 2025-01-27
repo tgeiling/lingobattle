@@ -351,6 +351,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   late TextEditingController _textInputController;
   late List<String> _letterBoxes;
   late List<String?> _currentSentenceInputs;
+  late FocusNode _focusNode;
 
   @override
   void initState() {
@@ -361,6 +362,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     _textInputController = TextEditingController();
 
     _initializeWordHandling();
+
+    _focusNode = FocusNode();
 
     widget.socket.on('progressUpdate', _onProgressUpdate);
     widget.socket.on('battleEnded', _onBattleEnded);
@@ -387,6 +390,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   void dispose() {
+    _focusNode.dispose();
     widget.socket.off('progressUpdate', _onProgressUpdate);
     widget.socket.off('battleEnded', _onBattleEnded);
     _textInputController.dispose();
@@ -584,61 +588,263 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         },
         child: Scaffold(
             appBar: AppBar(
-              title: Text("Battle in ${widget.language}"),
+              backgroundColor:
+                  Colors.white, // Neutral background for neumorphic effect
+              elevation: 4,
+              centerTitle: true,
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Display the flag
+                  Image.asset(
+                    'assets/flags/${widget.language.toLowerCase()}.png', // Match flag file
+                    width: 32, // Adjust flag size
+                    height: 32,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(
+                      width: 8), // Add spacing between the flag and text
+                  // Neumorphic container around the text
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: -2,
+                      color: Colors.white,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(16),
+                      ),
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
+                      "BATTLE IN ${widget.language.toUpperCase()}",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             resizeToAvoidBottomInset: true,
             body: SingleChildScrollView(
-              // Makes the content scrollable
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  SizedBox(height: 40),
+                  Column(
                     children: [
                       Row(
-                        children: List.generate(
-                          questions.length,
-                          (index) => Icon(
-                            Icons.circle,
-                            color: opponentProgress[index] == "unanswered"
-                                ? Colors.black
-                                : opponentProgress[index] == "correct"
-                                    ? Colors.green
-                                    : Colors.red,
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Opponent's name
+                          Text(
+                            widget.opponentUsername,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                          // Player's name
+                          Text(
+                            widget.username,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(
+                          height:
+                              8), // Add spacing between names and progress rows
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          // Opponent's progress indicators inside the specified Neumorphic container
+                          Neumorphic(
+                            padding: const EdgeInsets.all(8),
+                            style: NeumorphicStyle(
+                              shape: NeumorphicShape.concave,
+                              boxShape: NeumorphicBoxShape.roundRect(
+                                BorderRadius.circular(12),
+                              ),
+                              depth: 8,
+                              lightSource: LightSource.topLeft,
+                            ),
+                            child: Row(
+                              children: List.generate(
+                                questions.length,
+                                (index) => Icon(
+                                  Icons.circle,
+                                  color: opponentProgress[index] == "unanswered"
+                                      ? Colors.black
+                                      : opponentProgress[index] == "correct"
+                                          ? Colors.green
+                                          : Colors.red,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Player's progress indicators inside the specified Neumorphic container
+                          Neumorphic(
+                            padding: const EdgeInsets.all(8),
+                            style: NeumorphicStyle(
+                              shape: NeumorphicShape.concave,
+                              boxShape: NeumorphicBoxShape.roundRect(
+                                BorderRadius.circular(12),
+                              ),
+                              depth: 8,
+                              lightSource: LightSource.topLeft,
+                            ),
+                            child: Row(
+                              children: List.generate(
+                                questions.length,
+                                (index) => Icon(
+                                  Icons.circle,
+                                  color: questionResults[index] == "unanswered"
+                                      ? Colors.black
+                                      : questionResults[index] == "correct"
+                                          ? Colors.green
+                                          : Colors.red,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 40),
+                  Neumorphic(
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                    style: NeumorphicStyle(
+                      shape: NeumorphicShape.concave, // Inward shadow effect
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(16),
+                      ),
+                      depth: -4, // Negative depth for a concave look
+                      lightSource:
+                          LightSource.topRight, // Light source direction
+                      color: Colors.grey[200], // Subtle background color
+                    ),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width *
+                          0.75, // Dynamic width
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        children: _buildSentenceWithGap(
+                            questions[currentQuestionIndex]),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (currentWordIndex > 0)
+                        NeumorphicButton(
+                          onPressed: _previousWord,
+                          style: NeumorphicStyle(
+                            depth: 4,
+                            intensity: 0.8,
+                            shape: NeumorphicShape.convex,
+                            boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(12),
+                            ),
+                            color: Colors.grey[200],
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.arrow_back,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Back to Last Word",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      Row(
-                        children: List.generate(
-                          questions.length,
-                          (index) => Icon(
-                            Icons.circle,
-                            color: questionResults[index] == "unanswered"
-                                ? Colors.black
-                                : questionResults[index] == "correct"
-                                    ? Colors.green
-                                    : Colors.red,
+                      const SizedBox(width: 16), // Space between buttons
+                      NeumorphicButton(
+                        onPressed: _nextWord,
+                        style: NeumorphicStyle(
+                          depth: 4,
+                          intensity: 0.8,
+                          shape: NeumorphicShape.convex,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12),
                           ),
+                          color: Colors.grey[200],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            Text(
+                              currentWordIndex <
+                                      questions[currentQuestionIndex]
+                                              .answers
+                                              .length -
+                                          1
+                                  ? "Next Word"
+                                  : "Submit Answer",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              currentWordIndex <
+                                      questions[currentQuestionIndex]
+                                              .answers
+                                              .length -
+                                          1
+                                  ? Icons.arrow_forward
+                                  : Icons.check,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    children:
-                        _buildSentenceWithGap(questions[currentQuestionIndex]),
-                  ),
-                  const SizedBox(height: 60),
+                  SizedBox(height: 20),
                   if (questions[currentQuestionIndex].answers.length > 1)
                     Text(
                         "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
                   GestureDetector(
                     onTap: () {
-                      FocusScope.of(context).requestFocus(FocusNode());
-                      _textInputController.selection = TextSelection.collapsed(
-                        offset: _textInputController.text.length,
-                      );
+                      // Request focus for the TextField
+                      if (!_focusNode.hasFocus) {
+                        _focusNode
+                            .requestFocus(); // Request focus directly for the existing FocusNode
+                      }
+                      // Place the cursor at the end of the text
+                      Future.delayed(Duration.zero, () {
+                        _textInputController.selection =
+                            TextSelection.collapsed(
+                          offset: _textInputController.text.length,
+                        );
+                      });
                     },
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.8,
@@ -732,33 +938,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                     opacity: 0,
                     child: TextField(
                       controller: _textInputController,
+                      focusNode: _focusNode, // Attach the focus node here
                       onChanged: _handleInput,
                       autofocus: true,
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (currentWordIndex > 0)
-                        ElevatedButton(
-                          onPressed: _previousWord,
-                          child: const Text("Back to Last Word"),
-                        ),
-                      const SizedBox(width: 10),
-                      ElevatedButton(
-                        onPressed: _nextWord,
-                        child: Text(
-                          currentWordIndex <
-                                  questions[currentQuestionIndex]
-                                          .answers
-                                          .length -
-                                      1
-                              ? "Next Word"
-                              : "Submit Answer",
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
@@ -806,11 +989,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 "Are you sure you want to leave the game? This will count as a loss."),
             actions: [
               TextButton(
+                onPressed: () => print("Hallo"), // Cancel
+                child: const Text("Cancel"),
+              ),
+              TextButton(
                 onPressed: () => Navigator.of(context).pop(false), // Cancel
                 child: const Text("Cancel"),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(true), // Confirm
+                onPressed: () => Navigator.of(context).pop(true),
                 child: const Text("Leave"),
               ),
             ],
