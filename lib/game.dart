@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
@@ -9,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'level.dart';
 import 'provider.dart';
+import 'questionpool.dart';
 
 class GameScreen extends StatefulWidget {
   final Level level;
@@ -244,83 +246,6 @@ class _GameScreenState extends State<GameScreen> {
   }
 }
 
-class MultiplayerQuestion {
-  final String question;
-  final List<String> answers;
-
-  MultiplayerQuestion({
-    required this.question,
-    required this.answers,
-  });
-}
-
-class MultiplayerQuestionsPool {
-  static final Map<String, List<MultiplayerQuestion>> questionsByLanguage = {
-    'english': [
-      MultiplayerQuestion(
-        question: "The capital of Italy is _____",
-        answers: ["Rome"],
-      ),
-      MultiplayerQuestion(
-        question: "The chemical symbol for water is _____",
-        answers: ["H2O"],
-      ),
-      MultiplayerQuestion(
-        question: "The fastest animal in the sky is the _____ falcon",
-        answers: ["peregrine"],
-      ),
-      MultiplayerQuestion(
-        question: "The Great Wall of China was built to protect against _____",
-        answers: ["invasions"],
-      ),
-      MultiplayerQuestion(
-        question: "The largest ocean on Earth is the _____ Ocean",
-        answers: ["Pacific"],
-      ),
-    ],
-    'spanish': [
-      MultiplayerQuestion(
-        question: "La capital de España es _____",
-        answers: ["Madrid"],
-      ),
-      MultiplayerQuestion(
-        question: "El océano más grande del mundo es el _____",
-        answers: ["Pacífico"],
-      ),
-    ],
-    'dutch': [
-      MultiplayerQuestion(
-        question: "De hoofdstad van Nederland is _____",
-        answers: ["Amsterdam"],
-      ),
-      MultiplayerQuestion(
-        question: "Het grootste land in Europa is _____",
-        answers: ["Rusland"],
-      ),
-    ],
-    'german': [
-      MultiplayerQuestion(
-        question: "Die Hauptstadt von Deutschland ist _____",
-        answers: ["Berlin"],
-      ),
-      MultiplayerQuestion(
-        question: "Der höchste Berg in Europa ist der _____",
-        answers: ["Mont Blanc"],
-      ),
-    ],
-    'swiss': [
-      MultiplayerQuestion(
-        question: "Die Hauptstadt der Schweiz ist _____",
-        answers: ["Bern"],
-      ),
-      MultiplayerQuestion(
-        question: "Der größte See der Schweiz ist der _____",
-        answers: ["Genfersee"],
-      ),
-    ],
-  };
-}
-
 class MultiplayerGameScreen extends StatefulWidget {
   final IO.Socket socket;
   final String username;
@@ -356,7 +281,16 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void initState() {
     super.initState();
-    questions = MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+    _textInputController = TextEditingController();
+    _focusNode = FocusNode();
+
+    // Fetch the question pool for the selected language
+    List<MultiplayerQuestion> questionPool =
+        MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
+
+    // Shuffle the pool and select 5 random questions
+    questionPool.shuffle(Random());
+    questions = questionPool.take(5).toList();
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
     _textInputController = TextEditingController();
@@ -561,136 +495,130 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               backgroundColor:
                   Colors.white, // Neutral background for neumorphic effect
               elevation: 4,
-              centerTitle: true,
-              title: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              centerTitle: false,
+              title: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Display the flag
-                  Image.asset(
-                    'assets/flags/${widget.language.toLowerCase()}.png', // Match flag file
-                    width: 32, // Adjust flag size
-                    height: 32,
-                    fit: BoxFit.contain,
+                  // Opponent's row: name and progress
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      // Opponent's name
+                      Text(
+                        widget.opponentUsername,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(width: 8), // Space between name and dots
+                      // Opponent's progress
+                      Neumorphic(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        style: NeumorphicStyle(
+                          shape: NeumorphicShape.concave,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12),
+                          ),
+                          depth: 8,
+                          lightSource: LightSource.topLeft,
+                          color: Colors.grey[200],
+                        ),
+                        child: Row(
+                          children: List.generate(
+                            questions.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2),
+                              child: Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: opponentProgress[index] == "unanswered"
+                                    ? Colors.black
+                                    : opponentProgress[index] == "correct"
+                                        ? Colors.green
+                                        : Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(
-                      width: 8), // Add spacing between the flag and text
-                  // Neumorphic container around the text
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: -2,
-                      color: Colors.white,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                        BorderRadius.circular(16),
+                      height: 4), // Space between opponent and player rows
+                  // Player's row: name and progress
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      // Player's name
+                      Text(
+                        widget.username,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
                       ),
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      "BATTLE IN ${widget.language.toUpperCase()}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                        letterSpacing: 1.2,
+                      const SizedBox(width: 8), // Space between name and dots
+                      // Player's progress
+                      Neumorphic(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        style: NeumorphicStyle(
+                          shape: NeumorphicShape.concave,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12),
+                          ),
+                          depth: 8,
+                          lightSource: LightSource.topLeft,
+                          color: Colors.grey[200],
+                        ),
+                        child: Row(
+                          children: List.generate(
+                            questions.length,
+                            (index) => Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 2),
+                              child: Icon(
+                                Icons.circle,
+                                size: 8,
+                                color: questionResults[index] == "unanswered"
+                                    ? Colors.black
+                                    : questionResults[index] == "correct"
+                                        ? Colors.green
+                                        : Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
+              actions: [
+                // Flag on the right
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Image.asset(
+                    'assets/flags/${widget.language.toLowerCase()}.png', // Flag image
+                    width: 32,
+                    height: 32,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
             ),
             resizeToAvoidBottomInset: true,
             body: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(height: 40),
-                  Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          // Opponent's name
-                          Text(
-                            widget.opponentUsername,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                          // Player's name
-                          Text(
-                            widget.username,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(
-                          height:
-                              8), // Add spacing between names and progress rows
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          // Opponent's progress indicators inside the specified Neumorphic container
-                          Neumorphic(
-                            padding: const EdgeInsets.all(8),
-                            style: NeumorphicStyle(
-                              shape: NeumorphicShape.concave,
-                              boxShape: NeumorphicBoxShape.roundRect(
-                                BorderRadius.circular(12),
-                              ),
-                              depth: 8,
-                              lightSource: LightSource.topLeft,
-                            ),
-                            child: Row(
-                              children: List.generate(
-                                questions.length,
-                                (index) => Icon(
-                                  Icons.circle,
-                                  color: opponentProgress[index] == "unanswered"
-                                      ? Colors.black
-                                      : opponentProgress[index] == "correct"
-                                          ? Colors.green
-                                          : Colors.red,
-                                ),
-                              ),
-                            ),
-                          ),
-                          // Player's progress indicators inside the specified Neumorphic container
-                          Neumorphic(
-                            padding: const EdgeInsets.all(8),
-                            style: NeumorphicStyle(
-                              shape: NeumorphicShape.concave,
-                              boxShape: NeumorphicBoxShape.roundRect(
-                                BorderRadius.circular(12),
-                              ),
-                              depth: 8,
-                              lightSource: LightSource.topLeft,
-                            ),
-                            child: Row(
-                              children: List.generate(
-                                questions.length,
-                                (index) => Icon(
-                                  Icons.circle,
-                                  color: questionResults[index] == "unanswered"
-                                      ? Colors.black
-                                      : questionResults[index] == "correct"
-                                          ? Colors.green
-                                          : Colors.red,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 40),
+                  SizedBox(height: 15),
                   Neumorphic(
                     padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
                     style: NeumorphicStyle(
@@ -713,10 +641,119 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
+                  if (questions[currentQuestionIndex].answers.length > 1)
+                    Text(
+                        "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+                  GestureDetector(
+                    onTap: () {
+                      if (!_focusNode.hasFocus) {
+                        _focusNode.requestFocus();
+                      }
+                      Future.delayed(Duration.zero, () {
+                        _textInputController.selection =
+                            TextSelection.collapsed(
+                          offset: _textInputController.text.length,
+                        );
+                      });
+                    },
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          double maxWidth = constraints.maxWidth;
+
+                          // Define base dimensions
+                          const double maxBoxWidth = 55; // Default box width
+                          const double maxBoxHeight = 65; // Default box height
+                          const double minBoxWidth = 25; // Minimum box width
+                          const double minBoxHeight = 35; // Minimum box height
+                          const double defaultSpacing =
+                              12; // Normal spacing between boxes
+
+                          // Total number of boxes
+                          int totalBoxes = _letterBoxes.length;
+
+                          // Initialize box size and spacing
+                          double boxWidth = maxBoxWidth;
+                          double boxHeight = maxBoxHeight;
+                          double spacing = defaultSpacing;
+
+                          // Handle dynamic resizing when boxes > 6
+                          if (totalBoxes > 6) {
+                            double totalSpacing =
+                                defaultSpacing * (totalBoxes - 1);
+                            boxWidth = (maxWidth - totalSpacing) / totalBoxes;
+                            boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                            boxHeight = boxWidth * 1.2;
+                            spacing = (maxWidth - (boxWidth * totalBoxes)) /
+                                (totalBoxes - 1);
+                          } else if (totalBoxes == 6) {
+                            // Special case for 6 boxes: Adjust to perfectly fit without stretching
+                            double totalSpacing =
+                                defaultSpacing * 5; // 6 boxes = 5 spacings
+                            boxWidth = (maxWidth - totalSpacing) / 6;
+                            boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                            boxHeight = boxWidth * 1.2;
+                            spacing = defaultSpacing;
+                          }
+
+                          // Generate the letter boxes
+                          List<Widget> letterBoxes = List.generate(
+                            _letterBoxes.length,
+                            (index) => Neumorphic(
+                              style: NeumorphicStyle(
+                                depth: -2,
+                                boxShape: NeumorphicBoxShape.roundRect(
+                                  BorderRadius.circular(4),
+                                ),
+                              ),
+                              child: SizedBox(
+                                width: boxWidth,
+                                height: boxHeight,
+                                child: Center(
+                                  child: Text(
+                                    _letterBoxes[index],
+                                    style: GoogleFonts.pressStart2p(
+                                      fontSize: boxWidth * 0.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+
+                          // Single row with dynamic scaling and centering
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment
+                                .center, // Center align the row
+                            children: [
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                spacing: spacing,
+                                children: letterBoxes,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  Opacity(
+                    opacity: 0,
+                    child: TextField(
+                      controller: _textInputController,
+                      focusNode: _focusNode, // Attach the focus node here
+                      onChanged: _handleInput,
+                      autofocus: true,
+                    ),
+                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Placeholder for Back button when it's not visible
                       if (currentWordIndex > 0)
                         NeumorphicButton(
                           onPressed: _previousWord,
@@ -749,6 +786,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                               ),
                             ],
                           ),
+                        )
+                      else
+                        SizedBox(
+                          width:
+                              160, // Match the width of the "Back to Last Word" button
                         ),
                       const SizedBox(width: 16), // Space between buttons
                       NeumorphicButton(
@@ -765,6 +807,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               currentWordIndex <
@@ -797,122 +840,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  if (questions[currentQuestionIndex].answers.length > 1)
-                    Text(
-                        "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
-                  GestureDetector(
-                    onTap: () {
-                      // Request focus for the TextField
-                      if (!_focusNode.hasFocus) {
-                        _focusNode
-                            .requestFocus(); // Request focus directly for the existing FocusNode
-                      }
-                      // Place the cursor at the end of the text
-                      Future.delayed(Duration.zero, () {
-                        _textInputController.selection =
-                            TextSelection.collapsed(
-                          offset: _textInputController.text.length,
-                        );
-                      });
-                    },
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.8,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          double maxWidth = constraints.maxWidth;
-
-                          // Define thresholds and base dimensions
-                          const int minBoxesBeforeReduction =
-                              5; // Start reducing after 5 boxes
-                          const double minBoxWidth =
-                              40; // Slightly larger minimum width
-                          const double maxBoxWidth = 55;
-                          const double minBoxHeight =
-                              50; // Slightly larger minimum height
-                          const double maxBoxHeight = 65;
-                          const double minSpacing =
-                              6; // Larger minimum spacing for better aesthetics
-                          const double maxSpacing = 16;
-                          const double minRunSpacing = 4;
-                          const double maxRunSpacing = 12;
-
-                          // Calculate reduction factor
-                          int totalBoxes = _letterBoxes.length;
-                          double reductionFactor =
-                              ((totalBoxes - minBoxesBeforeReduction) / 10)
-                                  .clamp(0.0, 0.8);
-
-                          // Interpolate values based on reduction factor
-                          double boxWidth = maxBoxWidth -
-                              (maxBoxWidth - minBoxWidth) * reductionFactor;
-                          double boxHeight = maxBoxHeight -
-                              (maxBoxHeight - minBoxHeight) * reductionFactor;
-                          double spacing = maxSpacing -
-                              (maxSpacing - minSpacing) * reductionFactor;
-                          double runSpacing = maxRunSpacing -
-                              (maxRunSpacing - minRunSpacing) * reductionFactor;
-
-                          // Calculate maximum boxes per row
-                          int maxBoxesPerRow =
-                              (maxWidth / (boxWidth + spacing)).floor();
-                          maxBoxesPerRow = maxBoxesPerRow.clamp(
-                              1, totalBoxes); // Ensure at least one box per row
-
-                          // Adjust box dimensions if more than one row
-                          if (totalBoxes > maxBoxesPerRow) {
-                            double scalingFactor = totalBoxes / maxBoxesPerRow;
-                            boxWidth /= scalingFactor.clamp(
-                                1.0, 1.2); // Gentler scaling
-                            boxHeight /= scalingFactor.clamp(1.0, 1.2);
-                          }
-
-                          return Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: spacing, // Dynamic horizontal spacing
-                            runSpacing: runSpacing, // Dynamic vertical spacing
-                            children: List.generate(
-                              _letterBoxes.length,
-                              (index) => Neumorphic(
-                                style: NeumorphicStyle(
-                                  depth: -2,
-                                  boxShape: NeumorphicBoxShape.roundRect(
-                                    BorderRadius.circular(4),
-                                  ),
-                                ),
-                                child: SizedBox(
-                                  width: boxWidth,
-                                  height: boxHeight,
-                                  child: Center(
-                                    child: Text(
-                                      _letterBoxes[index],
-                                      style: GoogleFonts.pressStart2p(
-                                        fontSize:
-                                            boxWidth * 0.5, // Dynamic font size
-                                        fontWeight:
-                                            FontWeight.bold, // Bold font
-                                        color:
-                                            Colors.grey[800], // Dark gray color
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  Opacity(
-                    opacity: 0,
-                    child: TextField(
-                      controller: _textInputController,
-                      focusNode: _focusNode, // Attach the focus node here
-                      onChanged: _handleInput,
-                      autofocus: true,
-                    ),
-                  ),
+                  SizedBox(height: 50)
                 ],
               ),
             )));
