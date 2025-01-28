@@ -552,36 +552,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           final shouldLeave = await _showLeaveConfirmationDialog(context);
           if (shouldLeave) {
             // Emit "playerLeft" event to the server
-            widget.socket.emit('playerLeft', {
-              'matchId': widget.matchId,
-              'username': widget.username,
-            });
-
-            // Navigate to the match result screen with a loss
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MultiplayerResultScreen(
-                  results: {
-                    'message': 'You left the game.',
-                    'result': 'lossByLeave',
-                    'player1': {
-                      'username': widget.username,
-                      'correctAnswers': correctAnswers,
-                      'progress': questionResults,
-                    },
-                    'player2': {
-                      'username': widget.opponentUsername,
-                      'correctAnswers': 0, // You can adjust this if needed
-                      'progress': List<String>.filled(
-                          questionResults.length, 'unanswered'), // Placeholder
-                    },
-                    'winner': widget.opponentUsername,
-                  },
-                  language: widget.language,
-                ),
-              ),
-            );
           }
 
           return shouldLeave;
@@ -989,15 +959,44 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 "Are you sure you want to leave the game? This will count as a loss."),
             actions: [
               TextButton(
-                onPressed: () => print("Hallo"), // Cancel
+                onPressed: () => Navigator.of(context).pop(false),
                 child: const Text("Cancel"),
               ),
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // Cancel
-                child: const Text("Cancel"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(true),
+                onPressed: () {
+                  widget.socket.emit('playerLeft', {
+                    'matchId': widget.matchId,
+                    'username': widget.username,
+                  });
+
+                  // Navigate to the match result screen with a loss
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MultiplayerResultScreen(
+                        results: {
+                          'message': 'You left the game.',
+                          'result': 'lossByLeave',
+                          'player1': {
+                            'username': widget.username,
+                            'correctAnswers': correctAnswers,
+                            'progress': questionResults,
+                          },
+                          'player2': {
+                            'username': widget.opponentUsername,
+                            'correctAnswers':
+                                0, // You can adjust this if needed
+                            'progress': List<String>.filled(
+                                questionResults.length,
+                                'unanswered'), // Placeholder
+                          },
+                          'winner': widget.opponentUsername,
+                        },
+                        language: widget.language,
+                      ),
+                    ),
+                  );
+                },
                 child: const Text("Leave"),
               ),
             ],
