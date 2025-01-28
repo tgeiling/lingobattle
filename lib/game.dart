@@ -288,8 +288,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     List<MultiplayerQuestion> questionPool =
         MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
 
-    // Shuffle the pool and select 5 random questions
-    questionPool.shuffle(Random());
+    int seed = widget.matchId.hashCode;
+
+    Random random = Random(seed);
+
+    questionPool.shuffle(random);
     questions = questionPool.take(5).toList();
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
