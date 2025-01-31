@@ -152,7 +152,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The cat is _____ the table.",
-              "answers": ["under", "on", "beside"]
+              "answers": ["under"]
             },
             {
               "question": "I go _____ school every day.",
@@ -160,11 +160,11 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "She is sitting _____ the chair.",
-              "answers": ["on", "in"]
+              "answers": ["on"]
             },
             {
               "question": "We are going _____ the park.",
-              "answers": ["to", "into"]
+              "answers": ["to"]
             },
             {
               "question": "He plays football _____ the evening.",
@@ -179,15 +179,15 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "I am _____ my homework now.",
-              "answers": ["doing", "finishing", "starting"]
+              "answers": ["doing"]
             },
             {
               "question": "They are _____ to the cinema.",
-              "answers": ["going", "walking", "driving"]
+              "answers": ["going"]
             },
             {
               "question": "The dog is sleeping _____ the couch.",
-              "answers": ["on", "under", "beside"]
+              "answers": ["on"]
             },
             {
               "question": "He is interested _____ music.",
@@ -195,7 +195,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "The book is _____ the bag.",
-              "answers": ["in", "inside"]
+              "answers": ["in"]
             },
           ],
         ),
@@ -206,23 +206,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "I am _____ to the market.",
-              "answers": ["going", "walking", "driving"]
+              "answers": ["going"]
             },
             {
               "question": "She is _____ a letter to her friend.",
-              "answers": ["writing", "sending"]
+              "answers": ["writing"]
             },
             {
               "question": "We are _____ dinner in the kitchen.",
-              "answers": ["making", "cooking", "preparing"]
+              "answers": ["making"]
             },
             {
               "question": "They are _____ to the movie theater.",
-              "answers": ["going", "walking", "driving"]
+              "answers": ["going"]
             },
             {
               "question": "The kids are _____ outside.",
-              "answers": ["playing", "running"]
+              "answers": ["playing"]
             },
           ],
         ),
@@ -233,7 +233,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The bird is _____ the tree.",
-              "answers": ["in", "on"]
+              "answers": ["in"]
             },
             {
               "question": "He _____ to school by bus.",
@@ -241,11 +241,11 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "We _____ to visit our grandparents tomorrow.",
-              "answers": ["plan", "want", "are going"]
+              "answers": ["plan"]
             },
             {
               "question": "She _____ a beautiful dress yesterday.",
-              "answers": ["bought", "wore"]
+              "answers": ["bought"]
             },
             {
               "question": "They _____ playing in the garden now.",
@@ -268,11 +268,11 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "I would like to _____ some coffee.",
-              "answers": ["have", "drink", "order"]
+              "answers": ["have"]
             },
             {
               "question": "Do you know _____ the weather will be tomorrow?",
-              "answers": ["what", "how"]
+              "answers": ["what"]
             },
             {
               "question": "He has been working _____ the project all day.",
@@ -287,23 +287,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The teacher asked us to _____ quietly.",
-              "answers": ["sit", "work", "listen"]
+              "answers": ["sit"]
             },
             {
               "question": "She wants to _____ the piano.",
-              "answers": ["play", "practice"]
+              "answers": ["play"]
             },
             {
               "question": "He is going to _____ his homework later.",
-              "answers": ["finish", "start", "do"]
+              "answers": ["finish"]
             },
             {
               "question": "Can you _____ me a favor?",
-              "answers": ["do", "grant", "offer"]
+              "answers": ["do"]
             },
             {
               "question": "I need to _____ some groceries.",
-              "answers": ["buy", "get", "pick up"]
+              "answers": ["buy"]
             },
           ],
         ),
@@ -318,7 +318,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Could you _____ me the way to the station?",
-              "answers": ["tell", "show", "give"]
+              "answers": ["tell"]
             },
             {
               "question": "He _____ the answer to the question.",
@@ -326,11 +326,11 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "They are _____ to the park together.",
-              "answers": ["going", "walking", "heading"]
+              "answers": ["going"]
             },
             {
               "question": "I _____ to see the doctor this afternoon.",
-              "answers": ["need", "want", "have"]
+              "answers": ["need"]
             },
           ],
         ),
@@ -341,7 +341,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The boy is reading _____ the library.",
-              "answers": ["in", "at"]
+              "answers": ["in"]
             },
             {
               "question": "She was born _____ April.",
@@ -368,11 +368,11 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The car is parked _____ the garage.",
-              "answers": ["in", "inside"]
+              "answers": ["in"]
             },
             {
               "question": "They met _____ the coffee shop.",
-              "answers": ["at", "in"]
+              "answers": ["at"]
             },
             {
               "question": "She is looking _____ her lost keys.",
@@ -380,7 +380,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "I will call you _____ I get home.",
-              "answers": ["when", "once"]
+              "answers": ["when"]
             },
             {
               "question": "The cat jumped _____ the fence.",
@@ -399,7 +399,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "They are discussing the plan _____ the meeting.",
-              "answers": ["during", "in"]
+              "answers": ["during"]
             },
             {
               "question": "She is preparing _____ her exams.",
@@ -424,19 +424,19 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Hund liegt _____ dem Tisch.",
-              "answers": ["unter", "bei"]
+              "answers": ["unter"]
             },
             {
               "question": "Ich gehe _____ die Schule.",
-              "answers": ["in", "zu"]
+              "answers": ["in"]
             },
             {
               "question": "Sie sitzt _____ dem Stuhl.",
-              "answers": ["auf", "an"]
+              "answers": ["auf"]
             },
             {
               "question": "Wir fahren _____ den Park.",
-              "answers": ["in", "zu"]
+              "answers": ["in"]
             },
             {
               "question": "Er spielt Fußball _____ dem Abend.",
@@ -451,7 +451,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich mache gerade _____ meine Hausaufgaben.",
-              "answers": ["an", "mit"]
+              "answers": ["an"]
             },
             {
               "question": "Sie gehen _____ das Kino.",
@@ -459,7 +459,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Der Hund schläft _____ dem Sofa.",
-              "answers": ["auf", "neben"]
+              "answers": ["auf"]
             },
             {
               "question": "Er interessiert sich _____ Musik.",
@@ -467,7 +467,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Das Buch liegt _____ der Tasche.",
-              "answers": ["in", "auf"]
+              "answers": ["in"]
             },
           ],
         ),
@@ -478,7 +478,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich bin _____ den Supermarkt gegangen.",
-              "answers": ["in", "zu"]
+              "answers": ["in"]
             },
             {
               "question": "Er hat _____ einen Brief geschrieben.",
@@ -486,15 +486,15 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Wir haben _____ Abendessen gekocht.",
-              "answers": ["das", "ein"]
+              "answers": ["das"]
             },
             {
               "question": "Sie sind _____ das Kino gegangen.",
-              "answers": ["in", "zu"]
+              "answers": ["in"]
             },
             {
               "question": "Die Kinder spielen _____ draußen.",
-              "answers": ["immer", "oft"]
+              "answers": ["immer"]
             },
           ],
         ),
@@ -505,7 +505,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Vogel ist _____ dem Baum.",
-              "answers": ["auf", "in"]
+              "answers": ["auf"]
             },
             {
               "question": "Er fährt _____ mit dem Bus.",
@@ -513,7 +513,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Wir wollen _____ unsere Großeltern besuchen.",
-              "answers": ["heute", "morgen"]
+              "answers": ["heute"]
             },
             {
               "question": "Sie hat _____ ein schönes Kleid gekauft.",
@@ -536,11 +536,11 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Können Sie mir bitte _____ den Zucker geben?",
-              "answers": ["noch", "auch"]
+              "answers": ["noch"]
             },
             {
               "question": "Ich möchte gerne _____ eine Tasse Kaffee bestellen.",
-              "answers": ["noch", "gerne"]
+              "answers": ["noch"]
             },
             {
               "question": "Wissen Sie, wie _____ Wetter morgen sein wird?",
@@ -591,7 +591,7 @@ class LevelNotifier with ChangeNotifier {
             {
               "question":
                   "Könntest du mir bitte _____ den Weg zum Bahnhof zeigen?",
-              "answers": ["noch", "auch"]
+              "answers": ["noch"]
             },
             {
               "question": "Er _____ die Antwort auf die Frage.",
@@ -599,7 +599,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Sie sind _____ gemeinsam in den Park gegangen.",
-              "answers": ["oft", "gestern"]
+              "answers": ["oft"]
             },
             {
               "question": "Ich _____ später zum Arzt gehen.",
@@ -614,7 +614,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Junge liest _____ in der Bibliothek.",
-              "answers": ["viel", "oft"]
+              "answers": ["viel"]
             },
             {
               "question": "Sie wurde im _____ April geboren.",
@@ -622,7 +622,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Wir planen bald in den Urlaub zu _____ gehen.",
-              "answers": ["fahren", "reisen"]
+              "answers": ["fahren"]
             },
             {
               "question": "Er ist sehr gut in _____ Mathematik.",
@@ -642,11 +642,11 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Das Auto steht _____ der Garage.",
-              "answers": ["in", "vor"]
+              "answers": ["in"]
             },
             {
               "question": "Sie haben sich _____ im Café getroffen.",
-              "answers": ["heute", "dort"]
+              "answers": ["heute"]
             },
             {
               "question": "Sie sucht _____ ihre verlorenen Schlüssel.",
@@ -654,7 +654,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Ich rufe dich an, wenn ich _____ nach Hause komme.",
-              "answers": ["gleich", "bald"]
+              "answers": ["gleich"]
             },
             {
               "question": "Die Katze sprang _____ über den Zaun.",
@@ -673,7 +673,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Sie besprechen den Plan _____ im Meeting.",
-              "answers": ["heute", "morgen"]
+              "answers": ["heute"]
             },
             {
               "question": "Sie bereitet sich _____ auf ihre Prüfungen vor.",
@@ -686,7 +686,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Ich bin sehr stolz _____ auf meine Leistungen.",
-              "answers": ["immer", "sehr"]
+              "answers": ["immer"]
             },
           ],
         ),
@@ -699,23 +699,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El gato está _____ la mesa.",
-              "answers": ["debajo de", "sobre"]
+              "answers": ["debajo de"]
             },
             {
               "question": "Voy _____ la escuela todos los días.",
-              "answers": ["a", "hacia"]
+              "answers": ["a"]
             },
             {
               "question": "Ella está sentada _____ la silla.",
-              "answers": ["en", "sobre"]
+              "answers": ["en"]
             },
             {
               "question": "Vamos _____ el parque esta tarde.",
-              "answers": ["a", "hacia"]
+              "answers": ["a"]
             },
             {
               "question": "Él juega fútbol _____ la tarde.",
-              "answers": ["por", "durante"]
+              "answers": ["por"]
             },
           ],
         ),
@@ -726,23 +726,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Estoy _____ mi tarea ahora.",
-              "answers": ["haciendo", "terminando"]
+              "answers": ["haciendo"]
             },
             {
               "question": "Ellos están yendo _____ el cine.",
-              "answers": ["a", "hacia"]
+              "answers": ["a"]
             },
             {
               "question": "El perro está durmiendo _____ el sofá.",
-              "answers": ["en", "debajo de"]
+              "answers": ["en"]
             },
             {
               "question": "Ella está interesada _____ la música.",
-              "answers": ["en", "por"]
+              "answers": ["en"]
             },
             {
               "question": "El libro está _____ la mochila.",
-              "answers": ["en", "dentro de"]
+              "answers": ["en"]
             },
           ],
         ),
@@ -753,23 +753,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Voy _____ el mercado.",
-              "answers": ["a", "hacia"]
+              "answers": ["a"]
             },
             {
               "question": "Ella está _____ una carta a su amiga.",
-              "answers": ["escribiendo", "enviando"]
+              "answers": ["escribiendo"]
             },
             {
               "question": "Estamos _____ la cena en la cocina.",
-              "answers": ["preparando", "cocinando"]
+              "answers": ["preparando"]
             },
             {
               "question": "Ellos están _____ al cine juntos.",
-              "answers": ["yendo", "caminando"]
+              "answers": ["yendo"]
             },
             {
               "question": "Los niños están _____ afuera.",
-              "answers": ["jugando", "corriendo"]
+              "answers": ["jugando"]
             },
           ],
         ),
@@ -780,23 +780,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El pájaro está _____ el árbol.",
-              "answers": ["en", "sobre"]
+              "answers": ["en"]
             },
             {
               "question": "Él va _____ la escuela en autobús.",
-              "answers": ["a", "hacia"]
+              "answers": ["a"]
             },
             {
               "question": "Vamos _____ visitar a nuestros abuelos mañana.",
-              "answers": ["a", "para"]
+              "answers": ["a"]
             },
             {
               "question": "Ella _____ un vestido bonito ayer.",
-              "answers": ["compró", "usó"]
+              "answers": ["compró"]
             },
             {
               "question": "Ellos están _____ en el jardín ahora.",
-              "answers": ["jugando", "trabajando"]
+              "answers": ["jugando"]
             },
           ],
         ),
@@ -807,24 +807,24 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "¡Buenos días! ¿Cómo _____ estás?",
-              "answers": ["te", "tan"]
+              "answers": ["te"]
             },
             {
               "question": "¿Puedes pasarme _____ la sal, por favor?",
-              "answers": ["", "un poco de"]
+              "answers": [""]
             },
             {
               "question": "Me gustaría _____ una taza de café.",
-              "answers": ["pedir", "tomar"]
+              "answers": ["pedir"]
             },
             {
               "question": "¿Sabes cómo estará _____ el clima mañana?",
-              "answers": ["", "soleado"]
+              "answers": [""]
             },
             {
               "question":
                   "Ha estado trabajando _____ en el proyecto todo el día.",
-              "answers": ["sin descanso", "continuamente"]
+              "answers": ["sin descanso"]
             },
           ],
         ),
@@ -836,23 +836,23 @@ class LevelNotifier with ChangeNotifier {
             {
               "question":
                   "El profesor nos pidió _____ que estemos en silencio.",
-              "answers": ["amablemente", "firmemente"]
+              "answers": ["amablemente"]
             },
             {
               "question": "Ella quiere _____ tocar el piano.",
-              "answers": ["aprender a", "enseñar a"]
+              "answers": ["aprender a"]
             },
             {
               "question": "Él va a _____ hacer su tarea más tarde.",
-              "answers": ["terminar", "comenzar"]
+              "answers": ["terminar"]
             },
             {
               "question": "¿Puedes hacerme _____ un favor?",
-              "answers": ["", "grande"]
+              "answers": [""]
             },
             {
               "question": "Necesito _____ comprar algunos comestibles.",
-              "answers": ["urgentemente", "rápidamente"]
+              "answers": ["urgentemente"]
             },
           ],
         ),
@@ -863,23 +863,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "¿Cómo _____ te sientes hoy?",
-              "answers": ["bien", "regular"]
+              "answers": ["bien"]
             },
             {
               "question": "¿Puedes decirme _____ cómo llegar a la estación?",
-              "answers": ["fácilmente", "claramente"]
+              "answers": ["fácilmente"]
             },
             {
               "question": "Él sabe _____ la respuesta a la pregunta.",
-              "answers": ["exactamente", "casi"]
+              "answers": ["exactamente"]
             },
             {
               "question": "Ellos están _____ yendo al parque juntos.",
-              "answers": ["felices", "entusiasmados"]
+              "answers": ["felices"]
             },
             {
               "question": "Tengo que _____ visitar al médico esta tarde.",
-              "answers": ["urgentemente", "posponer"]
+              "answers": ["urgentemente"]
             },
           ],
         ),
@@ -890,24 +890,24 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El niño está leyendo _____ en la biblioteca.",
-              "answers": ["tranquilamente", "un libro"]
+              "answers": ["tranquilamente"]
             },
             {
               "question": "Ella nació _____ en abril.",
-              "answers": ["durante", "en"]
+              "answers": ["durante"]
             },
             {
               "question": "Estamos planeando ir _____ de vacaciones pronto.",
-              "answers": ["a algún lugar tropical", "lejos"]
+              "answers": ["a algún lugar tropical"]
             },
             {
               "question": "Él es muy bueno _____ en matemáticas.",
-              "answers": ["practicando", "explicando"]
+              "answers": ["practicando"]
             },
             {
               "question":
                   "Necesito terminar este proyecto _____ para el viernes.",
-              "answers": ["mañana", "hoy"]
+              "answers": ["mañana"]
             },
           ],
         ),
@@ -918,23 +918,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El coche está estacionado _____ en el garaje.",
-              "answers": ["adentro", "fuera"]
+              "answers": ["adentro"]
             },
             {
               "question": "Ellos se encontraron _____ en la cafetería.",
-              "answers": ["por casualidad", "planeadamente"]
+              "answers": ["por casualidad"]
             },
             {
               "question": "Ella está buscando _____ sus llaves perdidas.",
-              "answers": ["ansiosamente", "sin prisa"]
+              "answers": ["ansiosamente"]
             },
             {
               "question": "Te llamaré _____ cuando llegue a casa.",
-              "answers": ["tan pronto", "inmediatamente"]
+              "answers": ["tan pronto"]
             },
             {
               "question": "El gato saltó _____ sobre la valla.",
-              "answers": ["grácilmente", "rápidamente"]
+              "answers": ["grácilmente"]
             },
           ],
         ),
@@ -946,24 +946,24 @@ class LevelNotifier with ChangeNotifier {
             {
               "question":
                   "Él ha estado trabajando _____ en este problema por horas.",
-              "answers": ["arduamente", "sin descanso"]
+              "answers": ["arduamente"]
             },
             {
               "question": "Están discutiendo el plan _____ en la reunión.",
-              "answers": ["detenidamente", "rápidamente"]
+              "answers": ["detenidamente"]
             },
             {
               "question": "Ella se está preparando _____ para sus exámenes.",
-              "answers": ["diligentemente", "a fondo"]
+              "answers": ["diligentemente"]
             },
             {
               "question":
                   "La presentación está programada _____ para el próximo lunes.",
-              "answers": ["puntualmente", "estratégicamente"]
+              "answers": ["puntualmente"]
             },
             {
               "question": "Estoy muy orgulloso _____ de mis logros.",
-              "answers": ["profundamente", "realmente"]
+              "answers": ["profundamente"]
             },
           ],
         ),
@@ -976,23 +976,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De kat zit _____ de tafel.",
-              "answers": ["onder", "op"]
+              "answers": ["onder"]
             },
             {
               "question": "Ik ga _____ school elke dag.",
-              "answers": ["naar", "richting"]
+              "answers": ["naar"]
             },
             {
               "question": "Zij zit _____ de stoel.",
-              "answers": ["op", "in"]
+              "answers": ["op"]
             },
             {
               "question": "Wij gaan _____ het park vanmiddag.",
-              "answers": ["naar", "richting"]
+              "answers": ["naar"]
             },
             {
               "question": "Hij speelt voetbal _____ de middag.",
-              "answers": ["in", "tijdens"]
+              "answers": ["in"]
             },
           ],
         ),
@@ -1003,15 +1003,15 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ik ben _____ mijn huiswerk nu.",
-              "answers": ["bezig met", "aan het doen"]
+              "answers": ["bezig met"]
             },
             {
               "question": "Zij gaan _____ de bioscoop.",
-              "answers": ["naar", "richting"]
+              "answers": ["naar"]
             },
             {
               "question": "De hond slaapt _____ de bank.",
-              "answers": ["onder", "op"]
+              "answers": ["onder"]
             },
             {
               "question": "Zij is geïnteresseerd _____ muziek.",
@@ -1019,7 +1019,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Het boek zit _____ de tas.",
-              "answers": ["in", "binnen"]
+              "answers": ["in"]
             },
           ],
         ),
@@ -1030,25 +1030,25 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ik ga _____ de markt.",
-              "answers": ["naar", "richting"]
+              "answers": ["naar"]
             },
             {
               "question":
                   "Zij is _____ een brief aan haar vriend aan het schrijven.",
-              "answers": ["bezig met", "aan het sturen"]
+              "answers": ["bezig met"]
             },
             {
               "question":
                   "Wij zijn _____ het avondeten in de keuken aan het bereiden.",
-              "answers": ["bezig met", "aan het koken"]
+              "answers": ["bezig met"]
             },
             {
               "question": "Zij gaan _____ de bioscoop samen.",
-              "answers": ["naar", "richting"]
+              "answers": ["naar"]
             },
             {
               "question": "De kinderen zijn _____ buiten aan het spelen.",
-              "answers": ["aan het", "bezig met"]
+              "answers": ["aan het"]
             },
           ],
         ),
@@ -1059,7 +1059,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De vogel zit _____ de boom.",
-              "answers": ["in", "op"]
+              "answers": ["in"]
             },
             {
               "question": "Hij gaat _____ school met de bus.",
@@ -1067,7 +1067,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Wij gaan _____ onze grootouders morgen bezoeken.",
-              "answers": ["om", "naar"]
+              "answers": ["om"]
             },
             {
               "question": "Zij heeft gisteren _____ een mooie jurk gekocht.",
@@ -1094,7 +1094,7 @@ class LevelNotifier with ChangeNotifier {
             },
             {
               "question": "Ik zou graag _____ een kopje koffie willen.",
-              "answers": ["hebben", "drinken"]
+              "answers": ["hebben"]
             },
             {
               "question": "Weet jij hoe _____ het weer morgen zal zijn?",
@@ -1194,7 +1194,7 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De auto staat geparkeerd _____ in de garage.",
-              "answers": ["binnen", "buiten"]
+              "answers": ["binnen"]
             },
             {
               "question": "Zij ontmoetten elkaar _____ in het café.",
@@ -1251,23 +1251,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De Hund isch _____ im Garte.",
-              "answers": ["draa", "drinn"]
+              "answers": ["draa"]
             },
             {
               "question": "Ich gang _____ zum Coiffeur morn.",
-              "answers": ["zu", "bi"]
+              "answers": ["zu"]
             },
             {
               "question": "Si sind _____ use mit de Chind spaziere.",
-              "answers": ["grad", "schön"]
+              "answers": ["grad"]
             },
             {
               "question": "Er schlaft _____ uf em Sofa.",
-              "answers": ["gerade", "oft"]
+              "answers": ["gerade"]
             },
             {
               "question": "Mir gönd _____ is Kino hüt Abig.",
-              "answers": ["äbe", "defür"]
+              "answers": ["äbe"]
             },
           ],
         ),
@@ -1278,23 +1278,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Chasch mir bitte _____ d Tasse gä?",
-              "answers": ["grad", "mal"]
+              "answers": ["grad"]
             },
             {
               "question": "De Zug chunnt _____ pünktlich hüt.",
-              "answers": ["sicher", "immer"]
+              "answers": ["sicher"]
             },
             {
               "question": "D Chatz isch _____ underem Tisch.",
-              "answers": ["grad", "gerade"]
+              "answers": ["grad"]
             },
             {
               "question": "Ich bruuche _____ es neues Paar Schue.",
-              "answers": ["unbedingt", "schnell"]
+              "answers": ["unbedingt"]
             },
             {
               "question": "D Lüt warted _____ vor em Lädele.",
-              "answers": ["geduldig", "uf"]
+              "answers": ["geduldig"]
             },
           ],
         ),
@@ -1305,23 +1305,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Mir gönd _____ uf de Märt morn.",
-              "answers": ["gemeinsam", "ganz früeh"]
+              "answers": ["gemeinsam"]
             },
             {
               "question": "Er schribt _____ e Brief an sini Fründin.",
-              "answers": ["grad", "liäbevoll"]
+              "answers": ["grad"]
             },
             {
               "question": "D Kinder händ _____ im Garte gspilt.",
-              "answers": ["lang", "eifach"]
+              "answers": ["lang"]
             },
             {
               "question": "Ich gang jetzt _____ in d Stadt.",
-              "answers": ["schnell", "direkt"]
+              "answers": ["schnell"]
             },
             {
               "question": "D Fründin chunt _____ use zum Znüni.",
-              "answers": ["grad", "sofort"]
+              "answers": ["grad"]
             },
           ],
         ),
@@ -1332,23 +1332,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Si hät _____ es buchi Buech gläse.",
-              "answers": ["letzt", "heut"]
+              "answers": ["letzt"]
             },
             {
               "question": "Er het _____ sine Fründ tröffe im Bistro.",
-              "answers": ["grad", "öfters"]
+              "answers": ["grad"]
             },
             {
               "question": "D Chind gönd _____ in d Schuel morn.",
-              "answers": ["zämä", "immer"]
+              "answers": ["zämä"]
             },
             {
               "question": "Ich ha hüt _____ z vil Arbeit gha.",
-              "answers": ["mal wieder", "einfach"]
+              "answers": ["mal wieder"]
             },
             {
               "question": "Si gönd _____ immer zäme laufe am See.",
-              "answers": ["gern", "öppis"]
+              "answers": ["gern"]
             },
           ],
         ),
@@ -1359,23 +1359,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Wie _____ geits dir?",
-              "answers": ["guet", "eifach super"]
+              "answers": ["guet"]
             },
             {
               "question": "Hesch _____ chli meh Salz für mi?",
-              "answers": ["grad", "vill"]
+              "answers": ["grad"]
             },
             {
               "question": "Ich wür gern _____ e Chafi bstelle.",
-              "answers": ["sofort", "bald"]
+              "answers": ["sofort"]
             },
             {
               "question": "Weisch, wenn de Zug _____ chunnt?",
-              "answers": ["ungefähr", "defür"]
+              "answers": ["ungefähr"]
             },
             {
               "question": "Si schaffed _____ scho e ganze Tag an dem Projekt.",
-              "answers": ["intensiv", "langsam"]
+              "answers": ["intensiv"]
             },
           ],
         ),
@@ -1386,23 +1386,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "D Lärerin hät gseit, mir sötted _____ ruig sii.",
-              "answers": ["grad", "sofort"]
+              "answers": ["grad"]
             },
             {
               "question": "Er wott _____ sine Vater cho hole.",
-              "answers": ["sofort", "endlich"]
+              "answers": ["sofort"]
             },
             {
               "question": "Si probiert _____ d Antwort z finde.",
-              "answers": ["ganz schnell", "sorgfältig"]
+              "answers": ["ganz schnell"]
             },
             {
               "question": "Chasch mir bitte _____ d Chiste bringe?",
-              "answers": ["schnell", "schön"]
+              "answers": ["schnell"]
             },
             {
               "question": "Ich bruuche no _____ züüg vom Lädele.",
-              "answers": ["chli", "viel"]
+              "answers": ["chli"]
             },
           ],
         ),
@@ -1413,23 +1413,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Wo _____ geisch hüt no?",
-              "answers": ["grad", "eigentlich"]
+              "answers": ["grad"]
             },
             {
               "question": "Si gönd _____ us em Huus hüt am Nomittag.",
-              "answers": ["schön", "grad"]
+              "answers": ["schön"]
             },
             {
               "question": "Chasch mir _____ d Weg zeige zur Post?",
-              "answers": ["bitte", "sofort"]
+              "answers": ["bitte"]
             },
             {
               "question": "Er mues _____ sine Kolleg abhole.",
-              "answers": ["grad", "mal"]
+              "answers": ["grad"]
             },
             {
               "question": "Ich ha vergässe _____ d Schlüsel daheime.",
-              "answers": ["leider", "sofort"]
+              "answers": ["leider"]
             },
           ],
         ),
@@ -1440,23 +1440,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "D Schüler sind _____ am Lerne.",
-              "answers": ["fleißig", "oft"]
+              "answers": ["fleißig"]
             },
             {
               "question": "Mir gönd _____ am Sunntig i d Kirche.",
-              "answers": ["immer", "fast nie"]
+              "answers": ["immer"]
             },
             {
               "question": "Si bruuche meh Zit _____ zum Läse.",
-              "answers": ["immer", "langsam"]
+              "answers": ["immer"]
             },
             {
               "question": "Er isch _____ e guete Schachspieler.",
-              "answers": ["bescht", "besser"]
+              "answers": ["bescht"]
             },
             {
               "question": "D Lärerin hät _____ es guets Vorbild gheit.",
-              "answers": ["oft", "letzt"]
+              "answers": ["oft"]
             },
           ],
         ),
@@ -1467,23 +1467,23 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich ha _____ e E-Mail gschribe hüt.",
-              "answers": ["grad", "schnell"]
+              "answers": ["grad"]
             },
             {
               "question": "Mir gönd _____ chli spaziere mit em Hund.",
-              "answers": ["bald", "jetzt"]
+              "answers": ["bald"]
             },
             {
               "question": "Si het _____ d Antwort gli gfunde.",
-              "answers": ["schnell", "überraschend"]
+              "answers": ["schnell"]
             },
             {
               "question": "Er isch _____ ganz müed gsi nach em Schaffe.",
-              "answers": ["komplett", "fast"]
+              "answers": ["komplett"]
             },
             {
               "question": "Chasch mir hilfe _____ d Üebig mache?",
-              "answers": ["grad", "bitte"]
+              "answers": ["grad"]
             },
           ],
         ),
@@ -1494,24 +1494,24 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Er het _____ e wyt Ziit im Usland glebt.",
-              "answers": ["grad", "endlich"]
+              "answers": ["grad"]
             },
             {
               "question": "Si redet _____ über de nöie Vertrag.",
-              "answers": ["oft", "geradlinig"]
+              "answers": ["oft"]
             },
             {
               "question": "Si bruuched meh Zit _____ für s Examen vorzbereite.",
-              "answers": ["schnell", "unbedingt"]
+              "answers": ["schnell"]
             },
             {
               "question":
                   "D Präsentation isch _____ für nächste Wuche abgmacht.",
-              "answers": ["sofort", "exakt"]
+              "answers": ["sofort"]
             },
             {
               "question": "Ich bi stolz _____ uf mini Arbeite bis jetzt.",
-              "answers": ["immer", "langsam"]
+              "answers": ["immer"]
             },
           ],
         ),

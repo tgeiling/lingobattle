@@ -17,6 +17,7 @@ import 'auth.dart';
 import 'game.dart';
 
 bool isModalOpen = false;
+String selectedLanguage = "english";
 
 class Level {
   final int id;
@@ -119,8 +120,7 @@ class _LevelSelectionScreenState extends State<LevelSelectionScreen>
                       context,
                       MaterialPageRoute(
                         builder: (context) => GameScreen(
-                          level: level, // Pass the Level object
-                        ),
+                            level: level, language: selectedLanguage),
                       ),
                     );
                   },
@@ -249,7 +249,7 @@ class LanguageSelector extends StatelessWidget {
     };
 
     // Check if the selected language exists in the map
-    String? selectedLanguage = levelNotifier.selectedLanguage;
+    selectedLanguage = levelNotifier.selectedLanguage;
     if (!languagesWithFlags.containsKey(selectedLanguage)) {
       selectedLanguage =
           languagesWithFlags.keys.first; // Default to the first language

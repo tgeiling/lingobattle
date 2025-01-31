@@ -14,10 +14,12 @@ import 'questionpool.dart';
 
 class GameScreen extends StatefulWidget {
   final Level level;
+  final String language;
 
   const GameScreen({
     Key? key,
     required this.level,
+    required this.language,
   }) : super(key: key);
 
   @override
@@ -27,215 +29,458 @@ class GameScreen extends StatefulWidget {
 class _GameScreenState extends State<GameScreen> {
   int currentQuestionIndex = 0;
   int correctAnswers = 0;
-  late List<bool> questionResults;
-  late List<TextEditingController> controllers;
+  int currentWordIndex = 0;
+  late List<MultiplayerQuestion> questions;
+  late List<String> questionResults;
+  late TextEditingController _textInputController;
+  late List<String> _letterBoxes;
+  late List<String?> _currentSentenceInputs;
+  late FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
-    questionResults = List.filled(widget.level.questions.length, false);
-    controllers = List.generate(
-      widget.level.questions.length,
-      (_) => TextEditingController(),
+    _textInputController = TextEditingController();
+    _focusNode = FocusNode();
+
+    questions = (widget.level.questions as List<dynamic>)
+        .map((questionData) => MultiplayerQuestion(
+              question: questionData['question'] as String,
+              answers: List<String>.from(questionData['answers'] as List),
+            ))
+        .toList();
+
+    // Fetch the question pool for the selected language
+    questionResults = List<String>.filled(questions.length, "unanswered");
+    _textInputController = TextEditingController();
+
+    _initializeWordHandling();
+
+    _focusNode = FocusNode();
+  }
+
+  void _initializeWordHandling() {
+    _currentSentenceInputs = List<String?>.filled(
+      questions[currentQuestionIndex].answers.length,
+      null,
     );
+    _updateLetterBoxesForCurrentWord();
+  }
+
+  void _updateLetterBoxesForCurrentWord() {
+    if (currentWordIndex >= 0 &&
+        currentWordIndex < questions[currentQuestionIndex].answers.length) {
+      final wordLength =
+          questions[currentQuestionIndex].answers[currentWordIndex].length;
+      _letterBoxes = List.filled(wordLength, "");
+      _textInputController.text =
+          _currentSentenceInputs[currentWordIndex] ?? "";
+    }
   }
 
   @override
   void dispose() {
-    for (var controller in controllers) {
-      controller.dispose();
-    }
+    _focusNode.dispose();
+    _textInputController.dispose();
     super.dispose();
   }
 
-  void submitAnswer() {
+  void _handleInput(String value) {
     setState(() {
-      List<String> acceptableAnswers =
-          widget.level.questions[currentQuestionIndex]['answers'];
-      if (acceptableAnswers.any((answer) =>
-          controllers[currentQuestionIndex].text.toLowerCase() ==
-          answer.toLowerCase())) {
-        questionResults[currentQuestionIndex] = true;
+      final input = value.split('');
+      for (int i = 0; i < _letterBoxes.length; i++) {
+        _letterBoxes[i] = i < input.length ? input[i] : "";
+      }
+      _currentSentenceInputs[currentWordIndex] = value.trim();
+    });
+  }
+
+  void _nextWord() {
+    if (currentWordIndex < questions[currentQuestionIndex].answers.length - 1) {
+      setState(() {
+        _currentSentenceInputs[currentWordIndex] =
+            _textInputController.text.trim();
+        currentWordIndex++;
+        _textInputController.clear();
+        _updateLetterBoxesForCurrentWord();
+      });
+    } else {
+      _submitAnswer();
+    }
+  }
+
+  void _previousWord() {
+    if (currentWordIndex > 0) {
+      setState(() {
+        _currentSentenceInputs[currentWordIndex] =
+            _textInputController.text.trim();
+        currentWordIndex--;
+        _textInputController.clear();
+        _updateLetterBoxesForCurrentWord();
+      });
+    }
+  }
+
+  void _submitAnswer() {
+    setState(() {
+      List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
+      String userAnswer = _currentSentenceInputs.join(" ").trim().toLowerCase();
+
+      if (acceptableAnswers
+          .any((answer) => answer.toLowerCase() == userAnswer)) {
+        questionResults[currentQuestionIndex] = "correct";
         correctAnswers++;
       } else {
-        questionResults[currentQuestionIndex] = false;
+        questionResults[currentQuestionIndex] = "incorrect";
       }
 
-      if (currentQuestionIndex < widget.level.questions.length - 1) {
+      if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        controllers[currentQuestionIndex]
-            .clear(); // Clear input box for next question
+        currentWordIndex = 0;
+        _initializeWordHandling();
       } else {
-        // Mark the level as completed and save progress
         Provider.of<LevelNotifier>(context, listen: false)
             .updateLevelStatus(widget.level.id);
-
-        // Show completion dialog
         _showCompletionDialog();
       }
     });
   }
 
   void _showCompletionDialog() {
-    bool isLevelPassed = correctAnswers >= widget.level.questions.length ~/ 2;
-
     showDialog(
       context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Neumorphic(
-          style: NeumorphicStyle(
-            depth: 10,
-            color: Colors.white,
-            boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+      builder: (context) => AlertDialog(
+        title: const Text("Game Over"),
+        content:
+            Text("You got $correctAnswers out of ${questions.length} correct!"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+            },
+            child: const Text("OK"),
           ),
-          child: AlertDialog(
-            title: Text(isLevelPassed ? "Level Completed!" : "Level Failed!"),
-            content: Text(isLevelPassed
-                ? "Congratulations! You answered $correctAnswers out of ${widget.level.questions.length} questions correctly."
-                : "You answered $correctAnswers out of ${widget.level.questions.length} correctly. Try again!"),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context);
-                },
-                child: const Text("OK"),
-              ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return NeumorphicTheme(
-      theme: NeumorphicThemeData(
-        baseColor: const Color(0xFFE0E5EC),
-        lightSource: LightSource.topLeft,
-        depth: 8,
-      ),
-      child: Scaffold(
-        appBar: NeumorphicAppBar(
-          title: Text(
-            "Level ${widget.level.id}: ${widget.level.description}",
-            style: const TextStyle(color: Colors.black),
-          ),
-          color: const Color(0xFFE0E5EC),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+    return Scaffold(
+        appBar: AppBar(
+          backgroundColor:
+              Colors.white, // Neutral background for neumorphic effect
+          elevation: 4,
+          centerTitle: false,
+          title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Progress indicator
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Text(
-                    "Question ${currentQuestionIndex + 1} of ${widget.level.questions.length}",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children:
-                        List.generate(widget.level.questions.length, (index) {
-                      return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        width: 16,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: questionResults[index]
-                              ? Colors.green
-                              : index < currentQuestionIndex
-                                  ? Colors.red
-                                  : Colors.grey,
+                  Neumorphic(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    style: NeumorphicStyle(
+                      shape: NeumorphicShape.concave,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(12),
+                      ),
+                      depth: 8,
+                      lightSource: LightSource.topLeft,
+                      color: Colors.grey[200],
+                    ),
+                    child: Row(
+                      children: List.generate(
+                        questions.length,
+                        (index) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 2),
+                          child: Icon(
+                            Icons.circle,
+                            size: 8,
+                            color: questionResults[index] == "unanswered"
+                                ? Colors.black
+                                : questionResults[index] == "correct"
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
                         ),
-                      );
-                    }),
+                      ),
+                    ),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
-              // Sentence with gap
-              Neumorphic(
-                padding: const EdgeInsets.all(16),
-                style: NeumorphicStyle(
-                  depth: -4,
-                  color: const Color(0xFFFFFFFF),
-                  boxShape:
-                      NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  children: _buildSentenceWithGap(
-                      widget.level.questions[currentQuestionIndex]['question']),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Submit button
-              Center(
-                child: NeumorphicButton(
-                  onPressed: submitAnswer,
-                  style: NeumorphicStyle(
-                    color: Colors.blue.shade100,
-                    depth: 6,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                  ),
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    child: Text(
-                      "Submit Answer",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
+          actions: [
+            // Flag on the right
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Image.asset(
+                'assets/flags/${widget.language.toLowerCase()}.png', // Flag image
+                width: 32,
+                height: 32,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
         ),
-      ),
-    );
+        resizeToAvoidBottomInset: true,
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 15),
+              Neumorphic(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                style: NeumorphicStyle(
+                  shape: NeumorphicShape.concave, // Inward shadow effect
+                  boxShape: NeumorphicBoxShape.roundRect(
+                    BorderRadius.circular(16),
+                  ),
+                  depth: -4, // Negative depth for a concave look
+                  lightSource: LightSource.topRight, // Light source direction
+                  color: Colors.grey[200], // Subtle background color
+                ),
+                child: Container(
+                  width:
+                      MediaQuery.of(context).size.width * 0.75, // Dynamic width
+                  child: Wrap(
+                    alignment: WrapAlignment.center,
+                    children:
+                        _buildSentenceWithGap(questions[currentQuestionIndex]),
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              if (questions[currentQuestionIndex].answers.length > 1)
+                Text(
+                    "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+              GestureDetector(
+                onTap: () {
+                  if (!_focusNode.hasFocus) {
+                    _focusNode.requestFocus();
+                  }
+                  Future.delayed(Duration.zero, () {
+                    _textInputController.selection = TextSelection.collapsed(
+                      offset: _textInputController.text.length,
+                    );
+                  });
+                },
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      double maxWidth = constraints.maxWidth;
+
+                      // Define base dimensions
+                      const double maxBoxWidth = 55; // Default box width
+                      const double maxBoxHeight = 65; // Default box height
+                      const double minBoxWidth = 25; // Minimum box width
+                      const double minBoxHeight = 35; // Minimum box height
+                      const double defaultSpacing =
+                          12; // Normal spacing between boxes
+
+                      // Total number of boxes
+                      int totalBoxes = _letterBoxes.length;
+
+                      // Initialize box size and spacing
+                      double boxWidth = maxBoxWidth;
+                      double boxHeight = maxBoxHeight;
+                      double spacing = defaultSpacing;
+
+                      // Handle dynamic resizing when boxes > 6
+                      if (totalBoxes > 6) {
+                        double totalSpacing = defaultSpacing * (totalBoxes - 1);
+                        boxWidth = (maxWidth - totalSpacing) / totalBoxes;
+                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                        boxHeight = boxWidth * 1.2;
+                        spacing = (maxWidth - (boxWidth * totalBoxes)) /
+                            (totalBoxes - 1);
+                      } else if (totalBoxes == 6) {
+                        // Special case for 6 boxes: Adjust to perfectly fit without stretching
+                        double totalSpacing =
+                            defaultSpacing * 5; // 6 boxes = 5 spacings
+                        boxWidth = (maxWidth - totalSpacing) / 6;
+                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                        boxHeight = boxWidth * 1.2;
+                        spacing = defaultSpacing;
+                      }
+
+                      // Generate the letter boxes
+                      List<Widget> letterBoxes = List.generate(
+                        _letterBoxes.length,
+                        (index) => Neumorphic(
+                          style: NeumorphicStyle(
+                            depth: -2,
+                            boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(4),
+                            ),
+                          ),
+                          child: SizedBox(
+                            width: boxWidth,
+                            height: boxHeight,
+                            child: Center(
+                              child: Text(
+                                _letterBoxes[index],
+                                style: GoogleFonts.pressStart2p(
+                                  fontSize: boxWidth * 0.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[800],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+
+                      // Single row with dynamic scaling and centering
+                      return Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.center, // Center align the row
+                        children: [
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: spacing,
+                            children: letterBoxes,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Opacity(
+                opacity: 0,
+                child: TextField(
+                  controller: _textInputController,
+                  focusNode: _focusNode, // Attach the focus node here
+                  onChanged: _handleInput,
+                  autofocus: true,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Placeholder for Back button when it's not visible
+                  if (currentWordIndex > 0)
+                    NeumorphicButton(
+                      onPressed: _previousWord,
+                      style: NeumorphicStyle(
+                        depth: 4,
+                        intensity: 0.8,
+                        shape: NeumorphicShape.convex,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                          BorderRadius.circular(12),
+                        ),
+                        color: Colors.grey[200],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.arrow_back,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            "Back to Last Word",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.black,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    SizedBox(
+                      width:
+                          160, // Match the width of the "Back to Last Word" button
+                    ),
+                  const SizedBox(width: 16), // Space between buttons
+                  NeumorphicButton(
+                    onPressed: _nextWord,
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.8,
+                      shape: NeumorphicShape.convex,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(12),
+                      ),
+                      color: Colors.grey[200],
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          currentWordIndex <
+                                  questions[currentQuestionIndex]
+                                          .answers
+                                          .length -
+                                      1
+                              ? "Next Word"
+                              : "Submit Answer",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          currentWordIndex <
+                                  questions[currentQuestionIndex]
+                                          .answers
+                                          .length -
+                                      1
+                              ? Icons.arrow_forward
+                              : Icons.check,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 50)
+            ],
+          ),
+        ));
   }
 
-  List<Widget> _buildSentenceWithGap(String sentence) {
-    List<String> parts = sentence.split("_____");
+  List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
+    List<String> parts = question.question.split("_____");
     List<Widget> widgets = [];
     for (int i = 0; i < parts.length; i++) {
-      widgets.add(Text(parts[i],
-          style: const TextStyle(fontSize: 18, color: Colors.black87)));
+      widgets.add(Text(
+        parts[i],
+        style: const TextStyle(fontSize: 18, color: Colors.black),
+      ));
       if (i < parts.length - 1) {
         widgets.add(
           SizedBox(
-            width: 100,
+            width: 80,
             child: Neumorphic(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
               style: NeumorphicStyle(
                 depth: -2,
                 boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(8)),
-                color: Colors.white,
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
               ),
-              child: TextField(
-                controller: controllers[currentQuestionIndex],
-                onChanged: (value) {
-                  setState(() {});
-                },
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  hintText: "Answer",
-                  hintStyle: TextStyle(color: Colors.grey),
+              child: Center(
+                child: Text(
+                  _currentSentenceInputs[i] ?? "",
+                  style: const TextStyle(fontSize: 18, color: Colors.black),
                 ),
-                style: const TextStyle(color: Colors.black),
               ),
             ),
           ),
