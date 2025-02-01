@@ -158,6 +158,7 @@ class _StartPageState extends State<StartPage> {
     bool isLoggedIn = widget.isLoggedIn();
 
     final profilProvider = Provider.of<ProfileProvider>(context, listen: false);
+    print(profilProvider.username);
 
     return Scaffold(
       body: Stack(

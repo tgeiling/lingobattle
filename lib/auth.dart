@@ -209,6 +209,9 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success) {
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      profileProvider.setUsername(_usernameController.text);
       final token = await _authService.storage.read(key: 'authToken');
       if (token != null) {
         // Load profile data (win streak, exp, completed levels)
@@ -307,16 +310,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    final profileProvider =
-        Provider.of<ProfileProvider>(context, listen: false);
-    profileProvider.setUsername(_usernameController.text);
-
     bool success = await _authService.register(
       _usernameController.text,
       _passwordController.text,
     );
 
     if (success) {
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      profileProvider.setUsername(_usernameController.text);
       Navigator.pop(context); // Go back to login screen
     } else {
       showDialog(

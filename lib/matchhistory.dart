@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -38,7 +39,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
       final response = await http.get(
         apiUrl,
         headers: {
-          'Authorization': 'Bearer $token', // Add the token to the headers
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -101,24 +102,92 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                       orElse: () => null,
                     );
 
-                    return Card(
-                      elevation: 4,
-                      margin: const EdgeInsets.symmetric(
+                    final isWin = (player?['correctAnswers'] ?? 0) >
+                        (opponent?['correctAnswers'] ?? 0);
+                    final resultText = isWin ? 'Win' : 'Loss';
+                    final resultColor = isWin ? Colors.green : Colors.red;
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
-                      child: ListTile(
-                        title: Text('Match ID: ${match['matchId']}'),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                'Opponent: ${opponent?['username'] ?? 'Unknown'}'),
-                            Text(
-                                'Your Score: ${player?['correctAnswers'] ?? 0}'),
-                            Text(
-                                'Opponent Score: ${opponent?['correctAnswers'] ?? 0}'),
-                            Text('Language: ${match['language']}'),
-                            const SizedBox(height: 6),
-                          ],
+                      child: Neumorphic(
+                        style: NeumorphicStyle(
+                          depth: 8,
+                          intensity: 0.7,
+                          shape: NeumorphicShape.flat,
+                          color: Colors.grey.shade200,
+                          shadowLightColor: Colors.white,
+                        ),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Match ID: ${match['matchId']}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                  ),
+                                  Text(
+                                    resultText,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18,
+                                      color: resultColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'You: ${player?['correctAnswers'] ?? 0}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Opponent: ${opponent?['username'] ?? 'Unknown'}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        'Opponent Score: ${opponent?['correctAnswers'] ?? 0}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Language: ${match['language']}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Created at: ${match['createdAt'] ?? 'Unknown'}',
+                                style: const TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     );
