@@ -109,7 +109,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 12, vertical: 8),
                       child: Neumorphic(
                         style: NeumorphicStyle(
                           depth: 8,
@@ -121,68 +121,81 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
+                              // Win/Loss text
+                              Text(
+                                resultText,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 24,
+                                  color: resultColor,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              // Scores and usernames
                               Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text(
-                                    'Match ID: ${match['matchId']}',
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
+                                  Column(
+                                    children: [
+                                      Text(
+                                        '${player?['username'] ?? 'Unknown'}',
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        '${player?['correctAnswers'] ?? 0}',
+                                        style: const TextStyle(
+                                          fontSize: 48,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(width: 16),
                                   Text(
-                                    resultText,
+                                    ':',
                                     style: TextStyle(
+                                      fontSize: 48,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: resultColor,
+                                      color: Colors.grey.shade600,
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
+                                  const SizedBox(width: 16),
                                   Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'You: ${player?['correctAnswers'] ?? 0}',
-                                        style: const TextStyle(fontSize: 16),
+                                        '${opponent?['username'] ?? 'Unknown'}',
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
                                       ),
-                                      const SizedBox(height: 4),
                                       Text(
-                                        'Opponent: ${opponent?['username'] ?? 'Unknown'}',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: [
-                                      Text(
-                                        'Opponent Score: ${opponent?['correctAnswers'] ?? 0}',
-                                        style: const TextStyle(fontSize: 16),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Language: ${match['language']}',
-                                        style: const TextStyle(fontSize: 16),
+                                        '${opponent?['correctAnswers'] ?? 0}',
+                                        style: const TextStyle(
+                                          fontSize: 48,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 12),
+                              // Match ID and created date
+                              Text(
+                                'Match ID: ${match['matchId']}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
                               Text(
                                 'Created at: ${match['createdAt'] ?? 'Unknown'}',
                                 style: const TextStyle(
+                                  fontSize: 12,
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),

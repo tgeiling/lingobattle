@@ -24,11 +24,22 @@ mongoose.connect(process.env.MONGO_URI)
 
 // User schema and model
 const UserSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  password: String,
-  winStreak: { type: Number, default: 0 },
-  exp: { type: Number, default: 0 },
-  completedLevels: { type: Number, default: 0 }
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  
+  winStreak: { type: Number, default: 0 }, 
+  exp: { type: Number, default: 0 }, 
+  completedLevels: {
+    type: Map,
+    of: Number, // Each language will store a number (highest completed level)
+    default: {}
+  },
+  
+  title: { type: String, default: "" },
+  elo: { type: Number, default: 0 },
+  skillLevel: { type: Number, default: 0 },
+  
+  createdAt: { type: Date, default: Date.now }, // Timestamp for when the user was created
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -82,28 +93,91 @@ app.post('/register', async (req, res) => {
 
 // Login endpoint
 app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    console.log(`Login attempt for username: ${username}`);
+  const { username, password } = req.body;
+  console.log(`Login attempt for username: ${username}`);
+
+  const user = await User.findOne({ username });
   
-    const user = await User.findOne({ username });
-    
+  if (!user) {
+    console.log('User not found');
+    return res.status(400).json({ message: 'User not found' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  console.log(`Password match: ${isMatch}`);
+
+  if (!isMatch) {
+    console.log('Invalid credentials');
+    return res.status(400).json({ message: 'Invalid credentials' });
+  }
+
+  const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+  console.log('Authentication successful, sending token');
+  res.json({ token });
+});
+
+app.post('/updateProfile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.user.username });
     if (!user) {
-      console.log('User not found');
-      return res.status(400).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
-  
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log(`Password match: ${isMatch}`);
-  
-    if (!isMatch) {
-      console.log('Invalid credentials');
-      return res.status(400).json({ message: 'Invalid credentials' });
+
+    // Update general user fields if present
+    if (req.body.winStreak !== undefined) user.winStreak = req.body.winStreak;
+    if (req.body.exp !== undefined) user.exp = req.body.exp;
+    if (req.body.title !== undefined) user.title = req.body.title;
+    if (req.body.elo !== undefined) user.elo = req.body.elo;
+    if (req.body.skillLevel !== undefined) user.skillLevel = req.body.skillLevel;
+
+    // Handle completedLevels as a map (per language tracking)
+    if (req.body.completedLevels && typeof req.body.completedLevels === 'object') {
+      if (!user.completedLevels) {
+        user.completedLevels = {}; // Initialize if empty
+      }
+
+      for (const [language, level] of Object.entries(req.body.completedLevels)) {
+        const currentLevel = user.completedLevels[language] || 0;
+
+        // Only update if the new level is higher
+        if (level > currentLevel) {
+          user.completedLevels[language] = level;
+        }
+      }
     }
-  
-    const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
-    console.log('Authentication successful, sending token');
-    res.json({ token });
-  });
+
+    await user.save();
+    res.status(200).json({ message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error("Profile update error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+
+app.get('/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.user.username });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return the user's profile data
+    res.status(200).json({
+      username: user.username,
+      winStreak: user.winStreak,
+      exp: user.exp,
+      completedLevels: user.completedLevels,
+      title: user.title,
+      elo: user.elo,
+      skillLevel: user.skillLevel,
+    });
+  } catch (error) {
+    console.error("Fetching profile error:", error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 // Guest token generation endpoint
 app.post('/guestnode', (req, res) => {

@@ -292,41 +292,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               ],
             ),
           ),
-          // Modal integration from the old scaffold
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            bottom: _isModalVisible ? 0 : -450,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: Color.fromRGBO(230, 230, 230, 0.894),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
-                ),
-              ),
-              child: SizedBox(
-                height: modalHeight,
-                width: double.maxFinite,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    print("Inner pressed");
-                  },
-                  child: CustomBottomModal(
-                    description: modalDescription,
-                    levelId: level,
-                    authenticated: isAuthenticated,
-                    isVideoPlayer: isVideoPlayer,
-                    toggleModal: _toggleModal,
-                  ),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),

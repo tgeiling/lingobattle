@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'provider.dart';
+import 'services.dart';
 
 class AuthService {
   final String baseUrl =
@@ -196,31 +198,83 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _authService = AuthService();
-  bool _isLoading = false;
 
   void _attemptLogin() async {
-    setState(() {
-      _isLoading = true;
-    });
-
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
     bool success = await _authService.login(
       _usernameController.text,
       _passwordController.text,
     );
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     if (success) {
-      final profileProvider =
-          Provider.of<ProfileProvider>(context, listen: false);
-      profileProvider.setUsername(_usernameController.text);
-      final token = await _authService.storage.read(key: 'authToken');
-      if (token != null) {
-        // Load profile data (win streak, exp, completed levels)
-        final profileProvider =
-            Provider.of<ProfileProvider>(context, listen: false);
-        await profileProvider.loadPreferences();
+      final token = await getAuthToken();
 
-        widget.setAuthenticated(true);
-        Navigator.popUntil(context, (route) => route.isFirst);
+      if (token != null) {
+        final profileData = await fetchProfile(token);
+
+        if (profileData != null && profileData.containsKey('completedLevels')) {
+          await prefs.clear();
+
+          // Sync values from API to local storage
+          if (profileData.containsKey('winStreak')) {
+            profileProvider.setWinStreak(profileData['winStreak']);
+          }
+          if (profileData.containsKey('exp')) {
+            profileProvider.setExp(profileData['exp']);
+          }
+          if (profileData.containsKey('title')) {
+            profileProvider.setTitle(profileData['title']);
+          }
+          if (profileData.containsKey('elo')) {
+            profileProvider.setElo(profileData['elo']);
+          }
+          if (profileData.containsKey('skillLevel')) {
+            profileProvider.setSkillLevel(profileData['skillLevel']);
+          }
+
+          if (profileData.containsKey('completedLevels')) {
+            Map<String, int> completedLevels =
+                Map<String, int>.from(profileData['completedLevels']);
+            profileProvider.setCompletedLevels(completedLevels);
+
+            for (var entry in completedLevels.entries) {
+              await prefs.setInt('completedLevels_${entry.key}', entry.value);
+            }
+          }
+
+          profileProvider.loadPreferences();
+          widget.setAuthenticated(true);
+          Navigator.popUntil(context, (route) => route.isFirst);
+        } else {
+          // If no profile data exists, create initial profile
+          getAuthToken().then((token) {
+            if (token != null) {
+              updateProfile(
+                token: token,
+                winStreak: profileProvider.winStreak,
+                exp: profileProvider.exp,
+                title: profileProvider.title,
+                elo: profileProvider.elo,
+                skillLevel: profileProvider.skilllevel,
+                completedLevels: profileProvider.completedLevels,
+              ).then((success) {
+                if (success) {
+                  print("Profile updated successfully.");
+                } else {
+                  print("Failed to update profile.");
+                }
+              });
+            } else {
+              print("No auth token available.");
+            }
+          });
+
+          profileProvider.loadPreferences();
+          widget.setAuthenticated(true);
+          Navigator.popUntil(context, (route) => route.isFirst);
+        }
       } else {
         print("No token found after successful login");
       }
@@ -229,12 +283,23 @@ class _LoginScreenState extends State<LoginScreen> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('Login Failed'),
-            content:
-                const Text('Invalid username or password. Please try again.'),
+            backgroundColor: Colors.redAccent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            title: const Text(
+              "Login Failed",
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+            content: const Text(
+              "Invalid credentials. Please try again.",
+              style: TextStyle(color: Colors.white),
+            ),
             actions: <Widget>[
               TextButton(
-                child: const Text('Close'),
+                child:
+                    const Text("Close", style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -244,38 +309,47 @@ class _LoginScreenState extends State<LoginScreen> {
         },
       );
     }
-
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      resizeToAvoidBottomInset: false,
+      appBar: AppBar(title: const Text("Login")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Center(
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+                child: Image.asset('assets/logo.png',
+                    width: MediaQuery.of(context).size.width * 0.15),
+              ),
+            ),
             TextField(
               controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
+              decoration: const InputDecoration(labelText: "Username"),
+              style: const TextStyle(color: Colors.black),
             ),
             TextField(
               controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: "Password"),
               obscureText: true,
+              style: const TextStyle(color: Colors.black),
             ),
-            const SizedBox(height: 20),
-            _isLoading
-                ? const CircularProgressIndicator()
-                : ElevatedButton(
-                    onPressed: _attemptLogin,
-                    child: const Text('Login'),
-                  ),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: _attemptLogin,
+              child: const SizedBox(
+                width: double.infinity,
+                child: Center(
+                    child: Text("Login", style: TextStyle(fontSize: 18))),
+              ),
+            ),
             const SizedBox(height: 10),
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -283,7 +357,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       builder: (context) => const RegisterScreen()),
                 );
               },
-              child: const Text('Register'),
+              child: const SizedBox(
+                width: double.infinity,
+                child: Center(
+                    child: Text("Register", style: TextStyle(fontSize: 18))),
+              ),
             ),
           ],
         ),

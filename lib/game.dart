@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:lingobattle/services.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:google_fonts/google_fonts.dart';
@@ -140,7 +141,7 @@ class _GameScreenState extends State<GameScreen> {
         _initializeWordHandling();
       } else {
         Provider.of<LevelNotifier>(context, listen: false)
-            .updateLevelStatus(widget.level.id);
+            .updateLevelStatus(widget.language, widget.level.id);
         _showCompletionDialog();
       }
     });
@@ -1297,10 +1298,32 @@ class MultiplayerResultScreen extends StatelessWidget {
 
             // Back to Main Menu button
             ElevatedButton(
-              onPressed: () =>
-                  Navigator.popUntil(context, (route) => route.isFirst),
+              onPressed: () {
+                final profileProvider =
+                    Provider.of<ProfileProvider>(context, listen: false);
+                int expAmount = profileProvider.exp;
+                int eloAmount = profileProvider.elo;
+
+                getAuthToken().then((token) {
+                  if (token != null) {
+                    updateProfile(
+                      token: token,
+                      exp: expAmount + 100,
+                      elo: eloAmount + 15,
+                    ).then((success) {
+                      if (success) {
+                        print("Profile updated successfully.");
+                      } else {
+                        print("Failed to update profile.");
+                      }
+                    });
+                  } else {
+                    print("No auth token available.");
+                  }
+                });
+              },
               child: const Text("Back to Main Menu"),
-            ),
+            )
           ],
         ),
       ),

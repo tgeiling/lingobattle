@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'services.dart';
@@ -9,17 +10,19 @@ import 'level.dart';
 class ProfileProvider with ChangeNotifier {
   int _winStreak = 0;
   int _exp = 0;
-  int _completedLevels = 0;
-  int _completedLevelsTotal = 0;
-  String _lastUpdateString = "";
+  Map<String, int> _completedLevels = {};
   String _username = "";
+  String _title = "";
+  int _elo = 0;
+  int _skillLevel = 0;
 
   int get winStreak => _winStreak;
   int get exp => _exp;
-  int get completedLevels => _completedLevels;
-  int get completedLevelsTotal => _completedLevelsTotal;
-  String get lastUpdateString => _lastUpdateString;
+  Map<String, int> get completedLevels => _completedLevels;
   String get username => _username;
+  String get title => _title;
+  int get elo => _elo;
+  int get skilllevel => _skillLevel;
 
   ProfileProvider() {
     loadPreferences();
@@ -37,7 +40,7 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  void setCompletedLevels(int completedLevels) {
+  void setCompletedLevels(Map<String, int> completedLevels) {
     _completedLevels = completedLevels;
     notifyListeners();
     savePreferences();
@@ -45,6 +48,24 @@ class ProfileProvider with ChangeNotifier {
 
   void setUsername(String username) {
     _username = username;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setTitle(String title) {
+    _title = title;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setElo(int elo) {
+    _elo = elo;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setSkillLevel(int skillLevel) {
+    _skillLevel = skillLevel;
     notifyListeners();
     savePreferences();
   }
@@ -61,18 +82,26 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  void incrementCompletedLevels() {
-    _completedLevels++;
-    notifyListeners();
-    savePreferences();
-  }
-
   Future<void> loadPreferences() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     _winStreak = prefs.getInt('winStreak') ?? 0;
     _exp = prefs.getInt('exp') ?? 0;
-    _completedLevels = prefs.getInt('completedLevels') ?? 0;
+    for (String language in [
+      'english',
+      'spanish',
+      'german',
+      'swiss',
+      'dutch'
+    ]) {
+      int? storedLevel = prefs.getInt('completedLevels_$language');
+      if (storedLevel != null) {
+        _completedLevels[language] = storedLevel;
+      }
+    }
     _username = prefs.getString('username') ?? "";
+    _title = prefs.getString('title') ?? "";
+    _elo = prefs.getInt('elo') ?? 0;
+    _skillLevel = prefs.getInt('skillLevel') ?? 0;
     notifyListeners();
   }
 
@@ -80,8 +109,13 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
-    await prefs.setInt('completedLevels', _completedLevels);
+    _completedLevels.forEach((language, level) {
+      prefs.setInt('completedLevels_$language', level);
+    });
     await prefs.setString('username', _username);
+    await prefs.setString('title', _title);
+    await prefs.setInt('elo', _elo);
+    await prefs.setInt('skillLevel', _skillLevel);
   }
 }
 
@@ -1524,8 +1558,33 @@ class LevelNotifier with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateLevelStatus(int levelId) async {
-    _languageLevels[_selectedLanguage]?[levelId]?.isDone = true;
+  void updateLevelStatus(String language, int levelId) async {
+    _languageLevels[language]?[levelId]?.isDone = true;
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    int currentCompletedLevel = prefs.getInt('completedLevels_$language') ?? 0;
+
+    if (levelId > currentCompletedLevel) {
+      getAuthToken().then((token) {
+        if (token != null) {
+          updateProfile(
+            token: token,
+            completedLevels: {language: levelId}, // Send per-language progress
+          ).then((success) {
+            if (success) {
+              prefs.setInt('completedLevels_$language', levelId);
+              print(
+                  "Profile updated successfully. New completedLevels: $language -> $levelId");
+            } else {
+              print("Failed to update profile.");
+            }
+          });
+        } else {
+          print("No auth token available.");
+        }
+      });
+    }
+
     notifyListeners();
     await _saveLanguages();
   }

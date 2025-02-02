@@ -15,6 +15,7 @@ Future<String?> getAuthToken() async {
 
 Future<Map<String, dynamic>?> fetchProfile(String token) async {
   final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/profile');
+
   try {
     final response = await http.get(
       apiUrl,
@@ -38,55 +39,23 @@ Future<Map<String, dynamic>?> fetchProfile(String token) async {
 
 Future<bool> updateProfile({
   required String token,
-  DateTime? birthdate,
-  String? gender,
-  int? weight,
-  int? height,
-  int? weeklyGoal,
-  int? weeklyDone,
-  int? weeklyStreak,
-  String? lastUpdateString,
-  int? completedLevels,
-  int? completedLevelsTotal,
-  List<String>? painAreas,
-  String? workplaceEnvironment,
-  String? fitnessLevel,
-  String? expectation,
-  List<String>? personalGoal,
-  bool? questionnaireDone,
-  bool? payedSubscription,
-  String? subType,
-  DateTime? subStarted,
-  String? receiptData,
-  String? lastResetDate,
+  int? winStreak,
+  int? exp,
+  Map<String, int>? completedLevels, // Now a map for per-language progress
+  String? title,
+  int? elo,
+  int? skillLevel,
 }) async {
   final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/updateProfile');
 
   Map<String, dynamic> body = {};
-  if (birthdate != null) body['birthdate'] = birthdate.toIso8601String();
-  if (gender != null) body['gender'] = gender;
-  if (weight != null) body['weight'] = weight;
-  if (height != null) body['height'] = height;
-  if (weeklyGoal != null) body['weeklyGoal'] = weeklyGoal;
-  if (weeklyDone != null) body['weeklyDone'] = weeklyDone;
-  if (weeklyStreak != null) body['weeklyStreak'] = weeklyStreak;
-  if (lastUpdateString != null) body['lastUpdateString'] = lastUpdateString;
-  if (completedLevels != null) body['completedLevels'] = completedLevels;
-  if (completedLevelsTotal != null)
-    body['completedLevelsTotal'] = completedLevelsTotal;
-  if (painAreas != null) body['painAreas'] = painAreas;
-  if (workplaceEnvironment != null) {
-    body['workplaceEnvironment'] = workplaceEnvironment;
-  }
-  if (fitnessLevel != null) body['fitnessLevel'] = fitnessLevel;
-  if (expectation != null) body['expectation'] = expectation;
-  if (personalGoal != null) body['personalGoal'] = personalGoal;
-  if (questionnaireDone != null) body['questionnaireDone'] = questionnaireDone;
-  if (payedSubscription != null) body['payedSubscription'] = payedSubscription;
-  if (subType != null) body['subType'] = subType;
-  if (subStarted != null) body['subStarted'] = subStarted;
-  if (receiptData != null) body['receiptData'] = receiptData;
-  if (lastResetDate != null) body['lastResetDate'] = lastResetDate;
+  if (winStreak != null) body['winStreak'] = winStreak;
+  if (exp != null) body['exp'] = exp;
+  if (completedLevels != null)
+    body['completedLevels'] = completedLevels; // Send as map
+  if (title != null) body['title'] = title;
+  if (elo != null) body['elo'] = elo;
+  if (skillLevel != null) body['skillLevel'] = skillLevel;
 
   try {
     final response = await http.post(
