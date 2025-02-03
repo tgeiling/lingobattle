@@ -217,7 +217,10 @@ class _LoginScreenState extends State<LoginScreen> {
         if (profileData != null && profileData.containsKey('completedLevels')) {
           await prefs.clear();
 
-          // Sync values from API to local storage
+          if (profileData.containsKey('username')) {
+            profileProvider.setUsername(profileData['username']);
+          }
+
           if (profileData.containsKey('winStreak')) {
             profileProvider.setWinStreak(profileData['winStreak']);
           }
@@ -244,7 +247,6 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           }
 
-          profileProvider.loadPreferences();
           widget.setAuthenticated(true);
           Navigator.popUntil(context, (route) => route.isFirst);
         } else {

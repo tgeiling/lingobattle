@@ -39,6 +39,7 @@ flutter:
     - assets/flags/swiss.png
     - assets/flags/english.png
     - assets/flags/spanish.png
+    - assets/logo.png
     - assets/button_green.png
     - assets/button_grey.png
     - assets/button_mint.png
