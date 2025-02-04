@@ -1306,7 +1306,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                 int eloAmount = profileProvider.elo;
                 int winStreak = profileProvider.winStreak;
 
-                if (winner == player2['username']) {
+                if (winner == profileProvider.username) {
                   winStreak += 1;
                   expAmount += 100;
                   eloAmount += 15;
@@ -1339,6 +1339,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                     print("No auth token available.");
                   }
                 });
+                Navigator.popUntil(context, (route) => route.isFirst);
               },
               child: const Text("Back to Main Menu"),
             )
