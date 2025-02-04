@@ -1296,20 +1296,38 @@ class MultiplayerResultScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // Back to Main Menu button
             ElevatedButton(
               onPressed: () {
                 final profileProvider =
                     Provider.of<ProfileProvider>(context, listen: false);
+
+                // Declare variables outside the block
                 int expAmount = profileProvider.exp;
                 int eloAmount = profileProvider.elo;
+                int winStreak = profileProvider.winStreak;
 
+                if (winner == player2['username']) {
+                  winStreak += 1;
+                  expAmount += 100;
+                  eloAmount += 15;
+                } else {
+                  winStreak = 0;
+                  expAmount = max(0, expAmount - 100);
+                  eloAmount = max(0, eloAmount - 15);
+                }
+
+                profileProvider.setWinStreak(winStreak);
+                profileProvider.setExp(expAmount);
+                profileProvider.setElo(eloAmount);
+
+                // Send the updated values to the server
                 getAuthToken().then((token) {
                   if (token != null) {
                     updateProfile(
                       token: token,
-                      exp: expAmount + 100,
-                      elo: eloAmount + 15,
+                      winStreak: winStreak,
+                      exp: expAmount,
+                      elo: eloAmount,
                     ).then((success) {
                       if (success) {
                         print("Profile updated successfully.");
