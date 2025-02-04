@@ -37,11 +37,21 @@ Future<Map<String, dynamic>?> fetchProfile(String token) async {
   }
 }
 
+void fetchAndPrintProfile(String token) async {
+  Map<String, dynamic>? profileData = await fetchProfile(token);
+
+  if (profileData != null) {
+    print('Profile Data: $profileData');
+  } else {
+    print('Failed to fetch profile or no data returned.');
+  }
+}
+
 Future<bool> updateProfile({
   required String token,
   int? winStreak,
   int? exp,
-  Map<String, int>? completedLevels, // Now a map for per-language progress
+  String? completedLevels, // Now a map for per-language progress
   String? title,
   int? elo,
   int? skillLevel,

@@ -10,7 +10,7 @@ import 'level.dart';
 class ProfileProvider with ChangeNotifier {
   int _winStreak = 0;
   int _exp = 0;
-  Map<String, int> _completedLevels = {};
+  String _completedLevelsJson = "{}"; // Stored as JSON String
   String _username = "";
   String _title = "";
   int _elo = 0;
@@ -18,11 +18,22 @@ class ProfileProvider with ChangeNotifier {
 
   int get winStreak => _winStreak;
   int get exp => _exp;
-  Map<String, int> get completedLevels => _completedLevels;
   String get username => _username;
   String get title => _title;
   int get elo => _elo;
   int get skilllevel => _skillLevel;
+
+  Map<String, int> get completedLevels {
+    try {
+      Map<String, dynamic> decoded = json.decode(_completedLevelsJson);
+      return decoded.map((key, value) => MapEntry(key, value as int));
+    } catch (e) {
+      print("Error parsing completedLevels JSON: $e");
+      return {};
+    }
+  }
+
+  String get completedLevelsJson => _completedLevelsJson;
 
   ProfileProvider() {
     loadPreferences();
@@ -40,8 +51,9 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  void setCompletedLevels(Map<String, int> completedLevels) {
-    _completedLevels = completedLevels;
+  void setCompletedLevels(String completedLevels) {
+    _completedLevelsJson = completedLevels;
+    print("Updated completedLevels: $_completedLevelsJson");
     notifyListeners();
     savePreferences();
   }
@@ -86,22 +98,12 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     _winStreak = prefs.getInt('winStreak') ?? 0;
     _exp = prefs.getInt('exp') ?? 0;
-    for (String language in [
-      'english',
-      'spanish',
-      'german',
-      'swiss',
-      'dutch'
-    ]) {
-      int? storedLevel = prefs.getInt('completedLevels_$language');
-      if (storedLevel != null) {
-        _completedLevels[language] = storedLevel;
-      }
-    }
     _username = prefs.getString('username') ?? "";
     _title = prefs.getString('title') ?? "";
     _elo = prefs.getInt('elo') ?? 0;
     _skillLevel = prefs.getInt('skillLevel') ?? 0;
+    _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
+
     notifyListeners();
   }
 
@@ -109,13 +111,11 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
-    _completedLevels.forEach((language, level) {
-      prefs.setInt('completedLevels_$language', level);
-    });
     await prefs.setString('username', _username);
     await prefs.setString('title', _title);
     await prefs.setInt('elo', _elo);
     await prefs.setInt('skillLevel', _skillLevel);
+    await prefs.setString('language_levels', _completedLevelsJson);
   }
 }
 
@@ -127,11 +127,21 @@ class LevelNotifier with ChangeNotifier {
 
   String get selectedLanguage => _selectedLanguage;
 
+  /// Returns the completed levels count for the selected language
   int get completedLevels =>
-      levels.values.where((level) => level.isDone).length;
+      _languageLevels[_selectedLanguage]
+          ?.values
+          .where((level) => level.isDone)
+          .length ??
+      0;
 
   LevelNotifier() {
     _loadLanguages();
+  }
+
+  void loadLevelsAfterStart() async {
+    _loadLanguages();
+    notifyListeners();
   }
 
   Future<void> _loadLanguages() async {
@@ -139,7 +149,7 @@ class LevelNotifier with ChangeNotifier {
 
     // Load saved levels data from SharedPreferences
     String? savedData = prefs.getString('language_levels');
-    if (savedData != null) {
+    if (savedData != null && savedData != "") {
       // Deserialize JSON and populate _languageLevels
       Map<String, dynamic> jsonData = json.decode(savedData);
       _languageLevels = jsonData.map((lang, levels) {
@@ -172,7 +182,91 @@ class LevelNotifier with ChangeNotifier {
       );
     }));
 
+    getAuthToken().then((token) {
+      if (token != null) {
+        updateProfile(
+          token: token,
+          completedLevels: jsonData,
+        ).then((success) {
+          if (success) {
+            print("Profile updated successfully.");
+          } else {
+            print("Failed to update profile.");
+          }
+        });
+      } else {
+        print("No auth token available.");
+      }
+    });
+
     await prefs.setString('language_levels', jsonData);
+  }
+
+  Future<void> _saveLanguagesSync() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Serialize _languageLevels to JSON and save it
+    String jsonData = json.encode(_languageLevels.map((lang, levels) {
+      return MapEntry(
+        lang,
+        levels.map((key, level) => MapEntry(key.toString(), level.toJson())),
+      );
+    }));
+
+    await prefs.setString('language_levels', jsonData);
+  }
+
+  void selectLanguage(String language) {
+    _selectedLanguage = language;
+    notifyListeners();
+  }
+
+  void updateLevelStatus(String language, int levelId) async {
+    _languageLevels[language]?[levelId]?.isDone = true;
+
+    notifyListeners();
+    await _saveLanguages();
+  }
+
+  void updateLanguageLevels(String language, int maxCompletedLevel) {
+    if (_languageLevels.containsKey(language)) {
+      _languageLevels[language]?.forEach((levelId, level) {
+        if (levelId <= maxCompletedLevel) {
+          level.isDone = true;
+        }
+      });
+      notifyListeners();
+      _saveLanguages(); // Save changes after updating levels
+    } else {
+      print("Language $language does not exist in the level data.");
+    }
+  }
+
+  void updateLevelsFromMap(Map<String, int> completedLevels) {
+    completedLevels.forEach((language, maxCompletedLevel) {
+      updateLanguageLevels(language, maxCompletedLevel);
+    });
+    notifyListeners();
+  }
+
+/*   void updateLevelStatusSync(int levelId) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('level_${levelId}_isDone', true);
+
+    _levels[levelId]?.isDone = true;
+    _loadLevels();
+    notifyListeners();
+  } */
+
+  void loadCompletedLevels(String language, int maxCompletedLevel) {
+    if (_languageLevels.containsKey(language)) {
+      _languageLevels[language]?.forEach((levelId, level) {
+        if (levelId <= maxCompletedLevel) {
+          level.isDone = true;
+        }
+      });
+    }
+    notifyListeners();
   }
 
   void _initializeDefaultLevels() {
@@ -1551,41 +1645,5 @@ class LevelNotifier with ChangeNotifier {
         ),
       },
     };
-  }
-
-  void selectLanguage(String language) {
-    _selectedLanguage = language;
-    notifyListeners();
-  }
-
-  void updateLevelStatus(String language, int levelId) async {
-    _languageLevels[language]?[levelId]?.isDone = true;
-
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    int currentCompletedLevel = prefs.getInt('completedLevels_$language') ?? 0;
-
-    if (levelId > currentCompletedLevel) {
-      getAuthToken().then((token) {
-        if (token != null) {
-          updateProfile(
-            token: token,
-            completedLevels: {language: levelId}, // Send per-language progress
-          ).then((success) {
-            if (success) {
-              prefs.setInt('completedLevels_$language', levelId);
-              print(
-                  "Profile updated successfully. New completedLevels: $language -> $levelId");
-            } else {
-              print("Failed to update profile.");
-            }
-          });
-        } else {
-          print("No auth token available.");
-        }
-      });
-    }
-
-    notifyListeners();
-    await _saveLanguages();
   }
 }

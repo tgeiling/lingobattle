@@ -29,17 +29,15 @@ const UserSchema = new mongoose.Schema({
   
   winStreak: { type: Number, default: 0 }, 
   exp: { type: Number, default: 0 }, 
-  completedLevels: {
-    type: Map,
-    of: Number, // Each language will store a number (highest completed level)
-    default: {}
-  },
-  
+
+  //JSON
+  completedLevels: { type: String, default: "" },
+
   title: { type: String, default: "" },
   elo: { type: Number, default: 0 },
   skillLevel: { type: Number, default: 0 },
   
-  createdAt: { type: Date, default: Date.now }, // Timestamp for when the user was created
+  createdAt: { type: Date, default: Date.now },
 });
 
 const User = mongoose.model('User', UserSchema);
@@ -129,22 +127,7 @@ app.post('/updateProfile', authenticateToken, async (req, res) => {
     if (req.body.title !== undefined) user.title = req.body.title;
     if (req.body.elo !== undefined) user.elo = req.body.elo;
     if (req.body.skillLevel !== undefined) user.skillLevel = req.body.skillLevel;
-
-    // Handle completedLevels as a map (per language tracking)
-    if (req.body.completedLevels && typeof req.body.completedLevels === 'object') {
-      if (!user.completedLevels) {
-        user.completedLevels = {}; // Initialize if empty
-      }
-
-      for (const [language, level] of Object.entries(req.body.completedLevels)) {
-        const currentLevel = user.completedLevels[language] || 0;
-
-        // Only update if the new level is higher
-        if (level > currentLevel) {
-          user.completedLevels[language] = level;
-        }
-      }
-    }
+    if (req.body.completedLevels !== undefined) user.completedLevels = req.body.completedLevels;
 
     await user.save();
     res.status(200).json({ message: 'Profile updated successfully' });

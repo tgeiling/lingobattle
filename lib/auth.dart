@@ -207,6 +207,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
+    final levelProvider = Provider.of<LevelNotifier>(context, listen: false);
 
     if (success) {
       final token = await getAuthToken();
@@ -220,7 +221,6 @@ class _LoginScreenState extends State<LoginScreen> {
           if (profileData.containsKey('username')) {
             profileProvider.setUsername(profileData['username']);
           }
-
           if (profileData.containsKey('winStreak')) {
             profileProvider.setWinStreak(profileData['winStreak']);
           }
@@ -238,14 +238,13 @@ class _LoginScreenState extends State<LoginScreen> {
           }
 
           if (profileData.containsKey('completedLevels')) {
-            Map<String, int> completedLevels =
-                Map<String, int>.from(profileData['completedLevels']);
-            profileProvider.setCompletedLevels(completedLevels);
+            dynamic completedLevelsData = profileData['completedLevels'];
 
-            for (var entry in completedLevels.entries) {
-              await prefs.setInt('completedLevels_${entry.key}', entry.value);
-            }
+            profileProvider.setCompletedLevels(completedLevelsData);
           }
+
+          await profileProvider.savePreferences();
+          levelProvider.loadLevelsAfterStart();
 
           widget.setAuthenticated(true);
           Navigator.popUntil(context, (route) => route.isFirst);
@@ -260,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 title: profileProvider.title,
                 elo: profileProvider.elo,
                 skillLevel: profileProvider.skilllevel,
-                completedLevels: profileProvider.completedLevels,
+                completedLevels: profileProvider.completedLevelsJson,
               ).then((success) {
                 if (success) {
                   print("Profile updated successfully.");

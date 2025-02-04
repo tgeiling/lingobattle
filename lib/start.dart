@@ -8,6 +8,7 @@ import 'elements.dart';
 import 'game.dart';
 import 'provider.dart';
 import 'matchhistory.dart';
+import 'services.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -210,7 +211,46 @@ class _StartPageState extends State<StartPage> {
                 ),
               ),
             ),
-
+          Positioned(
+            top: 16, // Adjust as needed
+            left: 16, // Adjust as needed
+            child: GestureDetector(
+              onTap: () async {
+                final token = await getAuthToken();
+                fetchAndPrintProfile(token!);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.8,
+                      shape: NeumorphicShape.concave,
+                      boxShape: NeumorphicBoxShape.circle(),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Icon(
+                        Icons.person, // History icon
+                        size: 32,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Request Profile',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           // Main content
           Center(
             child: Column(
