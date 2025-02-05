@@ -46,7 +46,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+class _MyHomePageState extends State<MyHomePage>
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
   bool _isModalVisible = false;
@@ -80,6 +81,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   bool _showAuthenticateMessage = true;
   bool _isLoading = true; // New state variable for loading
 
+  bool _showCoins = false;
+  bool _showExpText = false;
+  late AnimationController _controller;
+  late List<Animation<Offset>> _animations;
+  late List<Animation<double>> _scales;
+  final int numCoins = 8;
+  GlobalKey _expKey = GlobalKey(); // Key for tracking EXP widget position
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +104,43 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _updateConnectionStatus(result);
     });
     _checkInitialConnectivity();
+
+    _controller =
+        AnimationController(duration: Duration(seconds: 2), vsync: this);
+
+    _animations = List.generate(numCoins, (index) {
+      return Tween<Offset>(
+        begin: Offset(
+            Random().nextDouble() * 2 - 1, Random().nextDouble() * 2 - 1),
+        end: Offset(0, 0),
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+    });
+
+    _scales = List.generate(numCoins, (index) {
+      return Tween<double>(begin: 1.0, end: 0.5).animate(CurvedAnimation(
+        parent: _controller,
+        curve: Curves.easeInOut,
+      ));
+    });
+  }
+
+  void triggerAnimation() {
+    setState(() {
+      _showCoins = true;
+      _showExpText = true;
+    });
+
+    _controller.forward(from: 0.0).then((_) {
+      setState(() {
+        _showCoins = false;
+      });
+
+      Future.delayed(Duration(seconds: 1), () {
+        setState(() {
+          _showExpText = false;
+        });
+      });
+    });
   }
 
   @override
@@ -282,7 +328,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 Center(
                     child: StartPage(
                         isLoggedIn: isLoggedIn,
-                        toggleModal: _toggleModal,
+                        onBackToMainMenu: triggerAnimation,
                         setAuthenticated: _setAuthenticated)),
                 Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
                 SettingsPage(
@@ -292,6 +338,39 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               ],
             ),
           ),
+
+          // "+100 EXP" Text Effect
+          if (_showExpText)
+            Positioned(
+              top: 100,
+              left: MediaQuery.of(context).size.width / 2 - 20,
+              child: Text(
+                "+100 EXP",
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.greenAccent,
+                ),
+              ),
+            ),
+
+          // Flying Coins Animation
+          if (_showCoins)
+            ...List.generate(numCoins, (index) {
+              return AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Transform.translate(
+                    offset: _animations[index].value * 200,
+                    child: Transform.scale(
+                      scale: _scales[index].value,
+                      child: child,
+                    ),
+                  );
+                },
+                child: CoinWidget(),
+              );
+            }),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -391,5 +470,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ],
       ),
     );
+  }
+}
+
+class CoinWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Icon(Icons.monetization_on, color: Colors.amber, size: 30);
   }
 }

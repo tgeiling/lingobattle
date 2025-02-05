@@ -498,15 +498,17 @@ class MultiplayerGameScreen extends StatefulWidget {
   final String opponentUsername;
   final String matchId;
   final String language;
+  final VoidCallback onBackToMainMenu;
 
-  const MultiplayerGameScreen({
-    Key? key,
-    required this.socket,
-    required this.username,
-    required this.opponentUsername,
-    required this.matchId,
-    required this.language,
-  }) : super(key: key);
+  const MultiplayerGameScreen(
+      {Key? key,
+      required this.socket,
+      required this.username,
+      required this.opponentUsername,
+      required this.matchId,
+      required this.language,
+      required this.onBackToMainMenu})
+      : super(key: key);
 
   @override
   _MultiplayerGameScreenState createState() => _MultiplayerGameScreenState();
@@ -625,6 +627,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 'winner': widget.username,
               },
               language: widget.language,
+              onBackToMainMenu: widget.onBackToMainMenu,
             ),
           ),
         );
@@ -639,6 +642,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ...result,
               },
               language: widget.language,
+              onBackToMainMenu: widget.onBackToMainMenu,
             ),
           ),
         );
@@ -1170,6 +1174,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                           'winner': widget.opponentUsername,
                         },
                         language: widget.language,
+                        onBackToMainMenu: widget.onBackToMainMenu,
                       ),
                     ),
                   );
@@ -1186,11 +1191,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 class MultiplayerResultScreen extends StatelessWidget {
   final Map<String, dynamic> results;
   final String language;
+  final VoidCallback onBackToMainMenu;
 
   const MultiplayerResultScreen({
     Key? key,
     required this.results,
     required this.language,
+    required this.onBackToMainMenu,
   }) : super(key: key);
 
   @override
@@ -1310,6 +1317,10 @@ class MultiplayerResultScreen extends StatelessWidget {
                   winStreak += 1;
                   expAmount += 100;
                   eloAmount += 15;
+                } else if (winner == "Draw") {
+                  winStreak = 0;
+                  expAmount = max(0, expAmount - 5);
+                  eloAmount = max(0, eloAmount - 5);
                 } else {
                   winStreak = 0;
                   expAmount = max(0, expAmount - 100);
@@ -1340,6 +1351,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                   }
                 });
                 Navigator.popUntil(context, (route) => route.isFirst);
+                onBackToMainMenu();
               },
               child: const Text("Back to Main Menu"),
             )
@@ -1350,7 +1362,8 @@ class MultiplayerResultScreen extends StatelessWidget {
   }
 }
 
-void initializeSocket(BuildContext context, IO.Socket socket, String language) {
+void initializeSocket(BuildContext context, IO.Socket socket, String language,
+    VoidCallback onBackToMainMenu) {
   socket.onConnect((_) {
     print('Connected to the server');
     socket.emit('joinQueue', {
@@ -1369,6 +1382,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
           socket: socket,
           username: data['username'],
           language: data['language'],
+          onBackToMainMenu: onBackToMainMenu,
         ),
       ),
     );
@@ -1387,6 +1401,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language) {
           matchId: data['matchId'],
           language: data['language'],
           socket: socket,
+          onBackToMainMenu: onBackToMainMenu,
         ),
       ),
     );
@@ -1436,12 +1451,14 @@ class SearchingOpponentScreen extends StatefulWidget {
   final IO.Socket socket;
   final String username;
   final String language;
+  final VoidCallback onBackToMainMenu;
 
   const SearchingOpponentScreen({
     Key? key,
     required this.socket,
     required this.username,
     required this.language,
+    required this.onBackToMainMenu,
   }) : super(key: key);
 
   @override
@@ -1469,7 +1486,12 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
       _showErrorDialog('Battle is already full. Try another.');
     });
 
-    initializeSocket(context, widget.socket, widget.language);
+    initializeSocket(
+      context,
+      widget.socket,
+      widget.language,
+      widget.onBackToMainMenu,
+    );
   }
 
   @override

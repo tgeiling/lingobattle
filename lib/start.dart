@@ -12,13 +12,13 @@ import 'services.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
-  final Function(String, int, bool) toggleModal;
+  final VoidCallback onBackToMainMenu;
   final Function(bool) setAuthenticated;
 
   const StartPage({
     Key? key,
     required this.isLoggedIn,
-    required this.toggleModal,
+    required this.onBackToMainMenu,
     required this.setAuthenticated,
   }) : super(key: key);
 
@@ -123,6 +123,7 @@ class _StartPageState extends State<StartPage> {
           socket: socket,
           username: username,
           language: selectedLanguage!,
+          onBackToMainMenu: widget.onBackToMainMenu,
         ),
       ),
     );
