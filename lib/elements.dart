@@ -417,6 +417,44 @@ class SpeechBubble extends StatelessWidget {
   }
 }
 
+class CoinWithGlow extends StatelessWidget {
+  final Animation<double> glowOpacity;
+
+  const CoinWithGlow({Key? key, required this.glowOpacity}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // Coin Icon
+        const Icon(
+          Icons.attach_money,
+          size: 40,
+          color: Colors.amber,
+        ),
+        // Glowing Light Effect
+        Opacity(
+          opacity: glowOpacity.value,
+          child: Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  Colors.yellow.withOpacity(0.7),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class TrianglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

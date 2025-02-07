@@ -81,11 +81,14 @@ class _MyHomePageState extends State<MyHomePage>
   bool _showAuthenticateMessage = true;
   bool _isLoading = true; // New state variable for loading
 
+  //animation
   bool _showCoins = false;
   bool _showExpText = false;
   late AnimationController _controller;
   late List<Animation<Offset>> _animations;
   late List<Animation<double>> _scales;
+  late AnimationController _glowController; // For glowing effect
+  late Animation<double> _glowOpacityAnimation;
   final int numCoins = 8;
   GlobalKey _expKey = GlobalKey(); // Key for tracking EXP widget position
 
@@ -105,17 +108,29 @@ class _MyHomePageState extends State<MyHomePage>
     });
     _checkInitialConnectivity();
 
+    //animation
     _controller =
-        AnimationController(duration: Duration(seconds: 2), vsync: this);
+        AnimationController(duration: const Duration(seconds: 2), vsync: this);
 
+    // Initialize glowing effect animation controller
+    _glowController = AnimationController(
+        duration: const Duration(milliseconds: 1000), vsync: this)
+      ..repeat();
+
+    _glowOpacityAnimation = Tween(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+
+    // Generate fly animations for coins
     _animations = List.generate(numCoins, (index) {
       return Tween<Offset>(
         begin: Offset(
             Random().nextDouble() * 2 - 1, Random().nextDouble() * 2 - 1),
-        end: Offset(0, 0),
+        end: Offset(0, 0), // Fly towards the center
       ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
     });
 
+    // Generate scale animations for coins
     _scales = List.generate(numCoins, (index) {
       return Tween<double>(begin: 1.0, end: 0.5).animate(CurvedAnimation(
         parent: _controller,
@@ -124,6 +139,7 @@ class _MyHomePageState extends State<MyHomePage>
     });
   }
 
+  //animation
   void triggerAnimation() {
     setState(() {
       _showCoins = true;
@@ -146,6 +162,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void dispose() {
     _connectivitySubscription.cancel();
+    _glowController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -355,6 +372,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
 
           // Flying Coins Animation
+          // Flying Coins Animation
           if (_showCoins)
             ...List.generate(numCoins, (index) {
               return AnimatedBuilder(
@@ -368,7 +386,9 @@ class _MyHomePageState extends State<MyHomePage>
                     ),
                   );
                 },
-                child: CoinWidget(),
+                child: CoinWithGlow(
+                  glowOpacity: _glowOpacityAnimation,
+                ),
               );
             }),
         ],
