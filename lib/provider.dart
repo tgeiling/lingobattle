@@ -149,20 +149,30 @@ class LevelNotifier with ChangeNotifier {
 
     // Load saved levels data from SharedPreferences
     String? savedData = prefs.getString('language_levels');
-    if (savedData != null && savedData != "") {
-      // Deserialize JSON and populate _languageLevels
-      Map<String, dynamic> jsonData = json.decode(savedData);
-      _languageLevels = jsonData.map((lang, levels) {
-        return MapEntry(
-          lang,
-          (levels as Map<String, dynamic>).map((key, value) {
-            return MapEntry(
-              int.parse(key),
-              Level.fromJson(value),
-            );
-          }),
-        );
-      });
+    if (savedData != null && savedData.isNotEmpty) {
+      try {
+        // Deserialize JSON and populate _languageLevels
+        Map<String, dynamic> jsonData = json.decode(savedData);
+        _languageLevels = jsonData.map((lang, levels) {
+          return MapEntry(
+            lang,
+            (levels as Map<String, dynamic>).map((key, value) {
+              if (value is Map<String, dynamic>) {
+                // Parse key and create a Level object
+                return MapEntry(
+                  int.parse(key),
+                  Level.fromJson(value),
+                );
+              } else {
+                throw Exception("Invalid value structure for level data.");
+              }
+            }),
+          );
+        });
+      } catch (e) {
+        print("Error deserializing language levels: $e");
+        _initializeDefaultLevels(); // Initialize default levels in case of error
+      }
     } else {
       // Initialize default levels if no data is saved
       _initializeDefaultLevels();
