@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
@@ -1390,18 +1391,27 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
 
   // Listen for battleStart event
   socket.on('battleStart', (data) {
-    print('Battle started with data: $data');
-
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MultiplayerGameScreen(
+        builder: (context) => BattleStartScreen(
           username: data['username'],
           opponentUsername: data['opponentUsername'],
-          matchId: data['matchId'],
-          language: data['language'],
-          socket: socket,
-          onBackToMainMenu: onBackToMainMenu,
+          onBattleStart: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MultiplayerGameScreen(
+                  username: data['username'],
+                  opponentUsername: data['opponentUsername'],
+                  matchId: data['matchId'],
+                  language: data['language'],
+                  socket: socket,
+                  onBackToMainMenu: onBackToMainMenu,
+                ),
+              ),
+            );
+          },
         ),
       ),
     );
@@ -1471,21 +1481,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   void initState() {
     super.initState();
 
-    // Listen for battleStart event
-    /* widget.socket.on('battleStart', (data) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => BattleScreen(battleData: data),
-        ),
-      );
-    }); */
-
-    // Optionally handle battleFull or other error events
-    widget.socket.on('battleFull', (data) {
-      _showErrorDialog('Battle is already full. Try another.');
-    });
-
     initializeSocket(
       context,
       widget.socket,
@@ -1496,9 +1491,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
 
   @override
   void dispose() {
-    // Remove listeners when the screen is disposed
-    widget.socket.off('battleStart');
-    widget.socket.off('battleFull');
     super.dispose();
   }
 
@@ -1546,6 +1538,126 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class BattleStartScreen extends StatefulWidget {
+  final String username;
+  final String opponentUsername;
+  final VoidCallback onBattleStart;
+
+  const BattleStartScreen({
+    required this.username,
+    required this.opponentUsername,
+    required this.onBattleStart,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  _BattleStartScreenState createState() => _BattleStartScreenState();
+}
+
+class _BattleStartScreenState extends State<BattleStartScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _playerAnimation;
+  late Animation<Offset> _opponentAnimation;
+  int _countdown = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    _playerAnimation = Tween<Offset>(
+      begin: const Offset(-1.5, 0),
+      end: const Offset(0, 0),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _opponentAnimation = Tween<Offset>(
+      begin: const Offset(1.5, 0),
+      end: const Offset(0, 0),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _controller.forward();
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown == 1) {
+        timer.cancel();
+        widget.onBattleStart();
+      } else {
+        setState(() {
+          _countdown--;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Center(
+            child: Text(
+              "$_countdown",
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 80,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SlideTransition(
+            position: _playerAnimation,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 20.0),
+                child: Text(
+                  widget.username,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          SlideTransition(
+            position: _opponentAnimation,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 20.0),
+                child: Text(
+                  widget.opponentUsername,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
