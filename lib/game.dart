@@ -1372,7 +1372,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
     });
   });
 
-  socket.on('matchFound', (data) {
+  /* socket.on('matchFound', (data) {
     print('Match found: $data');
     // Navigate to searching screen if desired
     Navigator.pushReplacement(
@@ -1386,7 +1386,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
         ),
       ),
     );
-  });
+  }); */
 
   // Listen for battleStart event
   socket.on('battleStart', (data) {
