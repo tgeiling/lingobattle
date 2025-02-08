@@ -1472,14 +1472,14 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
     super.initState();
 
     // Listen for battleStart event
-    widget.socket.on('battleStart', (data) {
+    /* widget.socket.on('battleStart', (data) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => BattleScreen(battleData: data),
         ),
       );
-    });
+    }); */
 
     // Optionally handle battleFull or other error events
     widget.socket.on('battleFull', (data) {
