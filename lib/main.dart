@@ -63,16 +63,12 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isConnected = true;
   bool _showConnectionMessage = true;
   bool _showAuthenticateMessage = true;
-  bool _isLoading = true; // New state variable for loading
+  bool _isLoading = true;
 
   //animation
-  bool _showCoins = false;
-  bool _showExpText = false;
+  /* bool _showCoins = false;
   late AnimationController _controller;
-  late List<Animation<Offset>> _animations;
-  late List<Animation<double>> _scales;
-  final int numCoins = 8;
-  GlobalKey _expKey = GlobalKey(); // Key for tracking EXP widget position
+  final int numCoins = 8; */
 
   @override
   void initState() {
@@ -89,13 +85,18 @@ class _MyHomePageState extends State<MyHomePage>
       _updateConnectionStatus(result);
     });
     _checkInitialConnectivity();
+
+    //animation
+/*     _controller = AnimationController(
+      duration: Duration(seconds: 2),
+      vsync: this,
+    ); */
   }
 
   //animation
-  void triggerAnimation() {
+  /* void triggerAnimation() {
     setState(() {
       _showCoins = true;
-      _showExpText = true;
     });
 
     _controller.forward(from: 0.0).then((_) {
@@ -104,11 +105,13 @@ class _MyHomePageState extends State<MyHomePage>
       });
 
       Future.delayed(Duration(seconds: 1), () {
-        setState(() {
-          _showExpText = false;
-        });
+        setState(() {});
       });
     });
+  } */
+
+  void triggerAnimation() {
+    print("placeholder");
   }
 
   @override
@@ -289,6 +292,7 @@ class _MyHomePageState extends State<MyHomePage>
               Center(
                   child: StartPage(
                       isLoggedIn: isLoggedIn,
+                      //onBackToMainMenu: triggerAnimation,
                       onBackToMainMenu: triggerAnimation,
                       setAuthenticated: _setAuthenticated)),
               Center(child: LevelSelectionScreen()),
@@ -299,23 +303,8 @@ class _MyHomePageState extends State<MyHomePage>
             ],
           ),
 
-          // "+100 EXP" Text Effect
-          if (_showExpText)
-            Positioned(
-              top: 100,
-              left: MediaQuery.of(context).size.width / 2 - 20,
-              child: Text(
-                "+100 EXP",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.greenAccent,
-                ),
-              ),
-            ),
-
           // Flying Coins Animation
-          if (_showCoins) CoinsOverlay(),
+          //if (_showCoins) CoinsOverlay(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
@@ -415,12 +404,5 @@ class _MyHomePageState extends State<MyHomePage>
         ],
       ),
     );
-  }
-}
-
-class CoinWidget extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Icon(Icons.monetization_on, color: Colors.amber, size: 30);
   }
 }
