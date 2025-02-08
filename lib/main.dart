@@ -339,7 +339,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
 
           // Flying Coins Animation
-          if (_showCoins) CoinAnimation(),
+          if (_showCoins) FlyCoinAnimation(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
