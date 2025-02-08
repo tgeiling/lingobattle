@@ -285,6 +285,8 @@ const matchPlayers = async () => {
       username: player1.username,
       matchId: battleId,
       opponentUsername: player2.username,
+      elo: player1.elo,
+      opponentElo: player2.username,
       language: player1.language,
     });
 
@@ -292,6 +294,8 @@ const matchPlayers = async () => {
       username: player2.username,
       matchId: battleId,
       opponentUsername: player1.username,
+      elo: player2.elo,
+      opponentElo: player1.username,
       language: player2.language,
     });
 

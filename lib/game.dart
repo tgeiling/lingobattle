@@ -1397,6 +1397,8 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
         builder: (context) => BattleStartScreen(
           username: data['username'],
           opponentUsername: data['opponentUsername'],
+          elo: data['elo'],
+          opponentElo: data['opponentElo'],
           onBattleStart: () {
             Navigator.pushReplacement(
               context,
@@ -1546,11 +1548,15 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
 class BattleStartScreen extends StatefulWidget {
   final String username;
   final String opponentUsername;
+  final int elo;
+  final int opponentElo;
   final VoidCallback onBattleStart;
 
   const BattleStartScreen({
     required this.username,
     required this.opponentUsername,
+    required this.elo,
+    required this.opponentElo,
     required this.onBattleStart,
     Key? key,
   }) : super(key: key);
@@ -1629,21 +1635,12 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 20.0),
-                child: Neumorphic(
-                  style: NeumorphicStyle(
-                    depth: 4,
-                    intensity: 0.8,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    widget.username,
-                    style: const TextStyle(
-                      color: Colors.blue,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  widget.username,
+                  style: const TextStyle(
+                    color: Colors.blue,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -1655,23 +1652,61 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20.0),
-                child: Neumorphic(
-                  style: NeumorphicStyle(
-                    depth: 4,
-                    intensity: 0.8,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Text(
-                    widget.opponentUsername,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
+                child: Text(
+                  widget.opponentUsername,
+                  style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+            ),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 150.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: -4,
+                      intensity: 0.8,
+                      color: Colors.black54,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                          BorderRadius.circular(12)),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      "ELO: ${widget.elo}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: -4,
+                      intensity: 0.8,
+                      color: Colors.black54,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                          BorderRadius.circular(12)),
+                    ),
+                    padding: const EdgeInsets.all(12),
+                    child: Text(
+                      "Opponent ELO: ${widget.opponentElo}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
