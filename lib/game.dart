@@ -1610,14 +1610,14 @@ class _BattleStartScreenState extends State<BattleStartScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.grey[200],
       body: Stack(
         children: [
           Center(
             child: Text(
               "$_countdown",
               style: const TextStyle(
-                color: Colors.white,
+                color: Colors.black,
                 fontSize: 80,
                 fontWeight: FontWeight.bold,
               ),
@@ -1629,12 +1629,21 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 20.0),
-                child: Text(
-                  widget.username,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
+                child: Neumorphic(
+                  style: NeumorphicStyle(
+                    depth: 4,
+                    intensity: 0.8,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    widget.username,
+                    style: const TextStyle(
+                      color: Colors.blue,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -1646,12 +1655,21 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20.0),
-                child: Text(
-                  widget.opponentUsername,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
+                child: Neumorphic(
+                  style: NeumorphicStyle(
+                    depth: 4,
+                    intensity: 0.8,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Text(
+                    widget.opponentUsername,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
