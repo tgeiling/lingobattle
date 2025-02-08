@@ -58,11 +58,8 @@ class Level {
 }
 
 class LevelSelectionScreen extends StatefulWidget {
-  final Function(String, int, bool) toggleModal;
-
   const LevelSelectionScreen({
     super.key,
-    required this.toggleModal,
   });
 
   @override

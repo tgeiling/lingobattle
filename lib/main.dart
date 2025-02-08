@@ -55,22 +55,6 @@ class _MyHomePageState extends State<MyHomePage>
   int level = 0;
   bool isVideoPlayer = true;
 
-  void _toggleModal(
-      [String setDescription = "Was passt für dich ?",
-      int setLevel = 0,
-      bool setIsVideoPlayer = true]) {
-    setState(() {
-      _isModalVisible = !_isModalVisible;
-      if (_isModalVisible) {
-        modalDescription = setDescription;
-        level = setLevel;
-        isVideoPlayer = setIsVideoPlayer;
-      }
-    });
-
-    isModalOpen = !isModalOpen;
-  }
-
   bool? _authenticated;
   bool? _loggedIn;
   final AuthService _authService = AuthService();
@@ -294,33 +278,25 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: () {
-              if (_isModalVisible) {
-                _toggleModal();
-              }
+          PageView(
+            controller: _pageController,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
             },
-            behavior: HitTestBehavior.opaque,
-            child: PageView(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _currentIndex = index;
-                });
-              },
-              children: [
-                Center(
-                    child: StartPage(
-                        isLoggedIn: isLoggedIn,
-                        onBackToMainMenu: triggerAnimation,
-                        setAuthenticated: _setAuthenticated)),
-                Center(child: LevelSelectionScreen(toggleModal: _toggleModal)),
-                SettingsPage(
-                  setAuthenticated: _setAuthenticated,
-                  isLoggedIn: isLoggedIn,
-                ),
-              ],
-            ),
+            children: [
+              Center(
+                  child: StartPage(
+                      isLoggedIn: isLoggedIn,
+                      onBackToMainMenu: triggerAnimation,
+                      setAuthenticated: _setAuthenticated)),
+              Center(child: LevelSelectionScreen()),
+              SettingsPage(
+                setAuthenticated: _setAuthenticated,
+                isLoggedIn: isLoggedIn,
+              ),
+            ],
           ),
 
           // "+100 EXP" Text Effect
@@ -339,7 +315,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
 
           // Flying Coins Animation
-          if (_showCoins) FlyCoinAnimation(),
+          if (_showCoins) CoinsOverlay(),
         ],
       ),
       bottomNavigationBar: _buildBottomNavigationBar(),
