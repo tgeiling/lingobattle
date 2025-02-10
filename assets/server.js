@@ -235,44 +235,47 @@ const matchPlayers = async () => {
     const player1 = matchmakingQueue.shift();
     const player2 = matchmakingQueue.shift();
 
-    // Clear timeouts for both players
     clearTimeout(player1.timeout);
     clearTimeout(player2.timeout);
+
+    // Fetch ELO for both players from MongoDB
+    const user1 = await User.findOne({ username: player1.username });
+    const user2 = await User.findOne({ username: player2.username });
+
+    const elo1 = user1 ? user1.elo : 0;
+    const elo2 = user2 ? user2.elo : 0;
+
+    console.log("qweqweqweqwe");
+    console.log("ELO1: " + elo1);
+    console.log("ELO1: " + elo2);
+    console.log("qweqweqweqwe");
 
     const battleId = `${player1.socket.id}-${player2.socket.id}`;
     activeBattles[battleId] = {
       players: [
-        { id: player1.socket.id, username: player1.username },
-        { id: player2.socket.id, username: player2.username },
+        { id: player1.socket.id, username: player1.username, elo: elo1 },
+        { id: player2.socket.id, username: player2.username, elo: elo2 },
       ],
       status: 'active',
     };
 
     console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
-    console.log(`    Player 1: ${player1.username} (${player1.socket.id})`);
-    console.log(`    Player 2: ${player2.username} (${player2.socket.id})`);
+    console.log(`    Player 1: ${player1.username} (ELO: ${elo1})`);
+    console.log(`    Player 2: ${player2.username} (ELO: ${elo2})`);
 
     try {
       const matchResult = await MatchResult.findOneAndUpdate(
-        { matchId: battleId }, // Query by matchId
+        { matchId: battleId },
         {
           $set: {
             players: [
-              {
-                username: player1.username,
-                progress: Array(5).fill('unanswered'),
-                correctAnswers: 0,
-              },
-              {
-                username: player2.username,
-                progress: Array(5).fill('unanswered'),
-                correctAnswers: 0,
-              },
+              { username: player1.username, progress: Array(5).fill('unanswered'), correctAnswers: 0 },
+              { username: player2.username, progress: Array(5).fill('unanswered'), correctAnswers: 0 },
             ],
             language: player1.language,
           },
         },
-        { upsert: true, new: true } // Create or update
+        { upsert: true, new: true }
       );
 
       console.log(`[MATCH CREATED] Saved match result to database for matchId: ${battleId}`);
@@ -280,28 +283,29 @@ const matchPlayers = async () => {
       console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
     }
 
-    // Emit battleStart event to both players
+    // Emit battleStart event to both players **with ELO included**
     io.to(player1.socket.id).emit('battleStart', {
       username: player1.username,
       matchId: battleId,
       opponentUsername: player2.username,
-      elo: player1.elo,
-      opponentElo: player2.username,
       language: player1.language,
+      elo: elo1, // Added ELO
+      opponentElo: elo2, // Added ELO
     });
 
     io.to(player2.socket.id).emit('battleStart', {
       username: player2.username,
       matchId: battleId,
       opponentUsername: player1.username,
-      elo: player2.elo,
-      opponentElo: player1.username,
       language: player2.language,
+      elo: elo2, // Added ELO
+      opponentElo: elo1, // Added ELO
     });
 
-    console.log(`[BATTLE STARTED] Battle ID: ${battleId}`);
+    console.log(`[BATTLE STARTED] Battle ID: ${battleId} with ELO ratings`);
   }
 };
+
 
 
 // Handle WebSocket connections

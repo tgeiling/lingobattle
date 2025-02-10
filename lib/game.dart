@@ -1619,6 +1619,7 @@ class _BattleStartScreenState extends State<BattleStartScreen>
       backgroundColor: Colors.grey[200],
       body: Stack(
         children: [
+          // Countdown Timer
           Center(
             child: Text(
               "$_countdown",
@@ -1629,84 +1630,101 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               ),
             ),
           ),
+
+          // Player Name & ELO (Left Side)
           SlideTransition(
             position: _playerAnimation,
             child: Align(
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 20.0),
-                child: Text(
-                  widget.username,
-                  style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.username,
+                      style: const TextStyle(
+                        color: Colors.blue,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5), // Space between name and ELO
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue[100], // Light blue background
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue.withOpacity(0.2),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child: Text(
+                        "ELO: ${widget.elo}",
+                        style: const TextStyle(
+                          color: Colors.blue,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
+
+          // Opponent Name & ELO (Right Side)
           SlideTransition(
             position: _opponentAnimation,
             child: Align(
               alignment: Alignment.centerRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20.0),
-                child: Text(
-                  widget.opponentUsername,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.opponentUsername,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5), // Space between name and ELO
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.red[100], // Light red background
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.red.withOpacity(0.2),
+                            blurRadius: 4,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      child: Text(
+                        "ELO: ${widget.opponentElo}",
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 150.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: -4,
-                      intensity: 0.8,
-                      color: Colors.black54,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                          BorderRadius.circular(12)),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      "ELO: ${widget.elo}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: -4,
-                      intensity: 0.8,
-                      color: Colors.black54,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                          BorderRadius.circular(12)),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      "Opponent ELO: ${widget.opponentElo}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
           ),
