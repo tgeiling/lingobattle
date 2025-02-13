@@ -120,7 +120,6 @@ class _StartPageState extends State<StartPage> {
       context,
       MaterialPageRoute(
         builder: (context) => SearchingOpponentScreen(
-          context: context,
           socket: socket,
           username: username,
           language: selectedLanguage!,

@@ -14,6 +14,8 @@ import 'level.dart';
 import 'provider.dart';
 import 'questionpool.dart';
 
+bool _isInitialized = false;
+
 class GameScreen extends StatefulWidget {
   final Level level;
   final String language;
@@ -585,8 +587,16 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void dispose() {
     _focusNode.dispose();
-    widget.socket.off('progressUpdate', _onProgressUpdate);
-    widget.socket.off('battleEnded', _onBattleEnded);
+    // Remove event listeners explicitly
+    widget.socket.off('connect');
+    widget.socket.off('disconnect');
+    widget.socket.off('battleStart');
+    widget.socket.off('matchFound');
+    widget.socket.off('progressUpdate');
+    widget.socket.off('battleEnded');
+
+    widget.socket.disconnect(); // Properly disconnect socket
+    _isInitialized = false;
     _textInputController.dispose();
     super.dispose();
   }
@@ -1441,7 +1451,6 @@ class BattleScreen extends StatelessWidget {
 }
 
 class SearchingOpponentScreen extends StatefulWidget {
-  final BuildContext context;
   final IO.Socket socket;
   final String username;
   final String language;
@@ -1449,7 +1458,6 @@ class SearchingOpponentScreen extends StatefulWidget {
 
   const SearchingOpponentScreen({
     Key? key,
-    required this.context,
     required this.socket,
     required this.username,
     required this.language,
@@ -1466,14 +1474,15 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   void initState() {
     super.initState();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    if (_isInitialized) {
       initializeSocket(
-        widget.context,
+        context,
         widget.socket,
         widget.language,
         widget.onBackToMainMenu,
       );
-    });
+      _isInitialized = true;
+    }
   }
 
   @override
