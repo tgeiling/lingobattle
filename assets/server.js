@@ -460,11 +460,40 @@ io.on('connection', (socket) => {
         if (player) {
             player.correctAnswers = correctAnswers;
 
-            // Check if both players have submitted results
+            // Check if both players have submitted their results
             if (battle.players.every((p) => p.correctAnswers !== undefined)) {
                 const [player1, player2] = battle.players;
 
-                // Determine winner
+                try {
+                    // Save match results to MongoDB
+                    const matchResult = await MatchResult.findOneAndUpdate(
+                        { matchId },
+                        {
+                            $set: {
+                                players: [
+                                    {
+                                        username: player1.username,
+                                        correctAnswers: player1.correctAnswers,
+                                        progress: player1.progress,
+                                    },
+                                    {
+                                        username: player2.username,
+                                        correctAnswers: player2.correctAnswers,
+                                        progress: player2.progress,
+                                    },
+                                ],
+                                language: language,
+                            },
+                        },
+                        { upsert: true, new: true }
+                    );
+
+                    console.log(`[MATCH SAVED] Results saved for match ${matchId}`);
+                } catch (err) {
+                    console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
+                }
+
+                // Determine the winner
                 let winner = null;
                 if (player1.correctAnswers > player2.correctAnswers) {
                     winner = player1.username;
@@ -509,25 +538,40 @@ io.on('connection', (socket) => {
                     elo2 = Math.max(0, elo2 - 5);
                 }
 
-                // Update the users in the database
+                // Update user profiles in the database
                 await User.updateOne({ username: player1.username }, { winStreak: winStreak1, exp: exp1, elo: elo1 });
                 await User.updateOne({ username: player2.username }, { winStreak: winStreak2, exp: exp2, elo: elo2 });
 
-                console.log(`[ELO UPDATE] ${player1.username}: ${elo1}, ${player2.username}: ${elo2}`);
+                console.log(`[PROFILE UPDATE] ${player1.username} - ELO: ${elo1}, EXP: ${exp1}, WinStreak: ${winStreak1}`);
+                console.log(`[PROFILE UPDATE] ${player2.username} - ELO: ${elo2}, EXP: ${exp2}, WinStreak: ${winStreak2}`);
 
-                // Notify both players
+                // Notify both players of the match outcome
                 battle.players.forEach((p) => {
                     io.to(p.id).emit('battleEnded', {
                         message: 'Match finished!',
                         result: {
                             winner,
-                            player1: { username: player1.username, elo: elo1, exp: exp1, winStreak: winStreak1 },
-                            player2: { username: player2.username, elo: elo2, exp: exp2, winStreak: winStreak2 },
+                            player1: {
+                                username: player1.username,
+                                progress: player1.progress,
+                                correctAnswers: player1.correctAnswers,
+                                elo: elo1,
+                                exp: exp1,
+                                winStreak: winStreak1
+                            },
+                            player2: {
+                                username: player2.username,
+                                progress: player2.progress,
+                                correctAnswers: player2.correctAnswers,
+                                elo: elo2,
+                                exp: exp2,
+                                winStreak: winStreak2
+                            },
                         },
                     });
                 });
 
-                // Remove from active battles
+                // Remove the match from active battles
                 delete activeBattles[matchId];
             }
         }
@@ -536,7 +580,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  
 
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {

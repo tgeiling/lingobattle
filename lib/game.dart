@@ -1464,12 +1464,14 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   void initState() {
     super.initState();
 
-    initializeSocket(
-      context,
-      widget.socket,
-      widget.language,
-      widget.onBackToMainMenu,
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      initializeSocket(
+        context,
+        widget.socket,
+        widget.language,
+        widget.onBackToMainMenu,
+      );
+    });
   }
 
   @override
