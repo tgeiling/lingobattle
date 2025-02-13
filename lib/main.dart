@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:lingobattle/elements.dart';
+import 'package:lingobattle/services.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -74,6 +75,16 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     _checkAuthentication();
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+
+    getAuthToken().then((token) {
+      if (token != null) {
+        profileProvider.syncProfile(token);
+      } else {
+        print("No auth token available.");
+      }
+    });
     Future.microtask(() =>
         Provider.of<ProfileProvider>(context, listen: false).loadPreferences());
     WidgetsBinding.instance.addObserver(this);

@@ -117,6 +117,29 @@ class ProfileProvider with ChangeNotifier {
     await prefs.setInt('skillLevel', _skillLevel);
     await prefs.setString('language_levels', _completedLevelsJson);
   }
+
+  Future<void> syncProfile(String token) async {
+    Map<String, dynamic>? profileData = await fetchProfile(token);
+    if (profileData != null) {
+      _winStreak = profileData['winStreak'] ?? _winStreak;
+      _exp = profileData['exp'] ?? _exp;
+      _elo = profileData['elo'] ?? _elo;
+      _username = profileData['username'] ?? _username;
+      _title = profileData['title'] ?? _title;
+      _skillLevel = profileData['skillLevel'] ?? _skillLevel;
+
+      // If completedLevels is in the response, update it
+      if (profileData.containsKey('completedLevels')) {
+        _completedLevelsJson = jsonEncode(profileData['completedLevels']);
+      }
+
+      notifyListeners();
+      savePreferences();
+      print("Profile synced successfully.");
+    } else {
+      print("Failed to sync profile.");
+    }
+  }
 }
 
 class LevelNotifier with ChangeNotifier {

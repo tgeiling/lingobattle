@@ -341,39 +341,57 @@ io.on('connection', (socket) => {
   });
 
   // Handle player disconnection
-  socket.on('disconnect', () => {
+  socket.on('disconnect', async () => {
     console.log(`[DISCONNECTED] User disconnected: ${socket.id}`);
 
-    // Remove player from the matchmaking queue
+    // Remove from queue
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
-    console.log(`[QUEUE STATUS] Player ${socket.id} removed from the queue. Current queue length: ${matchmakingQueue.length}`);
 
-    // Check if the player was part of an active battle
+    // Find active battle
     for (const battleId in activeBattles) {
-      const battle = activeBattles[battleId];
-      const playerIndex = battle.players.findIndex((player) => player.id === socket.id);
+        const battle = activeBattles[battleId];
+        const playerIndex = battle.players.findIndex((p) => p.id === socket.id);
 
-      if (playerIndex !== -1) {
-        const disconnectedPlayer = battle.players[playerIndex];
-        battle.players.splice(playerIndex, 1);
-        console.log(`[BATTLE UPDATE] Player ${disconnectedPlayer.username} (${disconnectedPlayer.id}) disconnected from Battle ID: ${battleId}`);
+        if (playerIndex !== -1) {
+            const disconnectedPlayer = battle.players[playerIndex];
+            const remainingPlayer = battle.players.find((p) => p.id !== socket.id);
 
-        if (battle.players.length === 0) {
-          // No players remain, remove the battle
-          delete activeBattles[battleId];
-          console.log(`[BATTLE REMOVED] Battle ${battleId} removed as no players remain.`);
-        } else {
-          // Notify the remaining player
-          const remainingPlayer = battle.players[0];
-          io.to(remainingPlayer.id).emit('battleEnded', {
-            message: 'Your opponent has disconnected. The battle has ended.',
-            result: 'opponentDisconnected',
-          });
-          console.log(`[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent disconnection.`);
+            console.log(`[DISCONNECT] Player ${disconnectedPlayer.username} left Battle ID: ${battleId}`);
+
+            // Fetch user data
+            const user = await User.findOne({ username: disconnectedPlayer.username });
+            const remainingUser = await User.findOne({ username: remainingPlayer.username });
+
+            // Adjust ELO and EXP
+            let newElo = Math.max(0, user.elo - 15);
+            let newExp = Math.max(0, user.exp - 100);
+
+            // Reset win streak
+            await User.updateOne({ username: disconnectedPlayer.username }, { elo: newElo, exp: newExp, winStreak: 0 });
+
+            console.log(`[ELO UPDATE] ${disconnectedPlayer.username} penalized for disconnection. New ELO: ${newElo}`);
+
+            // Notify remaining player
+            io.to(remainingPlayer.id).emit('battleEnded', {
+                message: 'Your opponent disconnected. You win!',
+                result: 'opponentDisconnected',
+            });
+
+            // Reward remaining player
+            let newEloWin = remainingUser.elo + 15;
+            let newExpWin = remainingUser.exp + 100;
+            let newWinStreak = remainingUser.winStreak + 1;
+
+            await User.updateOne({ username: remainingPlayer.username }, { elo: newEloWin, exp: newExpWin, winStreak: newWinStreak });
+
+            console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}`);
+
+            // Remove battle from active list
+            delete activeBattles[battleId];
         }
-      }
     }
   });
+
 
   socket.on('submitAnswer', async (data) => {
     const { matchId, username, questionIndex, status } = data;
@@ -430,158 +448,94 @@ io.on('connection', (socket) => {
     }
   }); 
 
-  socket.on('playerLeft', (data) => {
-    const { matchId, username } = data;
-  
-    console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
-  
-    // Check if the match exists in active battles
-    if (activeBattles[matchId]) {
-      const battle = activeBattles[matchId];
-  
-      // Find the player who left
-      const playerIndex = battle.players.findIndex((p) => p.username === username);
-  
-      if (playerIndex !== -1) {
-        const disconnectedPlayer = battle.players[playerIndex];
-        battle.players.splice(playerIndex, 1); // Remove the player who left
-  
-        if (battle.players.length === 0) {
-          // If no players remain, delete the battle
-          delete activeBattles[matchId];
-          console.log(`[BATTLE REMOVED] Match ${matchId} removed as no players remain.`);
-        } else {
-          // Notify the remaining player about the opponent's departure
-          const remainingPlayer = battle.players[0];
-          io.to(remainingPlayer.id).emit('battleEnded', {
-            message: `${username} has left the game. You win!`,
-            result: 'playerLeft', // Indicate the opponent left
-          });
-  
-          console.log(
-            `[NOTIFIED] Remaining player ${remainingPlayer.username} (${remainingPlayer.id}) about opponent leaving.`
-          );
-  
-          // Optionally, save the state to the database
-          try {
-            const matchResult = MatchResult.findOneAndUpdate(
-              { matchId },
-              {
-                $set: {
-                  players: battle.players.map((p) => ({
-                    username: p.username,
-                    progress: p.progress || Array(5).fill('unanswered'),
-                    correctAnswers: p.correctAnswers || 0,
-                  })),
-                  status: 'playerLeft',
-                },
-              },
-              { upsert: true, new: true }
-            );
-  
-            console.log(`[DATABASE UPDATED] Match ${matchId} status saved as 'playerLeft'.`);
-          } catch (err) {
-            console.error(`[DATABASE ERROR] Failed to save match ${matchId}: ${err}`);
-          }
-        }
-      } else {
-        console.log(`[ERROR] Player ${username} not found in match ${matchId}.`);
-      }
-    } else {
-      console.log(`[ERROR] Match ${matchId} not found in active battles.`);
-    }
-  });
-  
-  
-  
-
-  // Submit results
   socket.on('submitResults', async (data) => {
     const { matchId, username, correctAnswers, language } = data;
-  
+
     console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId}`);
-  
+
     if (activeBattles[matchId]) {
-      const battle = activeBattles[matchId];
-      const player = battle.players.find((p) => p.username === username);
-  
-      if (player) {
-        player.correctAnswers = correctAnswers;
-  
-        // Check if both players have submitted their results
-        if (battle.players.every((p) => p.correctAnswers !== undefined)) {
-          const [player1, player2] = battle.players;
-  
-          try {
-            // Save or update match results in the database
-            const matchResult = await MatchResult.findOneAndUpdate(
-              { matchId }, // Query: Match by matchId
-              {
-                $set: {
-                  players: [
-                    {
-                      username: player1.username,
-                      correctAnswers: player1.correctAnswers,
-                      progress: player1.progress,
-                    },
-                    {
-                      username: player2.username,
-                      correctAnswers: player2.correctAnswers,
-                      progress: player2.progress,
-                    },
-                  ],
-                  language: language,
-                },
-              },
-              { upsert: true, new: true } // Options: Create if not exists, return the updated document
-            );
-  
-            console.log(`[MATCH SAVED] Results saved for match ${matchId}:`, matchResult);
-          } catch (err) {
-            console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
-          }
-  
-          // Determine winner
-          let winner = null;
-          console.log("#####################################");
-          console.log("Player1 Answers: " + player1.correctAnswers);
-          console.log("Player2 Answers: " + player2.correctAnswers);
-          console.log("#####################################");
-  
-          if (player1.correctAnswers > player2.correctAnswers) {
-            winner = player1.username;
-          } else if (player2.correctAnswers > player1.correctAnswers) {
-            winner = player2.username;
-          }
-  
-          // Notify both players
-          battle.players.forEach((p) => {
-            io.to(p.id).emit('battleEnded', {
-              message: 'Match finished!',
-              result: {
-                winner,
-                player1: {
-                  username: player1.username,
-                  progress: player1.progress,
-                  correctAnswers: player1.correctAnswers,
-                },
-                player2: {
-                  username: player2.username,
-                  progress: player2.progress,
-                  correctAnswers: player2.correctAnswers,
-                },
-              },
-            });
-          });
-  
-          // Remove the battle from active battles
-          delete activeBattles[matchId];
+        const battle = activeBattles[matchId];
+        const player = battle.players.find((p) => p.username === username);
+
+        if (player) {
+            player.correctAnswers = correctAnswers;
+
+            // Check if both players have submitted results
+            if (battle.players.every((p) => p.correctAnswers !== undefined)) {
+                const [player1, player2] = battle.players;
+
+                // Determine winner
+                let winner = null;
+                if (player1.correctAnswers > player2.correctAnswers) {
+                    winner = player1.username;
+                } else if (player2.correctAnswers > player1.correctAnswers) {
+                    winner = player2.username;
+                }
+
+                console.log(`Winner: ${winner || 'Draw'}`);
+
+                // Fetch users from DB
+                const user1 = await User.findOne({ username: player1.username });
+                const user2 = await User.findOne({ username: player2.username });
+
+                let winStreak1 = user1?.winStreak || 0;
+                let exp1 = user1?.exp || 0;
+                let elo1 = user1?.elo || 0;
+
+                let winStreak2 = user2?.winStreak || 0;
+                let exp2 = user2?.exp || 0;
+                let elo2 = user2?.elo || 0;
+
+                if (winner === player1.username) {
+                    winStreak1 += 1;
+                    exp1 += 100;
+                    elo1 += 15;
+                    winStreak2 = 0;
+                    exp2 = Math.max(0, exp2 - 100);
+                    elo2 = Math.max(0, elo2 - 15);
+                } else if (winner === player2.username) {
+                    winStreak2 += 1;
+                    exp2 += 100;
+                    elo2 += 15;
+                    winStreak1 = 0;
+                    exp1 = Math.max(0, exp1 - 100);
+                    elo1 = Math.max(0, elo1 - 15);
+                } else { // Draw case
+                    winStreak1 = 0;
+                    winStreak2 = 0;
+                    exp1 = Math.max(0, exp1 - 5);
+                    elo1 = Math.max(0, elo1 - 5);
+                    exp2 = Math.max(0, exp2 - 5);
+                    elo2 = Math.max(0, elo2 - 5);
+                }
+
+                // Update the users in the database
+                await User.updateOne({ username: player1.username }, { winStreak: winStreak1, exp: exp1, elo: elo1 });
+                await User.updateOne({ username: player2.username }, { winStreak: winStreak2, exp: exp2, elo: elo2 });
+
+                console.log(`[ELO UPDATE] ${player1.username}: ${elo1}, ${player2.username}: ${elo2}`);
+
+                // Notify both players
+                battle.players.forEach((p) => {
+                    io.to(p.id).emit('battleEnded', {
+                        message: 'Match finished!',
+                        result: {
+                            winner,
+                            player1: { username: player1.username, elo: elo1, exp: exp1, winStreak: winStreak1 },
+                            player2: { username: player2.username, elo: elo2, exp: exp2, winStreak: winStreak2 },
+                        },
+                    });
+                });
+
+                // Remove from active battles
+                delete activeBattles[matchId];
+            }
         }
-      }
     } else {
-      console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
+        console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
   });
+
   
 
   // Leave matchmaking queue
