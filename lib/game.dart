@@ -1441,6 +1441,7 @@ class BattleScreen extends StatelessWidget {
 }
 
 class SearchingOpponentScreen extends StatefulWidget {
+  final BuildContext context;
   final IO.Socket socket;
   final String username;
   final String language;
@@ -1448,6 +1449,7 @@ class SearchingOpponentScreen extends StatefulWidget {
 
   const SearchingOpponentScreen({
     Key? key,
+    required this.context,
     required this.socket,
     required this.username,
     required this.language,
@@ -1466,7 +1468,7 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       initializeSocket(
-        context,
+        widget.context,
         widget.socket,
         widget.language,
         widget.onBackToMainMenu,
