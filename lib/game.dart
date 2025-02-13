@@ -587,16 +587,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void dispose() {
     _focusNode.dispose();
-    // Remove event listeners explicitly
-    widget.socket.off('connect');
-    widget.socket.off('disconnect');
-    widget.socket.off('battleStart');
-    widget.socket.off('matchFound');
-    widget.socket.off('progressUpdate');
-    widget.socket.off('battleEnded');
-
-    widget.socket.disconnect(); // Properly disconnect socket
-    _isInitialized = false;
+    widget.socket.off('progressUpdate', _onProgressUpdate);
+    widget.socket.off('battleEnded', _onBattleEnded);
     _textInputController.dispose();
     super.dispose();
   }
@@ -1474,15 +1466,12 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   void initState() {
     super.initState();
 
-    if (_isInitialized) {
-      initializeSocket(
-        context,
-        widget.socket,
-        widget.language,
-        widget.onBackToMainMenu,
-      );
-      _isInitialized = true;
-    }
+    initializeSocket(
+      context,
+      widget.socket,
+      widget.language,
+      widget.onBackToMainMenu,
+    );
   }
 
   @override
