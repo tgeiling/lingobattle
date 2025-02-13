@@ -273,7 +273,7 @@ class _GameScreenState extends State<GameScreen> {
                   });
                 },
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                  width: MediaQuery.of(context).size.width * 0.9,
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       double maxWidth = constraints.maxWidth;
@@ -306,7 +306,15 @@ class _GameScreenState extends State<GameScreen> {
                         // Special case for 6 boxes: Adjust to perfectly fit without stretching
                         double totalSpacing =
                             defaultSpacing * 5; // 6 boxes = 5 spacings
-                        boxWidth = (maxWidth - totalSpacing) / 6;
+                        boxWidth = (maxWidth - totalSpacing) / 7;
+                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                        boxHeight = boxWidth * 1.2;
+                        spacing = defaultSpacing;
+                      } else if (totalBoxes == 5) {
+                        // Special case for 5 boxes: Adjust to perfectly fit without stretching
+                        double totalSpacing =
+                            defaultSpacing * 5; // 6 boxes = 5 spacings
+                        boxWidth = (maxWidth - totalSpacing) / 8;
                         boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
                         boxHeight = boxWidth * 1.2;
                         spacing = defaultSpacing;
@@ -946,7 +954,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                             // Special case for 6 boxes: Adjust to perfectly fit without stretching
                             double totalSpacing =
                                 defaultSpacing * 5; // 6 boxes = 5 spacings
-                            boxWidth = (maxWidth - totalSpacing) / 6;
+                            boxWidth = (maxWidth - totalSpacing) / 6.5;
+                            boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                            boxHeight = boxWidth * 1.2;
+                            spacing = defaultSpacing;
+                          } else if (totalBoxes == 5) {
+                            // Special case for 5 boxes: Adjust to perfectly fit without stretching
+                            double totalSpacing =
+                                defaultSpacing * 5; // 6 boxes = 5 spacings
+                            boxWidth = (maxWidth - totalSpacing) / 5;
                             boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
                             boxHeight = boxWidth * 1.2;
                             spacing = defaultSpacing;
