@@ -87,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage>
     });
     Future.microtask(() =>
         Provider.of<ProfileProvider>(context, listen: false).loadPreferences());
+    //Future.microtask(() => Provider.of<LevelNotifier>(context, listen: false).loadLevelsAfterStart());
     WidgetsBinding.instance.addObserver(this);
 
     // Initialize connectivity

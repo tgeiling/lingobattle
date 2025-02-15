@@ -172,39 +172,50 @@ class LevelNotifier with ChangeNotifier {
 
     // Load saved levels data from SharedPreferences
     String? savedData = prefs.getString('language_levels');
+
     if (savedData != null && savedData.isNotEmpty) {
       try {
+        // Check if the JSON is double-encoded (string inside string)
+        if (savedData.startsWith('"') && savedData.endsWith('"')) {
+          savedData = json.decode(savedData); // Decode once if needed
+        }
+
         // Deserialize JSON and populate _languageLevels
-        Map<String, dynamic> jsonData = json.decode(savedData);
+        Map<String, dynamic> jsonData = json.decode(savedData!);
+
         _languageLevels = jsonData.map((lang, levels) {
           return MapEntry(
             lang,
             (levels as Map<String, dynamic>).map((key, value) {
               if (value is Map<String, dynamic>) {
-                // Parse key and create a Level object
-                return MapEntry(
-                  int.parse(key),
-                  Level.fromJson(value),
-                );
+                Level level = Level.fromJson(value);
+
+                // Ensure isDone is correctly set from the JSON data
+                level.isDone = value['isDone'] ?? false;
+
+                return MapEntry(int.parse(key), level);
               } else {
                 throw Exception("Invalid value structure for level data.");
               }
             }),
           );
         });
+
+        print("✅ Successfully loaded levels from SharedPreferences!");
       } catch (e) {
-        print("Error deserializing language levels: $e");
+        print("❌ Error deserializing language levels: $e");
         _initializeDefaultLevels(); // Initialize default levels in case of error
       }
     } else {
       // Initialize default levels if no data is saved
       _initializeDefaultLevels();
+      print("⚠ No saved data found. Initializing default levels.");
     }
 
     notifyListeners();
   }
 
-  Future<void> _saveLanguages() async {
+  Future<void> saveLanguages() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Serialize _languageLevels to JSON and save it
@@ -235,7 +246,7 @@ class LevelNotifier with ChangeNotifier {
     await prefs.setString('language_levels', jsonData);
   }
 
-  Future<void> _saveLanguagesSync() async {
+  Future<void> saveLanguagesSync() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Serialize _languageLevels to JSON and save it
@@ -258,7 +269,7 @@ class LevelNotifier with ChangeNotifier {
     _languageLevels[language]?[levelId]?.isDone = true;
 
     notifyListeners();
-    await _saveLanguages();
+    await saveLanguages();
   }
 
   void updateLanguageLevels(String language, int maxCompletedLevel) {
@@ -269,7 +280,7 @@ class LevelNotifier with ChangeNotifier {
         }
       });
       notifyListeners();
-      _saveLanguages(); // Save changes after updating levels
+      saveLanguages(); // Save changes after updating levels
     } else {
       print("Language $language does not exist in the level data.");
     }

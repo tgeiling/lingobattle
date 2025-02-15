@@ -145,6 +145,7 @@ class _GameScreenState extends State<GameScreen> {
       } else {
         Provider.of<LevelNotifier>(context, listen: false)
             .updateLevelStatus(widget.language, widget.level.id);
+        //Provider.of<LevelNotifier>(context, listen: false).saveLanguages();
         _showCompletionDialog();
       }
     });
