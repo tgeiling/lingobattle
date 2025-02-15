@@ -340,6 +340,45 @@ io.on('connection', (socket) => {
     matchPlayers();
   });
 
+  socket.on('playerLeft', async (data) => {
+    const { matchId, username } = data;
+
+    console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
+
+    if (activeBattles[matchId]) {
+        const battle = activeBattles[matchId];
+        const leavingPlayer = battle.players.find((p) => p.username === username);
+        const remainingPlayer = battle.players.find((p) => p.username !== username);
+
+        if (leavingPlayer && remainingPlayer) {
+            console.log(`[FORFEIT] ${username} forfeited. ${remainingPlayer.username} wins.`);
+
+            // Fetch user data
+            const user = await User.findOne({ username });
+            const remainingUser = await User.findOne({ username: remainingPlayer.username });
+
+            // Penalize the leaving player
+            let newElo = Math.max(0, user.elo - 15);
+            let newExp = Math.max(0, user.exp - 100);
+            await User.updateOne({ username }, { elo: newElo, exp: newExp, winStreak: 0 });
+
+            // Reward the remaining player
+            let newEloWin = remainingUser.elo + 15;
+            let newExpWin = remainingUser.exp + 100;
+            let newWinStreak = remainingUser.winStreak + 1;
+            await User.updateOne({ username: remainingPlayer.username }, { elo: newEloWin, exp: newExpWin, winStreak: newWinStreak });
+
+            io.to(remainingPlayer.id).emit('battleEnded', {
+                message: 'Opponent left. You win!',
+                result: 'playerLeft',
+            });
+
+            delete activeBattles[matchId];
+        }
+    }
+  });
+
+
   // Handle player disconnection
   socket.on('disconnect', async () => {
     console.log(`[DISCONNECTED] User disconnected: ${socket.id}`);

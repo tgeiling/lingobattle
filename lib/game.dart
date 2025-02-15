@@ -587,8 +587,14 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   @override
   void dispose() {
     _focusNode.dispose();
-    widget.socket.off('progressUpdate', _onProgressUpdate);
-    widget.socket.off('battleEnded', _onBattleEnded);
+    widget.socket.off('connect');
+    widget.socket.off('disconnect');
+    widget.socket.off('battleStart');
+    widget.socket.off('matchFound');
+    widget.socket.off('progressUpdate');
+    widget.socket.off('battleEnded');
+
+    widget.socket.disconnect();
     _textInputController.dispose();
     super.dispose();
   }
