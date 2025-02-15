@@ -235,6 +235,13 @@ const matchPlayers = async () => {
     const player1 = matchmakingQueue.shift();
     const player2 = matchmakingQueue.shift();
 
+    // If player1 and player2 are the same user, put player2 back in the queue
+    if (player1.username === player2.username) {
+      console.log(`[ERROR] Player ${player1.username} tried to match with themselves. Re-adding to queue.`);
+      matchmakingQueue.push(player2); // Put player2 back in the queue
+      continue; // Skip this iteration
+    }
+
     clearTimeout(player1.timeout);
     clearTimeout(player2.timeout);
 
@@ -316,7 +323,10 @@ io.on('connection', (socket) => {
   socket.on('joinQueue', (data) => {
     const { username, language } = data;
     console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
-  
+
+    // Remove any existing queue entry for this player before adding them
+    matchmakingQueue = matchmakingQueue.filter((p) => p.username !== username);
+
     // Create a player object with a reference to the timeout
     const player = {
       socket,
@@ -331,14 +341,15 @@ io.on('connection', (socket) => {
         }
       }, MATCH_TIMEOUT),
     };
-  
+
     // Add the player to the matchmaking queue
     matchmakingQueue.push(player);
     console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
-  
+
     // Attempt to match players
     matchPlayers();
   });
+
 
   socket.on('playerLeft', async (data) => {
     const { matchId, username } = data;
@@ -354,29 +365,43 @@ io.on('connection', (socket) => {
             console.log(`[FORFEIT] ${username} forfeited. ${remainingPlayer.username} wins.`);
 
             // Fetch user data
-            const user = await User.findOne({ username });
+            const user = await User.findOne({ username: leavingPlayer.username });
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
-            // Penalize the leaving player
-            let newElo = Math.max(0, user.elo - 15);
-            let newExp = Math.max(0, user.exp - 100);
-            await User.updateOne({ username }, { elo: newElo, exp: newExp, winStreak: 0 });
+            if (user && remainingUser) {
+                // Penalize the leaving player
+                let newElo = Math.max(0, user.elo - 15);
+                let newExp = Math.max(0, user.exp - 100);
+                await User.updateOne({ username: leavingPlayer.username }, { 
+                    elo: newElo, 
+                    exp: newExp, 
+                    winStreak: 0  // Reset win streak for leaver
+                });
 
-            // Reward the remaining player
-            let newEloWin = remainingUser.elo + 15;
-            let newExpWin = remainingUser.exp + 100;
-            let newWinStreak = remainingUser.winStreak + 1;
-            await User.updateOne({ username: remainingPlayer.username }, { elo: newEloWin, exp: newExpWin, winStreak: newWinStreak });
+                // Reward the remaining player
+                let newEloWin = remainingUser.elo + 15;
+                let newExpWin = remainingUser.exp + 100;
+                let newWinStreak = remainingUser.winStreak + 1;
+                await User.updateOne({ username: remainingPlayer.username }, { 
+                    elo: newEloWin, 
+                    exp: newExpWin, 
+                    winStreak: newWinStreak  // Increase win streak
+                });
 
-            io.to(remainingPlayer.id).emit('battleEnded', {
-                message: 'Opponent left. You win!',
-                result: 'playerLeft',
-            });
+                console.log(`[ELO UPDATE] ${leavingPlayer.username} penalized. New ELO: ${newElo}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
 
-            delete activeBattles[matchId];
+                io.to(remainingPlayer.id).emit('battleEnded', {
+                    message: 'Opponent left. You win!',
+                    result: 'playerLeft',
+                });
+
+                delete activeBattles[matchId];
+            }
         }
     }
   });
+
 
 
   // Handle player disconnection
@@ -399,37 +424,52 @@ io.on('connection', (socket) => {
 
             // Fetch user data
             const user = await User.findOne({ username: disconnectedPlayer.username });
+
+            if (!remainingPlayer) {
+                console.log(`[INFO] No remaining player. Removing battle.`);
+                delete activeBattles[battleId];
+                return;
+            }
+
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
-            // Adjust ELO and EXP
-            let newElo = Math.max(0, user.elo - 15);
-            let newExp = Math.max(0, user.exp - 100);
+            if (user && remainingUser) {
+                // Penalize disconnected player
+                let newElo = Math.max(0, user.elo - 15);
+                let newExp = Math.max(0, user.exp - 100);
+                await User.updateOne({ username: disconnectedPlayer.username }, { 
+                    elo: newElo, 
+                    exp: newExp, 
+                    winStreak: 0  // Reset win streak for disconnector
+                });
 
-            // Reset win streak
-            await User.updateOne({ username: disconnectedPlayer.username }, { elo: newElo, exp: newExp, winStreak: 0 });
+                // Reward the remaining player
+                let newEloWin = remainingUser.elo + 15;
+                let newExpWin = remainingUser.exp + 100;
+                let newWinStreak = remainingUser.winStreak + 1;
+                await User.updateOne({ username: remainingPlayer.username }, { 
+                    elo: newEloWin, 
+                    exp: newExpWin, 
+                    winStreak: newWinStreak  // Increase win streak
+                });
 
-            console.log(`[ELO UPDATE] ${disconnectedPlayer.username} penalized for disconnection. New ELO: ${newElo}`);
+                console.log(`[ELO UPDATE] ${disconnectedPlayer.username} penalized. New ELO: ${newElo}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
 
-            // Notify remaining player
-            io.to(remainingPlayer.id).emit('battleEnded', {
-                message: 'Your opponent disconnected. You win!',
-                result: 'opponentDisconnected',
-            });
+                // Notify remaining player
+                io.to(remainingPlayer.id).emit('battleEnded', {
+                    message: 'Your opponent disconnected. You win!',
+                    result: 'opponentDisconnected',
+                });
 
-            // Reward remaining player
-            let newEloWin = remainingUser.elo + 15;
-            let newExpWin = remainingUser.exp + 100;
-            let newWinStreak = remainingUser.winStreak + 1;
-
-            await User.updateOne({ username: remainingPlayer.username }, { elo: newEloWin, exp: newExpWin, winStreak: newWinStreak });
-
-            console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}`);
-
-            // Remove battle from active list
-            delete activeBattles[battleId];
+                // Remove battle from active list
+                delete activeBattles[battleId];
+            }
         }
     }
   });
+
+
 
 
   socket.on('submitAnswer', async (data) => {
