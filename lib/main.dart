@@ -262,34 +262,111 @@ class _MyHomePageState extends State<MyHomePage>
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.grey[200],
+        toolbarHeight: 80,
         title: Consumer<ProfileProvider>(
-            builder: (context, profile, child) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          builder: (context, profile, child) => Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // Username + Streak Pill (Left Side, in Column)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.2),
+                      offset: Offset(2, 2),
+                      blurRadius: 4,
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withOpacity(0.7),
+                      offset: Offset(-2, -2),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Row(
-                      children: <Widget>[
-                        Icon(Icons.stars, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text(profile.username),
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.person,
+                            color: Colors.blueGrey[700], size: 18),
+                        SizedBox(width: 6),
+                        Text(
+                          profile.username,
+                          style: TextStyle(
+                            color: Colors.blueGrey[800],
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ],
                     ),
+                    SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Icon(Icons.stars, color: Colors.yellow),
-                            SizedBox(width: 8),
-                            Text(
-                                'Win Streak: ${profile.winStreak}'), // Updated dynamically
-                          ],
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset('assets/flame.png', width: 25, height: 25),
+                        SizedBox(width: 6),
+                        Text(
+                          'Streak: ${profile.winStreak}',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        Text('EXP: ${profile.exp}'), // Updated dynamically
                       ],
                     ),
                   ],
-                )),
-        backgroundColor: Color.fromRGBO(245, 245, 245, 0.894),
+                ),
+              ),
+
+              // EXP Pill (Right Side, aligned with bottom of left pill)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        offset: Offset(2, 2),
+                        blurRadius: 4,
+                      ),
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.7),
+                        offset: Offset(-2, -2),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Image.asset('assets/crown.png', width: 25, height: 25),
+                      SizedBox(width: 6),
+                      Text(
+                        'EXP: ${profile.exp}',
+                        style: TextStyle(
+                          color: Colors.amber[800],
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
       body: Stack(
         children: [
@@ -374,11 +451,7 @@ class _MyHomePageState extends State<MyHomePage>
             onTap: (i) {
               setState(() {
                 _currentIndex = i;
-                _pageController.animateToPage(
-                  i,
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOut,
-                );
+                _pageController.jumpToPage(i);
               });
             },
             items: [

@@ -214,7 +214,7 @@ class _StartPageState extends State<StartPage> {
               ),
             ),
           ),
-          Positioned(
+          /* Positioned(
             top: 16, // Adjust as needed
             left: 16, // Adjust as needed
             child: GestureDetector(
@@ -253,7 +253,7 @@ class _StartPageState extends State<StartPage> {
                 ],
               ),
             ),
-          ),
+          ), */
           // Main content
           Center(
             child: Column(
@@ -343,9 +343,14 @@ class _StartPageState extends State<StartPage> {
                 ),
                 const SizedBox(height: 20),
                 if (!isLoggedIn)
-                  ElevatedButton(
+                  PressableButton(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 18),
                     onPressed: _navigateToLogin,
-                    child: const Text('Login'),
+                    child: Text(
+                      'Login',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
                   ),
               ],
             ),
