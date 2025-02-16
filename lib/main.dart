@@ -368,53 +368,61 @@ class _MyHomePageState extends State<MyHomePage>
             color: Colors.grey,
           ),
           Expanded(
-            child: SalomonBottomBar(
-              backgroundColor: Colors.grey[100],
-              currentIndex: _currentIndex,
-              onTap: (i) {
-                setState(() {
-                  _currentIndex = i;
-                  _pageController.animateToPage(
-                    i,
-                    duration: Duration(milliseconds: 400),
-                    curve: Curves.easeOut,
-                  );
-                });
-              },
-              items: [
-                SalomonBottomBarItem(
-                  icon: NeumorphicIcon(
-                    CupertinoIcons.home,
-                    size: 40,
-                    style:
-                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                  ),
-                  title: const Text("Play"),
-                  selectedColor: Colors.grey[600],
+              child: SalomonBottomBar(
+            backgroundColor: Colors.grey[200],
+            currentIndex: _currentIndex,
+            onTap: (i) {
+              setState(() {
+                _currentIndex = i;
+                _pageController.animateToPage(
+                  i,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeOut,
+                );
+              });
+            },
+            items: [
+              SalomonBottomBarItem(
+                icon: NeumorphicIcon(
+                  CupertinoIcons.gamecontroller,
+                  size: MediaQuery.of(context).size.width * 0.08,
+                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
                 ),
-                SalomonBottomBarItem(
-                  icon: NeumorphicIcon(
-                    CupertinoIcons.wand_stars_inverse,
-                    size: 40,
-                    style:
-                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                  ),
-                  title: const Text("Level"),
-                  selectedColor: Colors.grey[600],
+                title: Text(
+                  "Multiplayer",
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.035),
                 ),
-                SalomonBottomBarItem(
-                  icon: NeumorphicIcon(
-                    CupertinoIcons.gear,
-                    size: 40,
-                    style:
-                        NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                  ),
-                  title: const Text("Settings"),
-                  selectedColor: Colors.grey[600],
+                selectedColor: Colors.blueGrey[700],
+              ),
+              SalomonBottomBarItem(
+                icon: NeumorphicIcon(
+                  CupertinoIcons.book,
+                  size: MediaQuery.of(context).size.width * 0.08,
+                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
                 ),
-              ],
-            ),
-          ),
+                title: Text(
+                  "Solo Learning",
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.035),
+                ),
+                selectedColor: Colors.blueGrey[700],
+              ),
+              SalomonBottomBarItem(
+                icon: NeumorphicIcon(
+                  CupertinoIcons.person,
+                  size: MediaQuery.of(context).size.width * 0.08,
+                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
+                ),
+                title: Text(
+                  "Profile",
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.035),
+                ),
+                selectedColor: Colors.blueGrey[700],
+              ),
+            ],
+          )),
         ],
       ),
     );
