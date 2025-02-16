@@ -201,9 +201,9 @@ class LevelNotifier with ChangeNotifier {
           );
         });
 
-        print("✅ Successfully loaded levels from SharedPreferences!");
+        print("Successfully loaded levels from SharedPreferences!");
       } catch (e) {
-        print("❌ Error deserializing language levels: $e");
+        print("Error deserializing language levels: $e");
         _initializeDefaultLevels(); // Initialize default levels in case of error
       }
     } else {

@@ -303,10 +303,12 @@ class _MyHomePageState extends State<MyHomePage>
             children: [
               Center(
                   child: StartPage(
-                      isLoggedIn: isLoggedIn,
-                      //onBackToMainMenu: triggerAnimation,
-                      onBackToMainMenu: triggerAnimation,
-                      setAuthenticated: _setAuthenticated)),
+                isLoggedIn: isLoggedIn,
+                //onBackToMainMenu: triggerAnimation,
+                onBackToMainMenu: triggerAnimation,
+                setAuthenticated: _setAuthenticated,
+                isAuthenticated: isAuthenticated,
+              )),
               Center(child: LevelSelectionScreen()),
               SettingsPage(
                 setAuthenticated: _setAuthenticated,

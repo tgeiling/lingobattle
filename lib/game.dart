@@ -1472,7 +1472,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   @override
   void initState() {
     super.initState();
-
     initializeSocket(
       context,
       widget.socket,
@@ -1482,51 +1481,75 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
   }
 
   @override
-  void dispose() {
-    super.dispose();
-  }
-
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Error'),
-          content: Text(message),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Searching for Opponent...")),
+      backgroundColor: Colors.grey[400],
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 20),
-            const Text(
-              'Searching for an opponent...',
-              style: TextStyle(fontSize: 18),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.5,
+              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 15),
+              decoration: BoxDecoration(
+                color: Colors.grey[500],
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    offset: const Offset(5, 5),
+                    blurRadius: 12,
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withOpacity(0.1),
+                    offset: const Offset(-5, -5),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const SpinKitWave(
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Finding an opponent...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 40),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                widget.socket.emit('leaveQueue'); // Leave the queue
+                widget.socket.emit('leaveQueue');
               },
-              child: const Text("Cancel Search"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[700],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                elevation: 8,
+                shadowColor: Colors.black,
+              ),
+              child: const Text(
+                "Cancel",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),

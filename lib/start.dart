@@ -14,12 +14,14 @@ class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
   final VoidCallback onBackToMainMenu;
   final Function(bool) setAuthenticated;
+  final bool Function() isAuthenticated;
 
   const StartPage({
     Key? key,
     required this.isLoggedIn,
     required this.onBackToMainMenu,
     required this.setAuthenticated,
+    required this.isAuthenticated,
   }) : super(key: key);
 
   @override
@@ -166,52 +168,52 @@ class _StartPageState extends State<StartPage> {
       body: Stack(
         children: [
           // Top-right "View History" button
-          if (isLoggedIn)
-            Positioned(
-              top: 16, // Adjust as needed
-              right: 16, // Adjust as needed
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          MatchHistoryScreen(username: profilProvider.username),
+
+          Positioned(
+            top: 16, // Adjust as needed
+            right: 16, // Adjust as needed
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        MatchHistoryScreen(username: profilProvider.username),
+                  ),
+                );
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.8,
+                      shape: NeumorphicShape.concave,
+                      boxShape: NeumorphicBoxShape.circle(),
                     ),
-                  );
-                },
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Neumorphic(
-                      style: NeumorphicStyle(
-                        depth: 4,
-                        intensity: 0.8,
-                        shape: NeumorphicShape.concave,
-                        boxShape: NeumorphicBoxShape.circle(),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Icon(
-                          Icons.history, // History icon
-                          size: 32,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'View History',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[800],
-                        fontWeight: FontWeight.bold,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Icon(
+                        Icons.history, // History icon
+                        size: 32,
+                        color: Colors.grey[700],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'View History',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
           Positioned(
             top: 16, // Adjust as needed
             left: 16, // Adjust as needed
