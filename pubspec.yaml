@@ -22,6 +22,8 @@ dependencies:
   socket_io_client: ^2.0.3+1
   flutter_neumorphic: ^3.2.0
   google_fonts: ^6.2.1
+  audioplayers: ^6.1.2
+  
 
 dev_dependencies:
   flutter_test:
@@ -46,4 +48,6 @@ flutter:
     - assets/button_locked.png
     - assets/crown.png
     - assets/flame.png
+    - assets/correct.mp3
+    - assets/wrong.mp3
 

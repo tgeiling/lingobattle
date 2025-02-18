@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -133,9 +134,11 @@ class _GameScreenState extends State<GameScreen> {
       if (acceptableAnswers
           .any((answer) => answer.toLowerCase() == userAnswer)) {
         questionResults[currentQuestionIndex] = "correct";
+        _triggerResultAnimation(true);
         correctAnswers++;
       } else {
         questionResults[currentQuestionIndex] = "incorrect";
+        _triggerResultAnimation(false);
       }
 
       if (currentQuestionIndex < questions.length - 1) {
@@ -169,6 +172,41 @@ class _GameScreenState extends State<GameScreen> {
         ],
       ),
     );
+  }
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  String? _statusText; // "Correct!" or "Wrong!"
+  bool _showStatus = false; // Controls visibility of the animation
+  double _statusPosition = 0.0; // Controls animation position
+
+  void _triggerResultAnimation(bool isCorrect) {
+    setState(() {
+      _statusText = isCorrect ? "Correct!" : "Wrong!";
+      _showStatus = true;
+      _statusPosition = 0.0;
+    });
+
+    // Play sound effect
+    _playSound(isCorrect);
+
+    // Start animation
+    Future.delayed(Duration(milliseconds: 50), () {
+      setState(() {
+        _statusPosition = -500; // Moves text up
+      });
+    });
+
+    // Fade out after animation
+    Future.delayed(Duration(milliseconds: 1300), () {
+      setState(() {
+        _showStatus = false;
+      });
+    });
+  }
+
+  void _playSound(bool isCorrect) async {
+    String soundPath = isCorrect ? "correct.mp3" : "wrong.mp3";
+    await _audioPlayer.play(AssetSource(soundPath));
   }
 
   @override
@@ -234,154 +272,194 @@ class _GameScreenState extends State<GameScreen> {
           ],
         ),
         resizeToAvoidBottomInset: true,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 15),
-              Neumorphic(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-                style: NeumorphicStyle(
-                  shape: NeumorphicShape.concave, // Inward shadow effect
-                  boxShape: NeumorphicBoxShape.roundRect(
-                    BorderRadius.circular(16),
+        body: Stack(children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: 15),
+                Neumorphic(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                  style: NeumorphicStyle(
+                    shape: NeumorphicShape.concave, // Inward shadow effect
+                    boxShape: NeumorphicBoxShape.roundRect(
+                      BorderRadius.circular(16),
+                    ),
+                    depth: -4, // Negative depth for a concave look
+                    lightSource: LightSource.topRight, // Light source direction
+                    color: Colors.grey[200], // Subtle background color
                   ),
-                  depth: -4, // Negative depth for a concave look
-                  lightSource: LightSource.topRight, // Light source direction
-                  color: Colors.grey[200], // Subtle background color
-                ),
-                child: Container(
-                  width:
-                      MediaQuery.of(context).size.width * 0.75, // Dynamic width
-                  child: Wrap(
-                    alignment: WrapAlignment.center,
-                    children:
-                        _buildSentenceWithGap(questions[currentQuestionIndex]),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width *
+                        0.75, // Dynamic width
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      children: _buildSentenceWithGap(
+                          questions[currentQuestionIndex]),
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(height: 20),
-              if (questions[currentQuestionIndex].answers.length > 1)
-                Text(
-                    "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
-              GestureDetector(
-                onTap: () {
-                  if (!_focusNode.hasFocus) {
-                    _focusNode.requestFocus();
-                  }
-                  Future.delayed(Duration.zero, () {
-                    _textInputController.selection = TextSelection.collapsed(
-                      offset: _textInputController.text.length,
-                    );
-                  });
-                },
-                child: Container(
-                  width: MediaQuery.of(context).size.width * 0.9,
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      double maxWidth = constraints.maxWidth;
+                SizedBox(height: 20),
+                if (questions[currentQuestionIndex].answers.length > 1)
+                  Text(
+                      "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
+                GestureDetector(
+                  onTap: () {
+                    if (!_focusNode.hasFocus) {
+                      _focusNode.requestFocus();
+                    }
+                    Future.delayed(Duration.zero, () {
+                      _textInputController.selection = TextSelection.collapsed(
+                        offset: _textInputController.text.length,
+                      );
+                    });
+                  },
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.9,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double maxWidth = constraints.maxWidth;
 
-                      // Define base dimensions
-                      const double maxBoxWidth = 55; // Default box width
-                      const double maxBoxHeight = 65; // Default box height
-                      const double minBoxWidth = 25; // Minimum box width
-                      const double minBoxHeight = 35; // Minimum box height
-                      const double defaultSpacing =
-                          12; // Normal spacing between boxes
+                        // Define base dimensions
+                        const double maxBoxWidth = 55; // Default box width
+                        const double maxBoxHeight = 65; // Default box height
+                        const double minBoxWidth = 25; // Minimum box width
+                        const double minBoxHeight = 35; // Minimum box height
+                        const double defaultSpacing =
+                            12; // Normal spacing between boxes
 
-                      // Total number of boxes
-                      int totalBoxes = _letterBoxes.length;
+                        // Total number of boxes
+                        int totalBoxes = _letterBoxes.length;
 
-                      // Initialize box size and spacing
-                      double boxWidth = maxBoxWidth;
-                      double boxHeight = maxBoxHeight;
-                      double spacing = defaultSpacing;
+                        // Initialize box size and spacing
+                        double boxWidth = maxBoxWidth;
+                        double boxHeight = maxBoxHeight;
+                        double spacing = defaultSpacing;
 
-                      // Handle dynamic resizing when boxes > 6
-                      if (totalBoxes > 6) {
-                        double totalSpacing = defaultSpacing * (totalBoxes - 1);
-                        boxWidth = (maxWidth - totalSpacing) / totalBoxes;
-                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
-                        boxHeight = boxWidth * 1.2;
-                        spacing = (maxWidth - (boxWidth * totalBoxes)) /
-                            (totalBoxes - 1);
-                      } else if (totalBoxes == 6) {
-                        // Special case for 6 boxes: Adjust to perfectly fit without stretching
-                        double totalSpacing =
-                            defaultSpacing * 5; // 6 boxes = 5 spacings
-                        boxWidth = (maxWidth - totalSpacing) / 7;
-                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
-                        boxHeight = boxWidth * 1.2;
-                        spacing = defaultSpacing;
-                      } else if (totalBoxes == 5) {
-                        // Special case for 5 boxes: Adjust to perfectly fit without stretching
-                        double totalSpacing =
-                            defaultSpacing * 5; // 6 boxes = 5 spacings
-                        boxWidth = (maxWidth - totalSpacing) / 8;
-                        boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
-                        boxHeight = boxWidth * 1.2;
-                        spacing = defaultSpacing;
-                      }
+                        // Handle dynamic resizing when boxes > 6
+                        if (totalBoxes > 6) {
+                          double totalSpacing =
+                              defaultSpacing * (totalBoxes - 1);
+                          boxWidth = (maxWidth - totalSpacing) / totalBoxes;
+                          boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                          boxHeight = boxWidth * 1.2;
+                          spacing = (maxWidth - (boxWidth * totalBoxes)) /
+                              (totalBoxes - 1);
+                        } else if (totalBoxes == 6) {
+                          // Special case for 6 boxes: Adjust to perfectly fit without stretching
+                          double totalSpacing =
+                              defaultSpacing * 5; // 6 boxes = 5 spacings
+                          boxWidth = (maxWidth - totalSpacing) / 7;
+                          boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                          boxHeight = boxWidth * 1.2;
+                          spacing = defaultSpacing;
+                        } else if (totalBoxes == 5) {
+                          // Special case for 5 boxes: Adjust to perfectly fit without stretching
+                          double totalSpacing =
+                              defaultSpacing * 5; // 6 boxes = 5 spacings
+                          boxWidth = (maxWidth - totalSpacing) / 8;
+                          boxWidth = boxWidth.clamp(minBoxWidth, maxBoxWidth);
+                          boxHeight = boxWidth * 1.2;
+                          spacing = defaultSpacing;
+                        }
 
-                      // Generate the letter boxes
-                      List<Widget> letterBoxes = List.generate(
-                        _letterBoxes.length,
-                        (index) => Neumorphic(
-                          style: NeumorphicStyle(
-                            depth: -2,
-                            boxShape: NeumorphicBoxShape.roundRect(
-                              BorderRadius.circular(4),
+                        // Generate the letter boxes
+                        List<Widget> letterBoxes = List.generate(
+                          _letterBoxes.length,
+                          (index) => Neumorphic(
+                            style: NeumorphicStyle(
+                              depth: -2,
+                              boxShape: NeumorphicBoxShape.roundRect(
+                                BorderRadius.circular(4),
+                              ),
                             ),
-                          ),
-                          child: SizedBox(
-                            width: boxWidth,
-                            height: boxHeight,
-                            child: Center(
-                              child: Text(
-                                _letterBoxes[index],
-                                style: GoogleFonts.pressStart2p(
-                                  fontSize: boxWidth * 0.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey[800],
+                            child: SizedBox(
+                              width: boxWidth,
+                              height: boxHeight,
+                              child: Center(
+                                child: Text(
+                                  _letterBoxes[index],
+                                  style: GoogleFonts.pressStart2p(
+                                    fontSize: boxWidth * 0.5,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[800],
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      );
+                        );
 
-                      // Single row with dynamic scaling and centering
-                      return Row(
-                        mainAxisAlignment:
-                            MainAxisAlignment.center, // Center align the row
-                        children: [
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            spacing: spacing,
-                            children: letterBoxes,
-                          ),
-                        ],
-                      );
-                    },
+                        // Single row with dynamic scaling and centering
+                        return Row(
+                          mainAxisAlignment:
+                              MainAxisAlignment.center, // Center align the row
+                          children: [
+                            Wrap(
+                              alignment: WrapAlignment.center,
+                              spacing: spacing,
+                              children: letterBoxes,
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              Opacity(
-                opacity: 0,
-                child: TextField(
-                  controller: _textInputController,
-                  focusNode: _focusNode, // Attach the focus node here
-                  onChanged: _handleInput,
-                  autofocus: true,
+                Opacity(
+                  opacity: 0,
+                  child: TextField(
+                    controller: _textInputController,
+                    focusNode: _focusNode, // Attach the focus node here
+                    onChanged: _handleInput,
+                    autofocus: true,
+                  ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Placeholder for Back button when it's not visible
-                  if (currentWordIndex > 0)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Placeholder for Back button when it's not visible
+                    if (currentWordIndex > 0)
+                      NeumorphicButton(
+                        onPressed: _previousWord,
+                        style: NeumorphicStyle(
+                          depth: 4,
+                          intensity: 0.8,
+                          shape: NeumorphicShape.convex,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12),
+                          ),
+                          color: Colors.grey[200],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.arrow_back,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              "Back to Last Word",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: Colors.black,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width:
+                            160, // Match the width of the "Back to Last Word" button
+                      ),
+                    const SizedBox(width: 16), // Space between buttons
                     NeumorphicButton(
-                      onPressed: _previousWord,
+                      onPressed: _nextWord,
                       style: NeumorphicStyle(
                         depth: 4,
                         intensity: 0.8,
@@ -394,81 +472,80 @@ class _GameScreenState extends State<GameScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 12),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.arrow_back,
-                            color: Colors.grey,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          const Text(
-                            "Back to Last Word",
-                            style: TextStyle(
+                          Text(
+                            currentWordIndex <
+                                    questions[currentQuestionIndex]
+                                            .answers
+                                            .length -
+                                        1
+                                ? "Next Word"
+                                : "Submit Answer",
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 14,
                               color: Colors.black,
                             ),
                           ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            currentWordIndex <
+                                    questions[currentQuestionIndex]
+                                            .answers
+                                            .length -
+                                        1
+                                ? Icons.arrow_forward
+                                : Icons.check,
+                            color: Colors.grey,
+                            size: 20,
+                          ),
                         ],
                       ),
-                    )
-                  else
-                    SizedBox(
-                      width:
-                          160, // Match the width of the "Back to Last Word" button
                     ),
-                  const SizedBox(width: 16), // Space between buttons
-                  NeumorphicButton(
-                    onPressed: _nextWord,
-                    style: NeumorphicStyle(
-                      depth: 4,
-                      intensity: 0.8,
-                      shape: NeumorphicShape.convex,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                        BorderRadius.circular(12),
-                      ),
-                      color: Colors.grey[200],
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          currentWordIndex <
-                                  questions[currentQuestionIndex]
-                                          .answers
-                                          .length -
-                                      1
-                              ? "Next Word"
-                              : "Submit Answer",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                            color: Colors.black,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          currentWordIndex <
-                                  questions[currentQuestionIndex]
-                                          .answers
-                                          .length -
-                                      1
-                              ? Icons.arrow_forward
-                              : Icons.check,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 50)
-            ],
+                  ],
+                ),
+                SizedBox(height: 50),
+              ],
+            ),
           ),
-        ));
+          if (_showStatus)
+            Positioned(
+              top: MediaQuery.of(context).size.height / 2 - 300,
+              left: MediaQuery.of(context).size.width / 2 - 80, // Centered
+              child: TweenAnimationBuilder(
+                tween: Tween<double>(begin: 0.5, end: 1.2), // Bounce effect
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut, // Nice bounce
+                builder: (context, scale, child) {
+                  return AnimatedOpacity(
+                    opacity: _showStatus ? 1 : 0, // Fade in and out
+                    duration: const Duration(milliseconds: 800),
+                    child: Transform.scale(
+                      scale: scale,
+                      child: Text(
+                        _statusText!,
+                        style: TextStyle(
+                          fontSize: 48, // Bigger for better impact
+                          fontWeight: FontWeight.bold,
+                          color: _statusText == "Correct!"
+                              ? Colors.greenAccent
+                              : Colors.redAccent,
+                          shadows: [
+                            Shadow(
+                              blurRadius: 10,
+                              color: Colors.black.withOpacity(0.3),
+                              offset: Offset(3, 3),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ]));
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
