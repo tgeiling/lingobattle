@@ -786,6 +786,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
       correctAnswers =
           questionResults.where((result) => result == "correct").length;
+      _triggerResultAnimation(isCorrect);
 
       // Emit the answer progress to the server
       widget.socket.emit('submitAnswer', {
