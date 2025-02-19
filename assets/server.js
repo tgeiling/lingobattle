@@ -56,6 +56,15 @@ const MatchResultSchema = new mongoose.Schema({
 });
 
 const MatchResult = mongoose.model('MatchResult', MatchResultSchema);
+
+const QuestionSchema = new mongoose.Schema({
+  language: { type: String, required: true },
+  question: { type: String, required: true },
+  answers: { type: [String], required: true }
+});
+
+module.exports = mongoose.model('Question', QuestionSchema);
+
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lingobattle_secret';
 
@@ -235,40 +244,46 @@ const matchPlayers = async () => {
     const player1 = matchmakingQueue.shift();
     const player2 = matchmakingQueue.shift();
 
-    // If player1 and player2 are the same user, put player2 back in the queue
     if (player1.username === player2.username) {
-      console.log(`[ERROR] Player ${player1.username} tried to match with themselves. Re-adding to queue.`);
-      matchmakingQueue.push(player2); // Put player2 back in the queue
-      continue; // Skip this iteration
+      console.log(`[ERROR] Player ${player1.username} tried to match with themselves.`);
+      matchmakingQueue.push(player2);
+      continue;
     }
 
     clearTimeout(player1.timeout);
     clearTimeout(player2.timeout);
 
-    // Fetch ELO for both players from MongoDB
+    // Fetch ELO ratings from MongoDB
     const user1 = await User.findOne({ username: player1.username });
     const user2 = await User.findOne({ username: player2.username });
 
     const elo1 = user1 ? user1.elo : 0;
     const elo2 = user2 ? user2.elo : 0;
 
-    console.log("qweqweqweqwe");
-    console.log("ELO1: " + elo1);
-    console.log("ELO1: " + elo2);
-    console.log("qweqweqweqwe");
-
     const battleId = `${player1.socket.id}-${player2.socket.id}`;
+
+    // **Fetch 5 random questions for the selected language**
+    let questions = await Question.aggregate([
+      { $match: { language: player1.language } }, // Filter by language
+      { $sample: { size: 5 } } // Pick 5 random questions
+    ]);
+
+    if (!questions.length) {
+      console.log(`[ERROR] No questions found for language ${player1.language}`);
+      continue;
+    }
+
+    // **Save match details including questions**
     activeBattles[battleId] = {
       players: [
         { id: player1.socket.id, username: player1.username, elo: elo1 },
         { id: player2.socket.id, username: player2.username, elo: elo2 },
       ],
       status: 'active',
+      questions, // Store questions inside the battle object
     };
 
     console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
-    console.log(`    Player 1: ${player1.username} (ELO: ${elo1})`);
-    console.log(`    Player 2: ${player2.username} (ELO: ${elo2})`);
 
     try {
       const matchResult = await MatchResult.findOneAndUpdate(
@@ -280,24 +295,26 @@ const matchPlayers = async () => {
               { username: player2.username, progress: Array(5).fill('unanswered'), correctAnswers: 0 },
             ],
             language: player1.language,
+            questions, // Save questions to DB
           },
         },
         { upsert: true, new: true }
       );
 
-      console.log(`[MATCH CREATED] Saved match result to database for matchId: ${battleId}`);
+      console.log(`[MATCH CREATED] Saved match result to database.`);
     } catch (err) {
       console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
     }
 
-    // Emit battleStart event to both players **with ELO included**
+    // **Emit `battleStart` event with questions**
     io.to(player1.socket.id).emit('battleStart', {
       username: player1.username,
       matchId: battleId,
       opponentUsername: player2.username,
       language: player1.language,
-      elo: elo1, // Added ELO
-      opponentElo: elo2, // Added ELO
+      elo: elo1,
+      opponentElo: elo2,
+      questions, // Send questions
     });
 
     io.to(player2.socket.id).emit('battleStart', {
@@ -305,13 +322,15 @@ const matchPlayers = async () => {
       matchId: battleId,
       opponentUsername: player1.username,
       language: player2.language,
-      elo: elo2, // Added ELO
-      opponentElo: elo1, // Added ELO
+      elo: elo2,
+      opponentElo: elo1,
+      questions, // Send questions
     });
 
-    console.log(`[BATTLE STARTED] Battle ID: ${battleId} with ELO ratings`);
+    console.log(`[BATTLE STARTED] Sent questions to both players.`);
   }
 };
+
 
 
 

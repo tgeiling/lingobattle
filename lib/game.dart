@@ -579,16 +579,18 @@ class MultiplayerGameScreen extends StatefulWidget {
   final String matchId;
   final String language;
   final VoidCallback onBackToMainMenu;
+  final List<MultiplayerQuestion> questions;
 
-  const MultiplayerGameScreen(
-      {Key? key,
-      required this.socket,
-      required this.username,
-      required this.opponentUsername,
-      required this.matchId,
-      required this.language,
-      required this.onBackToMainMenu})
-      : super(key: key);
+  const MultiplayerGameScreen({
+    Key? key,
+    required this.socket,
+    required this.username,
+    required this.opponentUsername,
+    required this.matchId,
+    required this.language,
+    required this.onBackToMainMenu,
+    required this.questions,
+  }) : super(key: key);
 
   @override
   _MultiplayerGameScreenState createState() => _MultiplayerGameScreenState();
@@ -616,12 +618,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     List<MultiplayerQuestion> questionPool =
         MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
 
-    int seed = widget.matchId.hashCode;
-
-    Random random = Random(seed);
-
-    questionPool.shuffle(random);
-    questions = questionPool.take(5).toList();
+    questions = widget.questions;
     questionResults = List<String>.filled(questions.length, "unanswered");
     opponentProgress = List<String>.filled(questions.length, "unanswered");
     _textInputController = TextEditingController();
@@ -1518,8 +1515,11 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
     );
   }); */
 
-  // Listen for battleStart event
   socket.on('battleStart', (data) {
+    List<MultiplayerQuestion> questions = (data['questions'] as List)
+        .map((q) => MultiplayerQuestion.fromJson(q))
+        .toList();
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1538,6 +1538,7 @@ void initializeSocket(BuildContext context, IO.Socket socket, String language,
                   matchId: data['matchId'],
                   language: data['language'],
                   socket: socket,
+                  questions: questions, // Pass the questions here
                   onBackToMainMenu: onBackToMainMenu,
                 ),
               ),
