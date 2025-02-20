@@ -41,6 +41,8 @@ class _GameScreenState extends State<GameScreen> {
   late List<String> _letterBoxes;
   late List<String?> _currentSentenceInputs;
   late FocusNode _focusNode;
+  late Timer _timer = Timer(Duration.zero, () {});
+  double _progress = 1.0;
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class _GameScreenState extends State<GameScreen> {
     _textInputController = TextEditingController();
 
     _initializeWordHandling();
+    _startTimer();
 
     _focusNode = FocusNode();
   }
@@ -85,6 +88,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    _timer.cancel();
     _focusNode.dispose();
     _textInputController.dispose();
     super.dispose();
@@ -145,12 +149,32 @@ class _GameScreenState extends State<GameScreen> {
         currentQuestionIndex++;
         currentWordIndex = 0;
         _initializeWordHandling();
+        _startTimer();
       } else {
         Provider.of<LevelNotifier>(context, listen: false)
             .updateLevelStatus(widget.language, widget.level.id);
         //Provider.of<LevelNotifier>(context, listen: false).saveLanguages();
         _showCompletionDialog();
       }
+    });
+  }
+
+  void _startTimer() {
+    _timer.cancel();
+    _progress = 1.0;
+    const int totalSeconds = 90;
+    int elapsedSeconds = 0;
+
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        elapsedSeconds++;
+        _progress = 1.0 - (elapsedSeconds / totalSeconds);
+
+        if (elapsedSeconds >= totalSeconds) {
+          _timer.cancel();
+          _submitAnswer(); // Auto-submit answer after 60 seconds
+        }
+      });
     });
   }
 
@@ -264,6 +288,12 @@ class _GameScreenState extends State<GameScreen> {
         ),
         resizeToAvoidBottomInset: true,
         body: Stack(children: [
+          LinearProgressIndicator(
+            value: _progress,
+            backgroundColor: Colors.grey[300],
+            color: Colors.red, // Change color to indicate urgency
+            minHeight: 5, // Thin line
+          ),
           SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -607,6 +637,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   late List<String> _letterBoxes;
   late List<String?> _currentSentenceInputs;
   late FocusNode _focusNode;
+  late Timer _timer = Timer(Duration.zero, () {});
+  double _progress = 1.0;
 
   @override
   void initState() {
@@ -652,6 +684,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   void dispose() {
+    _timer.cancel();
     _focusNode.dispose();
     widget.socket.off('connect');
     widget.socket.off('disconnect');
@@ -796,12 +829,32 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       // Reset UI for the next question or end the game
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
-        currentWordIndex = 0; // Reset to the first word
-        _textInputController.clear(); // Clear input
-        _initializeWordHandling(); // Reset sentence inputs and boxes
+        currentWordIndex = 0;
+        _textInputController.clear();
+        _initializeWordHandling();
+        _startTimer();
       } else {
-        _sendResultsToServer(); // End the game and send results
+        _sendResultsToServer();
       }
+    });
+  }
+
+  void _startTimer() {
+    _timer.cancel();
+    _progress = 1.0;
+    const int totalSeconds = 90;
+    int elapsedSeconds = 0;
+
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        elapsedSeconds++;
+        _progress = 1.0 - (elapsedSeconds / totalSeconds);
+
+        if (elapsedSeconds >= totalSeconds) {
+          _timer.cancel();
+          submitAnswer();
+        }
+      });
     });
   }
 
@@ -820,6 +873,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   bool _showStatus = false; // Controls visibility of the animation
 
   void _triggerResultAnimation(bool isCorrect) {
+    if (!mounted) return;
+
     setState(() {
       _statusText = isCorrect ? "Correct!" : "Wrong!";
       _showStatus = true;
@@ -978,6 +1033,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             ),
             resizeToAvoidBottomInset: true,
             body: Stack(children: [
+              LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: Colors.grey[300],
+                color: Colors.red, // Change color to indicate urgency
+                minHeight: 5, // Thin line
+              ),
               SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,

@@ -63,7 +63,8 @@ const QuestionSchema = new mongoose.Schema({
   answers: { type: [String], required: true }
 });
 
-module.exports = mongoose.model('Question', QuestionSchema);
+const Question = mongoose.model('Question', QuestionSchema);
+module.exports = { User, MatchResult, Question };
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'lingobattle_secret';
