@@ -7,13 +7,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lingobattle/services.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:google_fonts/google_fonts.dart';
 
 import 'level.dart';
 import 'provider.dart';
-import 'questionpool.dart';
+import 'multiplayerquestion.dart';
 
 bool _isInitialized = false;
 
@@ -531,39 +532,31 @@ class _GameScreenState extends State<GameScreen> {
             ),
           ),
           if (_showStatus)
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2 - 300,
-              left: MediaQuery.of(context).size.width / 2 - 80, // Centered
-              child: TweenAnimationBuilder(
-                tween: Tween<double>(begin: 0.5, end: 1.2), // Bounce effect
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.elasticOut, // Nice bounce
-                builder: (context, scale, child) {
-                  return AnimatedOpacity(
-                    opacity: _showStatus ? 1 : 0, // Fade in and out
-                    duration: const Duration(milliseconds: 800),
-                    child: Transform.scale(
-                      scale: scale,
-                      child: Text(
-                        _statusText!,
-                        style: TextStyle(
-                          fontSize: 48, // Bigger for better impact
-                          fontWeight: FontWeight.bold,
-                          color: _statusText == "Correct!"
-                              ? Colors.greenAccent
-                              : Colors.redAccent,
-                          shadows: [
-                            Shadow(
-                              blurRadius: 10,
-                              color: Colors.black.withOpacity(0.3),
-                              offset: Offset(3, 3),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+            Align(
+              alignment:
+                  Alignment.topCenter, // Ensures it's centered horizontally
+              child: Transform.translate(
+                offset: _statusText == "Correct!"
+                    ? Offset(0, 0)
+                    : Offset(0,
+                        100), // Moves it down from the top (adjust as needed)
+                child: AnimatedOpacity(
+                  opacity: _showStatus ? 1 : 0,
+                  duration: const Duration(milliseconds: 800),
+                  child: Lottie.asset(
+                    _statusText == "Correct!"
+                        ? 'assets/correct.json'
+                        : 'assets/wrong.json',
+                    repeat: false,
+                    onLoaded: (composition) {
+                      Future.delayed(Duration(milliseconds: 1300), () {
+                        setState(() {
+                          _showStatus = false;
+                        });
+                      });
+                    },
+                  ),
+                ),
               ),
             ),
         ]));
@@ -645,10 +638,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     super.initState();
     _textInputController = TextEditingController();
     _focusNode = FocusNode();
-
-    // Fetch the question pool for the selected language
-    List<MultiplayerQuestion> questionPool =
-        MultiplayerQuestionsPool.questionsByLanguage[widget.language]!;
 
     questions = widget.questions;
     questionResults = List<String>.filled(questions.length, "unanswered");
@@ -1285,39 +1274,31 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ),
               ),
               if (_showStatus)
-                Positioned(
-                  top: MediaQuery.of(context).size.height / 2 - 300,
-                  left: MediaQuery.of(context).size.width / 2 - 80, // Centered
-                  child: TweenAnimationBuilder(
-                    tween: Tween<double>(begin: 0.5, end: 1.2), // Bounce effect
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.elasticOut, // Nice bounce
-                    builder: (context, scale, child) {
-                      return AnimatedOpacity(
-                        opacity: _showStatus ? 1 : 0, // Fade in and out
-                        duration: const Duration(milliseconds: 800),
-                        child: Transform.scale(
-                          scale: scale,
-                          child: Text(
-                            _statusText!,
-                            style: TextStyle(
-                              fontSize: 48, // Bigger for better impact
-                              fontWeight: FontWeight.bold,
-                              color: _statusText == "Correct!"
-                                  ? Colors.greenAccent
-                                  : Colors.redAccent,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 10,
-                                  color: Colors.black.withOpacity(0.3),
-                                  offset: Offset(3, 3),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                Align(
+                  alignment:
+                      Alignment.topCenter, // Ensures it's centered horizontally
+                  child: Transform.translate(
+                    offset: _statusText == "Correct!"
+                        ? Offset(0, 0)
+                        : Offset(0,
+                            100), // Moves it down from the top (adjust as needed)
+                    child: AnimatedOpacity(
+                      opacity: _showStatus ? 1 : 0,
+                      duration: const Duration(milliseconds: 800),
+                      child: Lottie.asset(
+                        _statusText == "Correct!"
+                            ? 'assets/correct.json'
+                            : 'assets/wrong.json',
+                        repeat: false,
+                        onLoaded: (composition) {
+                          Future.delayed(Duration(milliseconds: 1300), () {
+                            setState(() {
+                              _showStatus = false;
+                            });
+                          });
+                        },
+                      ),
+                    ),
                   ),
                 ),
             ])));

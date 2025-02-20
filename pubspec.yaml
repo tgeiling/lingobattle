@@ -23,6 +23,7 @@ dependencies:
   flutter_neumorphic: ^3.2.0
   google_fonts: ^6.2.1
   audioplayers: ^6.1.2
+  lottie: ^3.2.0
   
 
 dev_dependencies:
@@ -50,4 +51,6 @@ flutter:
     - assets/flame.png
     - assets/correct.mp3
     - assets/wrong.mp3
+    - assets/correct.json
+    - assets/wrong.json
 
