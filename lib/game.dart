@@ -656,6 +656,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     _textInputController = TextEditingController();
 
     _initializeWordHandling();
+    _startTimer();
 
     _focusNode = FocusNode();
 
@@ -842,7 +843,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   void _startTimer() {
     _timer.cancel();
     _progress = 1.0;
-    const int totalSeconds = 90;
+    const int totalSeconds = 60;
     int elapsedSeconds = 0;
 
     _timer = Timer.periodic(Duration(seconds: 1), (timer) {
