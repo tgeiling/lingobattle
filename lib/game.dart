@@ -6,7 +6,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:lingobattle/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -15,6 +14,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'level.dart';
 import 'provider.dart';
 import 'multiplayerquestion.dart';
+import 'elements.dart';
+import 'services.dart';
 
 bool _isInitialized = false;
 
@@ -1407,127 +1408,138 @@ class MultiplayerResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Safely access data
     final player1 = results['player1'] ?? {};
     final player2 = results['player2'] ?? {};
     final winner = results['winner'] ?? "Draw";
     final message = results['message'] ?? "Match concluded";
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Match Results")),
+      backgroundColor: Colors.grey[200],
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Display the result message
-            Text(
-              message,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Neumorphic(
+            padding: const EdgeInsets.all(24),
+            style: NeumorphicStyle(
+              shape: NeumorphicShape.concave,
+              boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+              depth: 8,
+              lightSource: LightSource.topLeft,
+              color: Colors.grey[200],
             ),
-            const SizedBox(height: 20),
-
-            // Winner Information
-            Text(
-              "Winner: ${winner}",
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Progress Visualization for both players
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // Player 1 progress
-                Column(
-                  children: [
-                    Text(
-                      "Player 1: ${player1['username'] ?? 'Unknown'}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      children: List.generate(
-                        (player1['progress'] ?? []).length,
-                        (index) => Icon(
-                          Icons.circle,
-                          color: player1['progress'][index] == "correct"
-                              ? Colors.green
-                              : player1['progress'][index] == "wrong"
-                                  ? Colors.red
-                                  : Colors.black,
-                          size: 16,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Score: ${player1['correctAnswers'] ?? 0}",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
+                NeumorphicText(
+                  message,
+                  style: NeumorphicStyle(
+                    depth: 4,
+                    color: Colors.black,
+                  ),
+                  textStyle: NeumorphicTextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-
-                // Player 2 progress
-                Column(
-                  children: [
-                    Text(
-                      "Player 2: ${player2['username'] ?? 'Unknown'}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      children: List.generate(
-                        (player2['progress'] ?? []).length,
-                        (index) => Icon(
-                          Icons.circle,
-                          color: player2['progress'][index] == "correct"
-                              ? Colors.green
-                              : player2['progress'][index] == "wrong"
-                                  ? Colors.red
-                                  : Colors.black,
-                          size: 16,
+                const SizedBox(height: 20),
+                Neumorphic(
+                  padding: const EdgeInsets.all(16),
+                  style: NeumorphicStyle(
+                    shape: NeumorphicShape.flat,
+                    depth: 4,
+                    lightSource: LightSource.topLeft,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(10)),
+                    color: Colors.white,
+                  ),
+                  child: Column(
+                    children: [
+                      NeumorphicText(
+                        "Winner: $winner",
+                        style: NeumorphicStyle(depth: 4, color: Colors.black),
+                        textStyle: NeumorphicTextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      "Score: ${player2['correctAnswers'] ?? 0}",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
+                      const SizedBox(height: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _buildPlayerColumn(player1, "Player 1"),
+                          _buildPlayerColumn(player2, "Player 2"),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                PressableButton(
+                  onPressed: () {
+                    final profileProvider =
+                        Provider.of<ProfileProvider>(context, listen: false);
+
+                    getAuthToken().then((token) {
+                      if (token != null) {
+                        profileProvider.syncProfile(token);
+                      }
+                    });
+
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                    onBackToMainMenu();
+                  },
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  child: Text(
+                    "Back to Main Menu",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 30),
-
-            ElevatedButton(
-              onPressed: () {
-                final profileProvider =
-                    Provider.of<ProfileProvider>(context, listen: false);
-
-                getAuthToken().then((token) {
-                  if (token != null) {
-                    profileProvider.syncProfile(token);
-                  } else {
-                    print("No auth token available.");
-                  }
-                });
-                Navigator.popUntil(context, (route) => route.isFirst);
-                onBackToMainMenu();
-              },
-              child: const Text("Back to Main Menu"),
-            )
-          ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPlayerColumn(Map<String, dynamic> player, String title) {
+    return Column(
+      children: [
+        NeumorphicText(
+          "$title: ${player['username'] ?? 'Unknown'}",
+          style: NeumorphicStyle(depth: 4, color: Colors.black),
+          textStyle: NeumorphicTextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          children: List.generate(
+            (player['progress'] ?? []).length,
+            (index) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: NeumorphicIcon(
+                Icons.circle,
+                style: NeumorphicStyle(
+                  depth: 2,
+                  color: player['progress'][index] == "correct"
+                      ? Colors.green
+                      : player['progress'][index] == "wrong"
+                          ? Colors.red
+                          : Colors.black,
+                ),
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        NeumorphicText(
+          "Score: ${player['correctAnswers'] ?? 0}",
+          style: NeumorphicStyle(depth: 4, color: Colors.black),
+          textStyle: NeumorphicTextStyle(fontSize: 16),
+        ),
+      ],
     );
   }
 }
