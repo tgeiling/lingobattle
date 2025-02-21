@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:lingobattle/provider.dart';
 import 'package:lingobattle/start.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -600,4 +601,52 @@ void showCustomDialog({
       );
     },
   );
+}
+
+class ResultAnimation extends StatefulWidget {
+  final bool isCorrect;
+  final VoidCallback onAnimationEnd;
+
+  const ResultAnimation({
+    Key? key,
+    required this.isCorrect,
+    required this.onAnimationEnd,
+  }) : super(key: key);
+
+  @override
+  _ResultAnimationState createState() => _ResultAnimationState();
+}
+
+class _ResultAnimationState extends State<ResultAnimation> {
+  bool _isVisible = true;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Auto-hide animation after playing
+    Future.delayed(Duration(milliseconds: 1300), () {
+      if (mounted) {
+        setState(() => _isVisible = false);
+        widget.onAnimationEnd(); // Notify parent to clean up
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_isVisible) return SizedBox.shrink(); // Hide widget when done
+
+    return Align(
+      alignment: Alignment.topCenter,
+      child: AnimatedOpacity(
+        opacity: _isVisible ? 1 : 0,
+        duration: const Duration(milliseconds: 800),
+        child: Lottie.asset(
+          widget.isCorrect ? 'assets/correct.json' : 'assets/wrong.json',
+          repeat: false,
+        ),
+      ),
+    );
+  }
 }

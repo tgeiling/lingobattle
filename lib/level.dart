@@ -238,11 +238,11 @@ class LanguageSelector extends StatelessWidget {
 
     // Define the languages and their corresponding flag assets
     final Map<String, String> languagesWithFlags = {
-      'English': 'assets/flags/english.png',
-      'German': 'assets/flags/german.png',
-      'Spanish': 'assets/flags/spanish.png',
-      'Dutch': 'assets/flags/dutch.png',
-      'Swiss': 'assets/flags/swiss.png',
+      'English': 'assets/flags_20x20/english.png',
+      'German': 'assets/flags_20x20/german.png',
+      'Spanish': 'assets/flags_20x20/spanish.png',
+      'Dutch': 'assets/flags_20x20/dutch.png',
+      'Swiss': 'assets/flags_20x20/swiss.png',
     };
 
     // Check if the selected language exists in the map

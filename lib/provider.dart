@@ -323,12 +323,12 @@ class LevelNotifier with ChangeNotifier {
           reward: 100,
           questions: [
             {
-              "question": "The cat is _____ the table.",
-              "answers": ["under"]
+              "question": "The cat is _____ the table. _____ _____ qwe",
+              "answers": ["under", "jo", "jo"]
             },
             {
-              "question": "I go _____ school every day.",
-              "answers": ["to"]
+              "question": "I go _____ school every day. _____ _____",
+              "answers": ["to", "jo", "jo", "jo"]
             },
             {
               "question": "She is sitting _____ the chair.",

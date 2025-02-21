@@ -18,9 +18,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 const sampleQuestions = [
   // English
-  { language: 'english', question: "A _____ can fly, but a penguin cannot.", answers: ["bird"] },
-  { language: 'english', question: "The _____ barked loudly at the mailman.", answers: ["dog"] },
-  { language: 'english', question: "I _____ a sandwich for lunch yesterday.", answers: ["ate"] },
+  { language: 'english', question: "A _____ can fly, but a penguin cannot. _____", answers: ["bird", "jo"] },
+  { language: 'english', question: "The _____ barked loudly at the mailman.", answers: ["dog", "jo"] },
+  { language: 'english', question: "I _____ a sandwich for lunch yesterday.", answers: ["ate", "jo"] },
   { language: 'english', question: "She bought a new _____ to wear at the party.", answers: ["dress"] },
   { language: 'english', question: "To unlock the door, you need a _____.", answers: ["key"] },
 

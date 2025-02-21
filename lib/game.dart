@@ -134,11 +134,14 @@ class _GameScreenState extends State<GameScreen> {
 
   void _submitAnswer() {
     setState(() {
-      List<String> acceptableAnswers = questions[currentQuestionIndex].answers;
       String userAnswer = _currentSentenceInputs.join(" ").trim().toLowerCase();
+      String correctAnswer = questions[currentQuestionIndex]
+          .answers
+          .join(" ")
+          .trim()
+          .toLowerCase();
 
-      if (acceptableAnswers
-          .any((answer) => answer.toLowerCase() == userAnswer)) {
+      if (userAnswer == correctAnswer) {
         questionResults[currentQuestionIndex] = "correct";
         _triggerResultAnimation(true);
         correctAnswers++;
@@ -675,6 +678,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   @override
   void dispose() {
+    @override
+    void dispose() {
+      _animationFuture?.ignore(); // Ensure no pending UI update
+      super.dispose();
+    }
+
     _timer.cancel();
     _focusNode.dispose();
     widget.socket.off('connect');
@@ -705,12 +714,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _onBattleEnded(data) {
+    _animationFuture?.ignore();
+
     try {
       final String message = data['message'] ?? 'The battle has ended.';
       final result = data['result'];
 
       if (result == 'opponentDisconnected' || result == 'playerLeft') {
-        // Handle both opponent disconnect and player leaving
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -739,7 +749,6 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           ),
         );
       } else if (result is Map<String, dynamic>) {
-        // Handle normal battle results
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -863,6 +872,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   String? _statusText; // "Correct!" or "Wrong!"
   bool _showStatus = false; // Controls visibility of the animation
 
+  Future<void>? _animationFuture;
+
   void _triggerResultAnimation(bool isCorrect) {
     if (!mounted) return;
 
@@ -871,15 +882,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
       _showStatus = true;
     });
 
-    // Play sound effect
     _playSound(isCorrect);
-
-    // Fade out after animation
-    Future.delayed(Duration(milliseconds: 1300), () {
-      setState(() {
-        _showStatus = false;
-      });
-    });
   }
 
   void _playSound(bool isCorrect) async {
@@ -1275,32 +1278,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ),
               ),
               if (_showStatus)
-                Align(
-                  alignment:
-                      Alignment.topCenter, // Ensures it's centered horizontally
-                  child: Transform.translate(
-                    offset: _statusText == "Correct!"
-                        ? Offset(0, 0)
-                        : Offset(0,
-                            100), // Moves it down from the top (adjust as needed)
-                    child: AnimatedOpacity(
-                      opacity: _showStatus ? 1 : 0,
-                      duration: const Duration(milliseconds: 800),
-                      child: Lottie.asset(
-                        _statusText == "Correct!"
-                            ? 'assets/correct.json'
-                            : 'assets/wrong.json',
-                        repeat: false,
-                        onLoaded: (composition) {
-                          Future.delayed(Duration(milliseconds: 1300), () {
-                            setState(() {
-                              _showStatus = false;
-                            });
-                          });
-                        },
-                      ),
-                    ),
-                  ),
+                ResultAnimation(
+                  isCorrect: _statusText == "Correct!",
+                  onAnimationEnd: () {
+                    setState(() {
+                      _showStatus = false; // Hide animation when done
+                    });
+                  },
                 ),
             ])));
   }
@@ -1418,15 +1402,8 @@ class MultiplayerResultScreen extends StatelessWidget {
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Neumorphic(
+          child: Container(
             padding: const EdgeInsets.all(24),
-            style: NeumorphicStyle(
-              shape: NeumorphicShape.concave,
-              boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-              depth: 8,
-              lightSource: LightSource.topLeft,
-              color: Colors.grey[200],
-            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -1445,12 +1422,11 @@ class MultiplayerResultScreen extends StatelessWidget {
                 Neumorphic(
                   padding: const EdgeInsets.all(16),
                   style: NeumorphicStyle(
-                    shape: NeumorphicShape.flat,
-                    depth: 4,
-                    lightSource: LightSource.topLeft,
+                    shape: NeumorphicShape.concave,
                     boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(10)),
-                    color: Colors.white,
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                    depth: 8,
+                    lightSource: LightSource.topLeft,
                   ),
                   child: Column(
                     children: [
