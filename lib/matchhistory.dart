@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'elements.dart';
 
 class MatchHistoryScreen extends StatefulWidget {
   final String username;
@@ -76,6 +77,88 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
               child: const Text('OK'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showQuestionResultsDialog(
+      BuildContext context, List<dynamic> questions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.grey[200],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NeumorphicText(
+                  "Match Questions",
+                  style: NeumorphicStyle(depth: 4, color: Colors.black),
+                  textStyle: NeumorphicTextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: questions.length,
+                    itemBuilder: (context, index) {
+                      final question = questions[index]['question'];
+                      final answers =
+                          (questions[index]['answers'] as List).join(", ");
+                      return Neumorphic(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        style: NeumorphicStyle(
+                          shape: NeumorphicShape.flat,
+                          depth: 4,
+                          lightSource: LightSource.topLeft,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(10)),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Q${index + 1}: $question",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Answers: $answers",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                PressableButton(
+                  onPressed: () => Navigator.pop(context),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Text(
+                    "Close",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );
@@ -184,19 +267,17 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              // Match ID and created date
-                              Text(
-                                'Match ID: ${match['matchId']}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                              Text(
-                                'Created at: ${match['createdAt'] ?? 'Unknown'}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
+                              // View Questions Button
+                              PressableButton(
+                                onPressed: () => _showQuestionResultsDialog(
+                                    context, match['questions'] ?? []),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                                child: Text(
+                                  "View Questions",
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],

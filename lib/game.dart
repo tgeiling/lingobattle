@@ -1396,6 +1396,7 @@ class MultiplayerResultScreen extends StatelessWidget {
     final player2 = results['player2'] ?? {};
     final winner = results['winner'] ?? "Draw";
     final message = results['message'] ?? "Match concluded";
+    final questions = results['questions'] ?? [];
 
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -1409,10 +1410,7 @@ class MultiplayerResultScreen extends StatelessWidget {
               children: [
                 NeumorphicText(
                   message,
-                  style: NeumorphicStyle(
-                    depth: 4,
-                    color: Colors.black,
-                  ),
+                  style: NeumorphicStyle(depth: 4, color: Colors.black),
                   textStyle: NeumorphicTextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -1449,7 +1447,24 @@ class MultiplayerResultScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
+
+                // View Questions Button
+                PressableButton(
+                  onPressed: () =>
+                      _showQuestionResultsDialog(context, questions),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  child: Text(
+                    "View Questions",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Back Button
                 PressableButton(
                   onPressed: () {
                     final profileProvider =
@@ -1516,6 +1531,88 @@ class MultiplayerResultScreen extends StatelessWidget {
           textStyle: NeumorphicTextStyle(fontSize: 16),
         ),
       ],
+    );
+  }
+
+  void _showQuestionResultsDialog(
+      BuildContext context, List<dynamic> questions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.grey[200],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NeumorphicText(
+                  "Question Review",
+                  style: NeumorphicStyle(depth: 4, color: Colors.black),
+                  textStyle: NeumorphicTextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: questions.length,
+                    itemBuilder: (context, index) {
+                      final question = questions[index]['question'];
+                      final answers =
+                          (questions[index]['answers'] as List).join(", ");
+                      return Neumorphic(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        style: NeumorphicStyle(
+                          shape: NeumorphicShape.flat,
+                          depth: 4,
+                          lightSource: LightSource.topLeft,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(10)),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Q${index + 1}: $question",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Answers: $answers",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                PressableButton(
+                  onPressed: () => Navigator.pop(context),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Text(
+                    "Close",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

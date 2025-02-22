@@ -48,14 +48,21 @@ const MatchResultSchema = new mongoose.Schema({
     {
       username: { type: String, required: true },
       correctAnswers: { type: Number, required: true },
-      progress: { type: [String], default: [] }, // Tracks "correct", "wrong", "unanswered"
+      progress: { type: [String], default: [] }, // "correct", "wrong", "unanswered"
     },
   ],
   language: { type: String, required: true },
+  questions: [
+    {
+      question: { type: String, required: true },
+      answers: { type: [String], required: true },
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
 });
 
 const MatchResult = mongoose.model('MatchResult', MatchResultSchema);
+
 
 const QuestionSchema = new mongoose.Schema({
   language: { type: String, required: true },
@@ -227,7 +234,6 @@ app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
   }
 });
 
-
 // Socket.IO server setup
 const server = http.createServer(app);
 
@@ -296,7 +302,10 @@ const matchPlayers = async () => {
               { username: player2.username, progress: Array(5).fill('unanswered'), correctAnswers: 0 },
             ],
             language: player1.language,
-            questions, // Save questions to DB
+            questions: questions.map(q => ({
+              question: q.question,
+              answers: q.answers,
+            })),
           },
         },
         { upsert: true, new: true }
@@ -307,7 +316,7 @@ const matchPlayers = async () => {
       console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
     }
 
-    // **Emit `battleStart` event with questions**
+    // Emit battleStart event with questions
     io.to(player1.socket.id).emit('battleStart', {
       username: player1.username,
       matchId: battleId,
@@ -564,7 +573,7 @@ io.on('connection', (socket) => {
                 const [player1, player2] = battle.players;
 
                 try {
-                    // Save match results to MongoDB
+                    // Save match results to MongoDB, including questions
                     const matchResult = await MatchResult.findOneAndUpdate(
                         { matchId },
                         {
@@ -582,12 +591,16 @@ io.on('connection', (socket) => {
                                     },
                                 ],
                                 language: language,
+                                questions: battle.questions.map(q => ({
+                                    question: q.question,
+                                    answers: q.answers
+                                })), // Save questions from the battle
                             },
                         },
                         { upsert: true, new: true }
                     );
 
-                    console.log(`[MATCH SAVED] Results saved for match ${matchId}`);
+                    console.log(`[MATCH SAVED] Results and questions saved for match ${matchId}`);
                 } catch (err) {
                     console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
                 }
