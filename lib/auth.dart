@@ -48,8 +48,7 @@ class AuthService {
     }
   }
 
-  // Register function
-  Future<bool> register(String username, String password) async {
+  Future<List<String>?> register(String username, String password) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/register'),
@@ -58,14 +57,18 @@ class AuthService {
       );
 
       if (response.statusCode == 201) {
-        return true;
+        return null; // Success, no errors
       } else {
-        print('Registration failed: ${response.statusCode}');
-        return false;
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        if (responseData.containsKey('errors')) {
+          return List<String>.from(responseData['errors']);
+        } else {
+          return ["An unknown error occurred."];
+        }
       }
     } catch (e) {
       print('Registration error: $e');
-      return false;
+      return ["Network error. Please try again."];
     }
   }
 
@@ -389,40 +392,49 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isLoading = true;
     });
 
-    bool success = await _authService.register(
+    List<String>? errors = await _authService.register(
       _usernameController.text,
       _passwordController.text,
     );
 
-    if (success) {
+    if (errors == null) {
       final profileProvider =
           Provider.of<ProfileProvider>(context, listen: false);
       profileProvider.setUsername(_usernameController.text);
       Navigator.pop(context); // Go back to login screen
     } else {
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Registration Failed'),
-            content: const Text(
-                'Username already exists or another issue occurred.'),
-            actions: <Widget>[
-              TextButton(
-                child: const Text('Close'),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-              ),
-            ],
-          );
-        },
-      );
+      _showErrorDialog(errors);
     }
 
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void _showErrorDialog(List<String> errors) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Registration Failed'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: errors
+                .map((error) =>
+                    Text(error, style: const TextStyle(color: Colors.red)))
+                .toList(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

@@ -118,6 +118,14 @@ class _StartPageState extends State<StartPage> {
       return;
     }
 
+    // Listen for matchmaking errors
+    socket.off('joinQueueError'); // Prevent multiple listeners
+    socket.on('joinQueueError', (data) {
+      if (data is Map<String, dynamic> && data.containsKey('message')) {
+        _showErrorDialog(data['message']);
+      }
+    });
+
     Navigator.push(
       context,
       MaterialPageRoute(

@@ -8,6 +8,7 @@ const helmet = require('helmet');
 const http = require('http');
 const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
+const rateLimit = require("express-rate-limit");
 
 // Create express app
 const app = express();
@@ -80,53 +81,78 @@ app.get('/test', (req, res) => {
     res.status(200).json({ message: 'Test endpoint is working!' });
   });
 
-// Register endpoint
-// Register endpoint
+const badWords = ["admin", "moderator", "fuck", "shit", "bitch", "asshole"]; // Add more as needed
+
+// Helper function to validate username
+function validateUsername(username) {
+    const regex = /^[a-zA-Z0-9_]+$/;
+    let errors = [];
+
+    if (!regex.test(username)) errors.push("Username can only contain letters, numbers, and underscores.");
+    if (username.length < 3 || username.length > 16) errors.push("Username must be between 3 and 16 characters.");
+    if (badWords.some(word => username.toLowerCase().includes(word))) errors.push("Username contains forbidden words.");
+
+    return errors;
+}
+
 app.post('/register', async (req, res) => {
     try {
-      const { username, password } = req.body;
-  
-      // Check if username already exists
-      const existingUser = await User.findOne({ username });
-      if (existingUser) {
-        return res.status(400).json({ message: 'Username already exists' });
-      }
-  
-      // Hash the password
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      // Create new user
-      const user = new User({ username, password: hashedPassword });
-      await user.save();
-  
-      res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).send('Server error');
-    }
-  });
+        const { username, password } = req.body;
 
-// Login endpoint
-app.post('/login', async (req, res) => {
+        // Validate username
+        const errors = validateUsername(username);
+        if (errors.length > 0) {
+            return res.status(400).json({ message: "Invalid username", errors });
+        }
+
+        // Check if username already exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ message: "Username already exists", errors: ["This username is already taken."] });
+        }
+
+        // Hash the password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new user
+        const user = new User({ username, password: hashedPassword });
+        await user.save();
+
+        res.status(201).json({ message: "User registered successfully" });
+    } catch (error) {
+        console.error("Registration error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 5, // Max 5 login attempts per minute
+  message: { message: "Too many login attempts. Please try again later." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   console.log(`Login attempt for username: ${username}`);
 
   const user = await User.findOne({ username });
-  
+
   if (!user) {
-    console.log('User not found');
-    return res.status(400).json({ message: 'User not found' });
+      console.log('User not found');
+      return res.status(400).json({ message: 'User not found' });
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
   console.log(`Password match: ${isMatch}`);
 
   if (!isMatch) {
-    console.log('Invalid credentials');
-    return res.status(400).json({ message: 'Invalid credentials' });
+      console.log('Invalid credentials');
+      return res.status(400).json({ message: 'Invalid credentials' });
   }
 
-  const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+  const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET, { expiresIn: '12h' });
   console.log('Authentication successful, sending token');
   res.json({ token });
 });
@@ -287,7 +313,10 @@ const matchPlayers = async () => {
         { id: player2.socket.id, username: player2.username, elo: elo2 },
       ],
       status: 'active',
-      questions, // Store questions inside the battle object
+      questions: questions.map(q => ({
+        question: q.question,
+        answers: q.answers,
+      })),
     };
 
     console.log(`[MATCH CREATED] Battle ID: ${battleId}`);
@@ -348,36 +377,76 @@ const matchPlayers = async () => {
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
 
-  // Join matchmaking queue
+  const matchmakingAttempts = new Map();
+
   socket.on('joinQueue', (data) => {
     const { username, language } = data;
-    console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
+    const now = Date.now();
 
-    // Remove any existing queue entry for this player before adding them
-    matchmakingQueue = matchmakingQueue.filter((p) => p.username !== username);
+    // Rate limit: Allow max 3 matchmaking requests per minute per user
+    if (!matchmakingAttempts.has(username)) {
+        matchmakingAttempts.set(username, []);
+    }
 
-    // Create a player object with a reference to the timeout
-    const player = {
-      socket,
-      username,
-      language,
-      timeout: setTimeout(() => {
-        const isStillInQueue = matchmakingQueue.some((p) => p.socket.id === socket.id);
-        if (isStillInQueue) {
-          matchmakingQueue = matchmakingQueue.filter((p) => p.socket.id !== socket.id);
-          socket.emit('timeout', { message: 'Matchmaking timeout. Please try again.' });
-          console.log(`[TIMEOUT] Player ${username} (${socket.id}) removed from the queue due to timeout.`);
+    const timestamps = matchmakingAttempts.get(username);
+    const filteredTimestamps = timestamps.filter(timestamp => now - timestamp < 60 * 1000); // Keep only the last 60 seconds
+    filteredTimestamps.push(now);
+
+    if (filteredTimestamps.length > 3) {
+        console.log(`[RATE LIMIT] Matchmaking spam detected for ${username}`);
+        socket.emit('joinQueueError', { message: 'Too many matchmaking attempts. Try again in a minute.' });
+        return;
+    }
+
+    matchmakingAttempts.set(username, filteredTimestamps);
+
+    // Validate username (empty check)
+    if (!username || username.trim().length === 0) {
+        console.log(`[ERROR] Empty username attempted matchmaking.`);
+        socket.emit('joinQueueError', { message: 'Invalid username. Please set a username in your profile.' });
+        return;
+    }
+
+    // Check if username exists in DB
+    User.findOne({ username }).then(user => {
+        if (!user) {
+            console.log(`[ERROR] User ${username} not found.`);
+            socket.emit('joinQueueError', { message: 'User not found. Please log in again.' });
+            return;
         }
-      }, MATCH_TIMEOUT),
-    };
 
-    // Add the player to the matchmaking queue
-    matchmakingQueue.push(player);
-    console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
+        console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
 
-    // Attempt to match players
-    matchPlayers();
+        // Remove any existing queue entry for this player before adding them
+        matchmakingQueue = matchmakingQueue.filter((p) => p.username !== username);
+
+        // Create a player object with a reference to the timeout
+        const player = {
+            socket,
+            username,
+            language,
+            timeout: setTimeout(() => {
+                const isStillInQueue = matchmakingQueue.some((p) => p.socket.id === socket.id);
+                if (isStillInQueue) {
+                    matchmakingQueue = matchmakingQueue.filter((p) => p.socket.id !== socket.id);
+                    socket.emit('joinQueueError', { message: 'Matchmaking timeout. Please try again.' });
+                    console.log(`[TIMEOUT] Player ${username} (${socket.id}) removed from the queue due to timeout.`);
+                }
+            }, MATCH_TIMEOUT),
+        };
+
+        // Add the player to the matchmaking queue
+        matchmakingQueue.push(player);
+        console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
+
+        // Attempt to match players
+        matchPlayers();
+    }).catch(error => {
+        console.error(`[DATABASE ERROR] Failed to fetch user: ${error}`);
+        socket.emit('joinQueueError', { message: 'Server error. Please try again later.' });
+    });
   });
+
 
 
   socket.on('playerLeft', async (data) => {
@@ -423,6 +492,7 @@ io.on('connection', (socket) => {
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Opponent left. You win!',
                     result: 'playerLeft',
+                    questions: battle.questions || [],
                 });
 
                 delete activeBattles[matchId];
@@ -489,6 +559,7 @@ io.on('connection', (socket) => {
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Your opponent disconnected. You win!',
                     result: 'opponentDisconnected',
+                    questions: battle.questions || [],
                 });
 
                 // Remove battle from active list
@@ -680,6 +751,7 @@ io.on('connection', (socket) => {
                                 winStreak: winStreak2
                             },
                         },
+                        questions: battle.questions || [],
                     });
                 });
 

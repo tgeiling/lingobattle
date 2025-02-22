@@ -719,6 +719,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     try {
       final String message = data['message'] ?? 'The battle has ended.';
       final result = data['result'];
+      final questions = data['questions'];
 
       if (result == 'opponentDisconnected' || result == 'playerLeft') {
         Navigator.pushReplacement(
@@ -727,6 +728,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             builder: (context) => MultiplayerResultScreen(
               results: {
                 'message': message,
+                'questions': questions,
                 'result': result == 'playerLeft'
                     ? 'winByOpponentLeft'
                     : 'winByDisconnect',
@@ -755,6 +757,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
             builder: (context) => MultiplayerResultScreen(
               results: {
                 'message': message,
+                'questions': questions,
                 ...result,
               },
               language: widget.language,
@@ -1588,7 +1591,9 @@ class MultiplayerResultScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "Answers: $answers",
+                              answers.contains(",")
+                                  ? "Answers: $answers"
+                                  : "Answer: $answers",
                               style: const TextStyle(fontSize: 14),
                             ),
                           ],
