@@ -1350,6 +1350,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       builder: (context) => MultiplayerResultScreen(
                         results: {
                           'message': 'You left the game.',
+                          'questions': questions,
                           'result': 'lossByLeave',
                           'player1': {
                             'username': widget.username,
@@ -1358,11 +1359,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                           },
                           'player2': {
                             'username': widget.opponentUsername,
-                            'correctAnswers':
-                                0, // You can adjust this if needed
+                            'correctAnswers': 0,
                             'progress': List<String>.filled(
-                                questionResults.length,
-                                'unanswered'), // Placeholder
+                                questionResults.length, 'unanswered'),
                           },
                           'winner': widget.opponentUsername,
                         },
@@ -1901,6 +1900,8 @@ class _BattleStartScreenState extends State<BattleStartScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Colors.grey[200],
       body: Stack(
@@ -1924,43 +1925,48 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerLeft,
               child: Padding(
                 padding: const EdgeInsets.only(left: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.username,
-                      style: const TextStyle(
-                        color: Colors.blue,
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5), // Space between name and ELO
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue[100], // Light blue background
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.2),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child: Text(
-                        "ELO: ${widget.elo}",
+                child: ConstrainedBox(
+                  // Constrain the width so the text will wrap instead of overflow
+                  constraints: BoxConstraints(maxWidth: screenWidth * 0.4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // This will wrap onto multiple lines if it's too long
+                      Text(
+                        widget.username,
                         style: const TextStyle(
                           color: Colors.blue,
-                          fontSize: 20,
+                          fontSize: 30,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 5), // Space between name and ELO
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.blue[100], // Light blue background
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: Text(
+                          "ELO: ${widget.elo}",
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -1973,43 +1979,47 @@ class _BattleStartScreenState extends State<BattleStartScreen>
               alignment: Alignment.centerRight,
               child: Padding(
                 padding: const EdgeInsets.only(right: 20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.opponentUsername,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 5), // Space between name and ELO
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.red[100], // Light red background
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.red.withOpacity(0.2),
-                            blurRadius: 4,
-                            spreadRadius: 1,
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      child: Text(
-                        "ELO: ${widget.opponentElo}",
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: screenWidth * 0.4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Will also wrap here
+                      Text(
+                        widget.opponentUsername,
                         style: const TextStyle(
                           color: Colors.red,
-                          fontSize: 20,
+                          fontSize: 30,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 5), // Space between name and ELO
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.red[100], // Light red background
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.2),
+                              blurRadius: 4,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 8),
+                        child: Text(
+                          "ELO: ${widget.opponentElo}",
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

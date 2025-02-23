@@ -300,7 +300,7 @@ let activeBattles = {};
 let matchmakingQueue = []; // Players waiting for a match
 
 // Timeout period for matchmaking (in milliseconds)
-const MATCH_TIMEOUT = 60000; // 1 minute
+const MATCH_TIMEOUT = 301000; // 1 minute
 
 const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
