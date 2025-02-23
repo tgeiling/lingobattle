@@ -260,6 +260,36 @@ app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
   }
 });
 
+app.get('/leaderboard', async (req, res) => {
+  try {
+      let { page = 1, limit = 20, username } = req.query;
+      page = parseInt(page);
+      limit = parseInt(limit);
+
+      // Fetch paginated leaderboard
+      const topPlayers = await User.find({})
+          .sort({ elo: -1 }) // Sort by ELO
+          .skip((page - 1) * limit) // Pagination logic
+          .limit(limit)
+          .select('username elo winStreak');
+
+      let userRank = null;
+      if (username) {
+          const user = await User.findOne({ username }).select('elo');
+          if (user) {
+              userRank = await User.countDocuments({ elo: { $gt: user.elo } }) + 1;
+          }
+      }
+
+      res.status(200).json({ leaderboard: topPlayers, userRank });
+  } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      res.status(500).json({ message: 'Failed to fetch leaderboard' });
+  }
+});
+
+
+
 // Socket.IO server setup
 const server = http.createServer(app);
 

@@ -16,6 +16,7 @@ import 'start.dart';
 import 'auth.dart';
 import 'level.dart';
 import 'settings.dart';
+import 'gameappbar.dart';
 
 void main() {
   runApp(
@@ -261,97 +262,7 @@ class _MyHomePageState extends State<MyHomePage>
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.grey[200],
-        toolbarHeight: 80,
-        title: Consumer<ProfileProvider>(
-          builder: (context, profile, child) => Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Username Pill
-              Neumorphic(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                style: NeumorphicStyle(
-                  shape: NeumorphicShape.concave,
-                  boxShape:
-                      NeumorphicBoxShape.roundRect(BorderRadius.circular(6)),
-                  depth: 4,
-                  lightSource: LightSource.topLeft,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.person, color: Colors.blueGrey[700], size: 18),
-                    SizedBox(width: 6),
-                    Text(
-                      profile.username,
-                      style: TextStyle(
-                        color: Colors.blueGrey[800],
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Streak Pill
-              Neumorphic(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                style: NeumorphicStyle(
-                  shape: NeumorphicShape.concave,
-                  boxShape:
-                      NeumorphicBoxShape.roundRect(BorderRadius.circular(6)),
-                  depth: 4,
-                  lightSource: LightSource.topLeft,
-                ),
-                child: Row(
-                  children: [
-                    Image.asset('assets/flame.png', width: 25, height: 25),
-                    SizedBox(width: 6),
-                    Text(
-                      'Streak: ${profile.winStreak}',
-                      style: TextStyle(
-                        color: Colors.redAccent,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // EXP Pill
-              Neumorphic(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                style: NeumorphicStyle(
-                  shape: NeumorphicShape.concave,
-                  boxShape:
-                      NeumorphicBoxShape.roundRect(BorderRadius.circular(6)),
-                  depth: 4,
-                  lightSource: LightSource.topLeft,
-                ),
-                child: Row(
-                  children: [
-                    Image.asset('assets/crown.png', width: 25, height: 25),
-                    SizedBox(width: 6),
-                    Text(
-                      'ELO: ${profile.elo}',
-                      style: TextStyle(
-                        color: Colors.amber[800],
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      appBar: GameAppBar(),
       body: Stack(
         children: [
           PageView(

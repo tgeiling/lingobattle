@@ -8,7 +8,7 @@ import 'elements.dart';
 import 'game.dart';
 import 'provider.dart';
 import 'matchhistory.dart';
-import 'services.dart';
+import 'leaderboard.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -113,8 +113,10 @@ class _StartPageState extends State<StartPage> {
         Provider.of<ProfileProvider>(context, listen: false).username;
     final selectedLanguage = flags[currentIndex]['language'];
 
-    if (username.isEmpty) {
-      _showErrorDialog("Please set your username in the profile first.");
+    bool _authenticated = widget.isAuthenticated();
+
+    if (!_authenticated) {
+      _showErrorDialog("Please login in the profile first.");
       return;
     }
 
@@ -155,6 +157,9 @@ class _StartPageState extends State<StartPage> {
           actions: [
             ElevatedButton(
               onPressed: () {
+                if (message != "Please login in the profile first.") {
+                  Navigator.of(context).pop();
+                }
                 Navigator.of(context).pop();
               },
               child: const Text('OK'),
@@ -178,7 +183,7 @@ class _StartPageState extends State<StartPage> {
           // Top-right "View History" button
 
           Positioned(
-            top: 16, // Adjust as needed
+            bottom: 16, // Adjust as needed
             right: 16, // Adjust as needed
             child: GestureDetector(
               onTap: () {
@@ -212,6 +217,52 @@ class _StartPageState extends State<StartPage> {
                   const SizedBox(height: 8),
                   Text(
                     'View History',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[800],
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 16, // Adjust as needed
+            left: 16, // Adjust as needed
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => LeaderboardScreen(
+                      username: profilProvider.username,
+                    ),
+                  ),
+                );
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: 4,
+                      intensity: 0.8,
+                      shape: NeumorphicShape.concave,
+                      boxShape: NeumorphicBoxShape.circle(),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Icon(
+                        Icons.leaderboard_outlined, // History icon
+                        size: 32,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Leaderbord',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[800],
@@ -275,11 +326,11 @@ class _StartPageState extends State<StartPage> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                            horizontal: 10, vertical: 12),
                       ),
                       child: NeumorphicIcon(
                         Icons.arrow_left,
-                        size: 60,
+                        size: 70,
                         style: NeumorphicStyle(
                           color: Colors.grey[400],
                           depth: 2,
@@ -320,11 +371,11 @@ class _StartPageState extends State<StartPage> {
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                            horizontal: 10, vertical: 12),
                       ),
                       child: NeumorphicIcon(
                         Icons.arrow_right,
-                        size: 60,
+                        size: 70,
                         style: NeumorphicStyle(
                           color: Colors.grey[400],
                           depth: 2,
