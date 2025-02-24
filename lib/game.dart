@@ -1969,7 +1969,7 @@ class _BattleStartScreenState extends State<BattleStartScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        padding: EdgeInsets.only(right: 20),
                         child: Text(
                           widget.username,
                           style: const TextStyle(
@@ -2024,7 +2024,7 @@ class _BattleStartScreenState extends State<BattleStartScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        padding: EdgeInsets.only(left: 20),
                         child: Text(
                           widget.opponentUsername,
                           style: const TextStyle(
