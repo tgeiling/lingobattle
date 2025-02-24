@@ -65,7 +65,7 @@ const sampleQuestions = [
   { language: 'english', question: "He used a clean _____ to dry his hands.", answers: ["towel"] },
   { language: 'english', question: "The chicken lays an _____ ", answers: ["egg"] },
   { language: 'english', question: "He put on his _____ before _____ outside.", answers: ["shoes", "going"] },
-  { language: 'english', question: "They played a fun _____ with a deck of cards.", answers: ["game"] },,
+  { language: 'english', question: "They played a fun _____ with a deck of cards.", answers: ["game"] },
   { language: 'english', question: "He turned the _____ to open the door.", answers: ["knob"] },
   { language: 'english', question: "They sat under a big _____ in the park.", answers: ["tree"] },
   { language: 'english', question: "They took a _____ to _____ nearest store.", answers: ["taxi", "the"] },

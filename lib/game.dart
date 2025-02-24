@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -1500,10 +1501,16 @@ class MultiplayerResultScreen extends StatelessWidget {
   Widget _buildPlayerColumn(Map<String, dynamic> player, String title) {
     return Column(
       children: [
-        NeumorphicText(
-          "$title: ${player['username'] ?? 'Unknown'}",
-          style: NeumorphicStyle(depth: 4, color: Colors.black),
-          textStyle: NeumorphicTextStyle(fontWeight: FontWeight.bold),
+        SizedBox(
+          width: 140, // Adjust width as needed
+          child: AutoSizeText(
+            "$title: ${player['username'] ?? 'Unknown'}",
+            maxLines: 1,
+            minFontSize: 12,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
         ),
         const SizedBox(height: 10),
         Wrap(
