@@ -395,7 +395,7 @@ class _StartPageState extends State<StartPage> {
                     child: Center(
                       child: Text(
                         "Start Battle",
-                        style: Theme.of(context).textTheme.labelLarge,
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
                   ),

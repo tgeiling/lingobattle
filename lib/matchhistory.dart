@@ -96,13 +96,11 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                NeumorphicText(
+                Text(
                   "Match Questions",
-                  style: NeumorphicStyle(depth: 4, color: Colors.black),
-                  textStyle: NeumorphicTextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 10),
                 Expanded(
@@ -129,15 +127,17 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                           children: [
                             Text(
                               "Q${index + 1}: $question",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               "Answers: $answers",
-                              style: const TextStyle(fontSize: 14),
+                              style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
                         ),

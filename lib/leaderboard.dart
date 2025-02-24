@@ -117,14 +117,17 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Leaderboard'),
+        title: Text(
+          'Leaderboard',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
         actions: [
           if (userRank != null)
             TextButton(
               onPressed: _scrollToUserRank,
               child: Text(
                 "Go to My Rank (#$userRank)",
-                style: const TextStyle(color: Colors.black),
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
         ],
@@ -132,7 +135,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : leaderboard.isEmpty
-              ? const Center(child: Text('No leaderboard data available.'))
+              ? Center(
+                  child: Text(
+                  'No leaderboard data available.',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ))
               : ListView.builder(
                   controller: _scrollController,
                   itemCount: leaderboard.length + 1,
@@ -166,18 +173,22 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             children: [
                               Text(
                                 '#$rank',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueGrey,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium!
+                                    .copyWith(
+                                      color: Colors.blueGrey,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                               Text(
                                 username,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                               Row(
                                 children: [
@@ -212,7 +223,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         const SizedBox(width: 4),
         Text(
           text,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
         ),
       ],
     );
