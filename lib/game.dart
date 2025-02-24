@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -1411,46 +1410,60 @@ class MultiplayerResultScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 40), // Added space on top
                 NeumorphicText(
                   message,
                   style: NeumorphicStyle(depth: 4, color: Colors.black),
                   textStyle: NeumorphicTextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 Neumorphic(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   style: NeumorphicStyle(
                     shape: NeumorphicShape.concave,
                     boxShape:
                         NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                    depth: 8,
+                    depth: 10,
                     lightSource: LightSource.topLeft,
                   ),
                   child: Column(
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          NeumorphicText(
+                            "Winner: ",
+                            style:
+                                NeumorphicStyle(depth: 6, color: Colors.black),
+                            textStyle: NeumorphicTextStyle(
+                              fontSize: 24, // Increased font size
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          if (winner != "Draw")
+                            Image.asset("assets/crown.png",
+                                height: 30), // Crown Icon
+                        ],
+                      ),
                       NeumorphicText(
-                        "Winner: $winner",
-                        style: NeumorphicStyle(depth: 4, color: Colors.black),
+                        winner,
+                        style: NeumorphicStyle(depth: 6, color: Colors.black),
                         textStyle: NeumorphicTextStyle(
-                          fontSize: 18,
+                          fontSize: 26, // Bigger Winner Name
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _buildPlayerColumn(player1, "Player 1"),
-                          _buildPlayerColumn(player2, "Player 2"),
-                        ],
-                      ),
+                      const SizedBox(height: 20),
+                      _buildPlayerColumn(player1, "Player 1"),
+                      const SizedBox(height: 20),
+                      _buildPlayerColumn(player2, "Player 2"),
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
 
                 // View Questions Button
                 PressableButton(
@@ -1501,19 +1514,31 @@ class MultiplayerResultScreen extends StatelessWidget {
   Widget _buildPlayerColumn(Map<String, dynamic> player, String title) {
     return Column(
       children: [
-        SizedBox(
-          width: 140, // Adjust width as needed
-          child: AutoSizeText(
-            "$title: ${player['username'] ?? 'Unknown'}",
-            maxLines: 1,
-            minFontSize: 12,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
+        NeumorphicText(
+          title,
+          style: NeumorphicStyle(depth: 4, color: Colors.black),
+          textStyle:
+              NeumorphicTextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (player['username'] == results['winner']) // Show crown if winner
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: Image.asset("assets/crown.png", height: 20),
+              ),
+            Text(
+              player['username'] ?? 'Unknown',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         const SizedBox(height: 10),
         Wrap(
+          alignment: WrapAlignment.center,
           children: List.generate(
             (player['progress'] ?? []).length,
             (index) => Padding(
