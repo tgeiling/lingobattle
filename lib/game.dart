@@ -1401,114 +1401,118 @@ class MultiplayerResultScreen extends StatelessWidget {
     final questions = results['questions'] ?? [];
 
     return Scaffold(
-      backgroundColor: Colors.grey[200],
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 40), // Added space on top
-                NeumorphicText(
-                  message,
-                  style: NeumorphicStyle(depth: 4, color: Colors.black),
-                  textStyle: NeumorphicTextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 30),
-                Neumorphic(
-                  padding: const EdgeInsets.all(20),
-                  style: NeumorphicStyle(
-                    shape: NeumorphicShape.concave,
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                    depth: 10,
-                    lightSource: LightSource.topLeft,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+        backgroundColor: Colors.grey[200],
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              // 🔥 This prevents the overflow
+              child: Container(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 40), // Added space on top
+                    NeumorphicText(
+                      message,
+                      style: NeumorphicStyle(depth: 4, color: Colors.black),
+                      textStyle: NeumorphicTextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+                    Neumorphic(
+                      padding: const EdgeInsets.all(20),
+                      style: NeumorphicStyle(
+                        shape: NeumorphicShape.concave,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12)),
+                        depth: 10,
+                        lightSource: LightSource.topLeft,
+                      ),
+                      child: Column(
                         children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              NeumorphicText(
+                                "Winner: ",
+                                style: NeumorphicStyle(
+                                    depth: 6, color: Colors.black),
+                                textStyle: NeumorphicTextStyle(
+                                  fontSize: 24, // Increased font size
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (winner != "Draw")
+                                Image.asset("assets/crown.png",
+                                    height: 30), // Crown Icon
+                            ],
+                          ),
                           NeumorphicText(
-                            "Winner: ",
+                            winner,
                             style:
                                 NeumorphicStyle(depth: 6, color: Colors.black),
                             textStyle: NeumorphicTextStyle(
-                              fontSize: 24, // Increased font size
+                              fontSize: 26, // Bigger Winner Name
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          if (winner != "Draw")
-                            Image.asset("assets/crown.png",
-                                height: 30), // Crown Icon
+                          const SizedBox(height: 20),
+                          _buildPlayerColumn(player1, "Player 1"),
+                          const SizedBox(height: 20),
+                          _buildPlayerColumn(player2, "Player 2"),
                         ],
                       ),
-                      NeumorphicText(
-                        winner,
-                        style: NeumorphicStyle(depth: 6, color: Colors.black),
-                        textStyle: NeumorphicTextStyle(
-                          fontSize: 26, // Bigger Winner Name
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    // View Questions Button
+                    PressableButton(
+                      onPressed: () =>
+                          _showQuestionResultsDialog(context, questions),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 16),
+                      child: Text(
+                        "View Questions",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 20),
-                      _buildPlayerColumn(player1, "Player 1"),
-                      const SizedBox(height: 20),
-                      _buildPlayerColumn(player2, "Player 2"),
-                    ],
-                  ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Back Button
+                    PressableButton(
+                      onPressed: () {
+                        final profileProvider = Provider.of<ProfileProvider>(
+                            context,
+                            listen: false);
+
+                        getAuthToken().then((token) {
+                          if (token != null) {
+                            profileProvider.syncProfile(token);
+                          }
+                        });
+
+                        Navigator.popUntil(context, (route) => route.isFirst);
+                        onBackToMainMenu();
+                      },
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 16),
+                      child: Text(
+                        "Back to Main Menu",
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 30),
-
-                // View Questions Button
-                PressableButton(
-                  onPressed: () =>
-                      _showQuestionResultsDialog(context, questions),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  child: Text(
-                    "View Questions",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Back Button
-                PressableButton(
-                  onPressed: () {
-                    final profileProvider =
-                        Provider.of<ProfileProvider>(context, listen: false);
-
-                    getAuthToken().then((token) {
-                      if (token != null) {
-                        profileProvider.syncProfile(token);
-                      }
-                    });
-
-                    Navigator.popUntil(context, (route) => route.isFirst);
-                    onBackToMainMenu();
-                  },
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                  child: Text(
-                    "Back to Main Menu",
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   Widget _buildPlayerColumn(Map<String, dynamic> player, String title) {
@@ -1964,13 +1968,15 @@ class _BattleStartScreenState extends State<BattleStartScreen>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // This will wrap onto multiple lines if it's too long
-                      Text(
-                        widget.username,
-                        style: const TextStyle(
-                          color: Colors.blue,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          widget.username,
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 5), // Space between name and ELO
@@ -2017,13 +2023,15 @@ class _BattleStartScreenState extends State<BattleStartScreen>
                     crossAxisAlignment: CrossAxisAlignment.end,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Will also wrap here
-                      Text(
-                        widget.opponentUsername,
-                        style: const TextStyle(
-                          color: Colors.red,
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: Text(
+                          widget.opponentUsername,
+                          style: const TextStyle(
+                            color: Colors.red,
+                            fontSize: 30,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 5), // Space between name and ELO
