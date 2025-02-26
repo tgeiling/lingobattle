@@ -72,6 +72,7 @@ flutter:
     - assets/flags_20x20/english.png
     - assets/flags_20x20/spanish.png
     - assets/logo.png
+    - assets/playstorelogo.png
     - assets/button_green.png
     - assets/button_grey.png
     - assets/button_mint.png
