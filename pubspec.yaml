@@ -79,4 +79,20 @@ flutter:
     - assets/wrong.mp3
     - assets/correct.json
     - assets/wrong.json
+    - assets/ranks/baby01.png
+    - assets/ranks/baby02.png
+    - assets/ranks/baby03.png
+    - assets/ranks/baby04.png
+    - assets/ranks/beginner01.png
+    - assets/ranks/beginner02.png
+    - assets/ranks/beginner03.png
+    - assets/ranks/beginner04.png
+    - assets/ranks/novice01.png
+    - assets/ranks/novice02.png
+    - assets/ranks/novice03.png
+    - assets/ranks/novice04.png
+    - assets/ranks/expert01.png
+    - assets/ranks/expert02.png
+    - assets/ranks/expert03.png
+    - assets/ranks/expert04.png
 

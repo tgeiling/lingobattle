@@ -9,6 +9,7 @@ import 'game.dart';
 import 'provider.dart';
 import 'matchhistory.dart';
 import 'leaderboard.dart';
+import 'ranks.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -178,175 +179,178 @@ class _StartPageState extends State<StartPage> {
     print(profilProvider.username);
 
     return Scaffold(
-      body: Column(
-        children: [
-          const Spacer(),
+        body: Stack(
+      children: [
+        Positioned(right: 0, top: 0, child: Ranks()),
+        Column(
+          children: [
+            const Spacer(),
 
-          // Flag Selection Row (UNCHANGED)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              TextButton(
-                onPressed: previousFlag,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                ),
-                child: NeumorphicIcon(
-                  Icons.arrow_left,
-                  size: 70,
-                  style: NeumorphicStyle(
-                    color: Colors.grey[400],
-                    depth: 2,
-                  ),
-                ),
-              ),
-              Neumorphic(
-                padding: const EdgeInsets.all(24),
-                style: NeumorphicStyle(
-                  shape: NeumorphicShape.concave,
-                  boxShape:
-                      NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-                  depth: 8,
-                  lightSource: LightSource.topLeft,
-                ),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.35,
-                  height: MediaQuery.of(context).size.width * 0.3,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        currentIndex = index;
-                      });
-                    },
-                    itemCount: flags.length,
-                    itemBuilder: (context, index) {
-                      return Image.asset(
-                        flags[index]['path']!,
-                        fit: BoxFit.contain,
-                      );
-                    },
-                  ),
-                ),
-              ),
-              TextButton(
-                onPressed: nextFlag,
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                ),
-                child: NeumorphicIcon(
-                  Icons.arrow_right,
-                  size: 70,
-                  style: NeumorphicStyle(
-                    color: Colors.grey[400],
-                    depth: 2,
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // ✅ Only show one button at a time
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
-            child: isLoggedIn
-                ? PressableButton(
-                    onPressed: _initiateBattle,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 18),
-                    child: Center(
-                      child: Text(
-                        "Start Battle",
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                  )
-                : PressableButton(
-                    onPressed: _navigateToLogin,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 12, horizontal: 18),
-                    child: Center(
-                      child: Text(
-                        "Login",
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                    ),
-                  ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Bottom Icons (Leaderboard & Match History) FIXED
-          Padding(
-            padding: const EdgeInsets.only(bottom: 20), // Move it up slightly
-            child: Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => LeaderboardScreen(
-                          username: profilProvider.username,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      NeumorphicIcon(
-                        Icons.leaderboard,
-                        size: MediaQuery.of(context).size.width * 0.15,
-                        style: NeumorphicStyle(
-                          color: Colors.grey[400],
-                          depth: 2,
-                        ),
-                      ),
-                    ],
+              children: <Widget>[
+                TextButton(
+                  onPressed: previousFlag,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 12),
+                  ),
+                  child: NeumorphicIcon(
+                    Icons.arrow_left,
+                    size: 70,
+                    style: NeumorphicStyle(
+                      color: Colors.grey[400],
+                      depth: 2,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 40), // Space between icons
-
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MatchHistoryScreen(
-                            username: profilProvider.username),
-                      ),
-                    );
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      NeumorphicIcon(
-                        Icons.history,
-                        size: MediaQuery.of(context).size.width * 0.15,
-                        style: NeumorphicStyle(
-                          color: Colors.blue[300],
-                          depth: 2,
-                        ),
-                      ),
-                    ],
+                Neumorphic(
+                  padding: const EdgeInsets.all(24),
+                  style: NeumorphicStyle(
+                    shape: NeumorphicShape.concave,
+                    boxShape:
+                        NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                    depth: 8,
+                    lightSource: LightSource.topLeft,
+                  ),
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.35,
+                    height: MediaQuery.of(context).size.width * 0.3,
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          currentIndex = index;
+                        });
+                      },
+                      itemCount: flags.length,
+                      itemBuilder: (context, index) {
+                        return Image.asset(
+                          flags[index]['path']!,
+                          fit: BoxFit.contain,
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                TextButton(
+                  onPressed: nextFlag,
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 12),
+                  ),
+                  child: NeumorphicIcon(
+                    Icons.arrow_right,
+                    size: 70,
+                    style: NeumorphicStyle(
+                      color: Colors.grey[400],
+                      depth: 2,
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
 
-          const Spacer(),
-        ],
-      ),
-    );
+            const SizedBox(height: 20),
+
+            // ✅ Only show one button at a time
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
+              child: isLoggedIn
+                  ? PressableButton(
+                      onPressed: _initiateBattle,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 18),
+                      child: Center(
+                        child: Text(
+                          "Start Battle",
+                          style: Theme.of(context).textTheme.bodyLarge,
+                        ),
+                      ),
+                    )
+                  : PressableButton(
+                      onPressed: _navigateToLogin,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 18),
+                      child: Center(
+                        child: Text(
+                          "Login",
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ),
+                    ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Bottom Icons (Leaderboard & Match History) FIXED
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20), // Move it up slightly
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => LeaderboardScreen(
+                            username: profilProvider.username,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        NeumorphicIcon(
+                          Icons.leaderboard,
+                          size: MediaQuery.of(context).size.width * 0.15,
+                          style: NeumorphicStyle(
+                            color: Colors.grey[400],
+                            depth: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 40), // Space between icons
+
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MatchHistoryScreen(
+                              username: profilProvider.username),
+                        ),
+                      );
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        NeumorphicIcon(
+                          Icons.history,
+                          size: MediaQuery.of(context).size.width * 0.15,
+                          style: NeumorphicStyle(
+                            color: Colors.blue[300],
+                            depth: 2,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+          ],
+        ),
+      ],
+    ));
   }
 }

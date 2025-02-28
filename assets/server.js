@@ -68,7 +68,8 @@ const MatchResult = mongoose.model('MatchResult', MatchResultSchema);
 const QuestionSchema = new mongoose.Schema({
   language: { type: String, required: true },
   question: { type: String, required: true },
-  answers: { type: [String], required: true }
+  answers: { type: [String], required: true },
+  difficulty: { type: int, required: true }
 });
 
 const Question = mongoose.model('Question', QuestionSchema);
@@ -327,11 +328,42 @@ const matchPlayers = async () => {
 
     const battleId = `${player1.socket.id}-${player2.socket.id}`;
 
-    // **Fetch 5 random questions for the selected language**
+    function getDifficultyDistribution(baseDifficulty) {
+      const random = Math.random(); // Generates a value between 0 and 1
+    
+      if (random < 0.02 && baseDifficulty < 4) {
+        return { main: baseDifficulty + 1, mainCount: 5 }; // Rare challenge mode
+      } else if (random < 0.10 && baseDifficulty < 4) {
+        return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: 2 }; // 3+2 mix
+      } else if (random < 0.30 && baseDifficulty < 4) {
+        return { main: baseDifficulty, mainCount: 4, extra: baseDifficulty + 1, extraCount: 1 }; // 4+1 mix
+      } else {
+        return { main: baseDifficulty, mainCount: 5 }; // Standard: 5 from own category
+      }
+    }
+    
+    let difficultyLevel = 1;
+    if (player1.elo >= 400) difficultyLevel = 2;
+    if (player1.elo >= 800) difficultyLevel = 3;
+    if (player1.elo >= 1200) difficultyLevel = 4;
+    
+    const { main, mainCount, extra, extraCount } = getDifficultyDistribution(difficultyLevel);
+    
     let questions = await Question.aggregate([
-      { $match: { language: player1.language } }, // Filter by language
-      { $sample: { size: 5 } } // Pick 5 random questions
+      { $match: { language: player1.language, difficulty: main } },
+      { $sample: { size: mainCount } }
     ]);
+    
+    if (extra) {
+      let extraQuestions = await Question.aggregate([
+        { $match: { language: player1.language, difficulty: extra } },
+        { $sample: { size: extraCount } }
+      ]);
+      questions = [...questions, ...extraQuestions];
+    }
+    
+    // Shuffle the final selection
+    questions = questions.sort(() => Math.random() - 0.5);
 
     if (!questions.length) {
       console.log(`[ERROR] No questions found for language ${player1.language}`);
