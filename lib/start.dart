@@ -180,56 +180,9 @@ class _StartPageState extends State<StartPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Top-right "View History" button
-
           Positioned(
-            bottom: 16, // Adjust as needed
-            right: 16, // Adjust as needed
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        MatchHistoryScreen(username: profilProvider.username),
-                  ),
-                );
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: 4,
-                      intensity: 0.8,
-                      shape: NeumorphicShape.concave,
-                      boxShape: NeumorphicBoxShape.circle(),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Icon(
-                        Icons.history, // History icon
-                        size: 32,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'View History',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 16, // Adjust as needed
-            left: 16, // Adjust as needed
+            top: 425, // Adjust as needed
+            left: 118, // Adjust as needed
             child: GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -244,31 +197,52 @@ class _StartPageState extends State<StartPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Neumorphic(
+                  NeumorphicIcon(
+                    Icons.leaderboard,
+                    size: 60,
                     style: NeumorphicStyle(
-                      depth: 4,
-                      intensity: 0.8,
-                      shape: NeumorphicShape.concave,
-                      boxShape: NeumorphicBoxShape.circle(),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Icon(
-                        Icons.leaderboard_outlined, // History icon
-                        size: 32,
-                        color: Colors.grey[700],
-                      ),
+                      color: Colors.grey[400],
+                      depth: 2,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
+                  /* Text(
                     'Leaderbord',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ), */
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 425, // Adjust as needed
+            left: 232, // Adjust as needed
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        MatchHistoryScreen(username: profilProvider.username),
+                  ),
+                );
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  NeumorphicIcon(
+                    Icons.history,
+                    size: 60,
+                    style: NeumorphicStyle(
+                      color: Colors.blue[300],
+                      depth: 2,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  /* Text(
+                    'View History',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ), */
                 ],
               ),
             ),
@@ -395,7 +369,7 @@ class _StartPageState extends State<StartPage> {
                     child: Center(
                       child: Text(
                         "Start Battle",
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
                   ),

@@ -35,7 +35,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Salomon Bottom Bar Example',
       theme: ThemeData(
         primarySwatch: Colors.grey,
       ),
@@ -283,6 +282,9 @@ class _MyHomePageState extends State<MyHomePage>
                 isAuthenticated: isAuthenticated,
               )),
               Center(child: LevelSelectionScreen()),
+              Center(
+                child: Text("Comming Soon"),
+              ),
               SettingsPage(
                 setAuthenticated: _setAuthenticated,
                 isLoggedIn: isLoggedIn,
@@ -353,12 +355,12 @@ class _MyHomePageState extends State<MyHomePage>
             items: [
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
-                  CupertinoIcons.gamecontroller,
-                  size: MediaQuery.of(context).size.width * 0.08,
-                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
+                  Icons.gamepad,
+                  size: MediaQuery.of(context).size.width * 0.11,
+                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
-                  "Multiplayer",
+                  "Game",
                   style: TextStyle(
                       fontSize: MediaQuery.of(context).size.width * 0.035),
                 ),
@@ -366,12 +368,12 @@ class _MyHomePageState extends State<MyHomePage>
               ),
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
-                  CupertinoIcons.book,
-                  size: MediaQuery.of(context).size.width * 0.08,
-                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
+                  Icons.menu_book,
+                  size: MediaQuery.of(context).size.width * 0.11,
+                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
-                  "Solo Learning",
+                  "Learn",
                   style: TextStyle(
                       fontSize: MediaQuery.of(context).size.width * 0.035),
                 ),
@@ -379,12 +381,25 @@ class _MyHomePageState extends State<MyHomePage>
               ),
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
-                  CupertinoIcons.person,
-                  size: MediaQuery.of(context).size.width * 0.08,
-                  style: NeumorphicStyle(depth: 3, color: Colors.grey.shade600),
+                  Icons.person,
+                  size: MediaQuery.of(context).size.width * 0.11,
+                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
                   "Profile",
+                  style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.035),
+                ),
+                selectedColor: Colors.blueGrey[700],
+              ),
+              SalomonBottomBarItem(
+                icon: NeumorphicIcon(
+                  Icons.settings,
+                  size: MediaQuery.of(context).size.width * 0.11,
+                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
+                ),
+                title: Text(
+                  "Settings",
                   style: TextStyle(
                       fontSize: MediaQuery.of(context).size.width * 0.035),
                 ),

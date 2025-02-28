@@ -255,6 +255,7 @@ app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
 
     res.status(200).json(matches);
   } catch (error) {
+    console.log("Error fetching match history: " + error);
     console.error('Error fetching match history:', error);
     res.status(500).json({ message: 'Failed to fetch match history' });
   }
@@ -283,6 +284,7 @@ app.get('/leaderboard', async (req, res) => {
 
       res.status(200).json({ leaderboard: topPlayers, userRank });
   } catch (error) {
+      console.log("Error fetching leaderboard: " + error);
       console.error('Error fetching leaderboard:', error);
       res.status(500).json({ message: 'Failed to fetch leaderboard' });
   }

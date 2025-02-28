@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:lingobattle/provider.dart';
 import 'package:lingobattle/start.dart';
 import 'package:lottie/lottie.dart';
@@ -649,4 +650,57 @@ class _ResultAnimationState extends State<ResultAnimation> {
       ),
     );
   }
+}
+
+Widget buildIconButton(IconData icon, Function() onPressed) {
+  if (Icons.sync == icon) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.black,
+        padding: EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+      ),
+      child: NeumorphicIcon(
+        icon,
+        size: 52,
+        style: NeumorphicStyle(
+          color: Colors.blue,
+          depth: 2,
+        ),
+      ),
+    );
+  }
+
+  if (Icons.delete == icon) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.black,
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      ),
+      child: NeumorphicIcon(
+        icon,
+        size: 60,
+        style: NeumorphicStyle(
+          color: Colors.grey[400],
+          depth: 2,
+        ),
+      ),
+    );
+  }
+
+  return TextButton(
+    onPressed: onPressed,
+    style: TextButton.styleFrom(
+      foregroundColor: Colors.black,
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+    ),
+    child: NeumorphicIcon(
+      icon,
+      size: 60,
+      style: NeumorphicStyle(
+        depth: 2,
+      ),
+    ),
+  );
 }
