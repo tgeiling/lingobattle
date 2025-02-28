@@ -178,192 +178,87 @@ class _StartPageState extends State<StartPage> {
     print(profilProvider.username);
 
     return Scaffold(
-      body: Stack(
+      body: Column(
         children: [
-          Positioned(
-            top: 425, // Adjust as needed
-            left: 118, // Adjust as needed
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LeaderboardScreen(
-                      username: profilProvider.username,
-                    ),
-                  ),
-                );
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  NeumorphicIcon(
-                    Icons.leaderboard,
-                    size: 60,
-                    style: NeumorphicStyle(
-                      color: Colors.grey[400],
-                      depth: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  /* Text(
-                    'Leaderbord',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ), */
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 425, // Adjust as needed
-            left: 232, // Adjust as needed
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        MatchHistoryScreen(username: profilProvider.username),
-                  ),
-                );
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  NeumorphicIcon(
-                    Icons.history,
-                    size: 60,
-                    style: NeumorphicStyle(
-                      color: Colors.blue[300],
-                      depth: 2,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  /* Text(
-                    'View History',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ), */
-                ],
-              ),
-            ),
-          ),
-          /* Positioned(
-            top: 16, // Adjust as needed
-            left: 16, // Adjust as needed
-            child: GestureDetector(
-              onTap: () async {
-                final token = await getAuthToken();
-                fetchAndPrintProfile(token!);
-              },
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: 4,
-                      intensity: 0.8,
-                      shape: NeumorphicShape.concave,
-                      boxShape: NeumorphicBoxShape.circle(),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Icon(
-                        Icons.person, // History icon
-                        size: 32,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Request Profile',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[800],
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ), */
-          // Main content
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    TextButton(
-                      onPressed: previousFlag,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 12),
-                      ),
-                      child: NeumorphicIcon(
-                        Icons.arrow_left,
-                        size: 70,
-                        style: NeumorphicStyle(
-                          color: Colors.grey[400],
-                          depth: 2,
-                        ),
-                      ),
-                    ),
-                    Neumorphic(
-                      padding: const EdgeInsets.all(24),
-                      style: NeumorphicStyle(
-                        shape: NeumorphicShape.concave,
-                        boxShape: NeumorphicBoxShape.roundRect(
-                            BorderRadius.circular(12)),
-                        depth: 8,
-                        lightSource: LightSource.topLeft,
-                      ),
-                      child: SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.35,
-                        height: MediaQuery.of(context).size.width * 0.3,
-                        child: PageView.builder(
-                          controller: _pageController,
-                          onPageChanged: (index) {
-                            setState(() {
-                              currentIndex = index;
-                            });
-                          },
-                          itemCount: flags.length,
-                          itemBuilder: (context, index) {
-                            return Image.asset(
-                              flags[index]['path']!,
-                              fit: BoxFit.contain,
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: nextFlag,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 12),
-                      ),
-                      child: NeumorphicIcon(
-                        Icons.arrow_right,
-                        size: 70,
-                        style: NeumorphicStyle(
-                          color: Colors.grey[400],
-                          depth: 2,
-                        ),
-                      ),
-                    ),
-                  ],
+          const Spacer(),
+
+          // Flag Selection Row (UNCHANGED)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              TextButton(
+                onPressed: previousFlag,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                 ),
-                const SizedBox(height: 20),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 10.0, horizontal: 110.0),
-                  child: PressableButton(
-                    onPressed: _initiateBattle, // Start battle via WebSocket
+                child: NeumorphicIcon(
+                  Icons.arrow_left,
+                  size: 70,
+                  style: NeumorphicStyle(
+                    color: Colors.grey[400],
+                    depth: 2,
+                  ),
+                ),
+              ),
+              Neumorphic(
+                padding: const EdgeInsets.all(24),
+                style: NeumorphicStyle(
+                  shape: NeumorphicShape.concave,
+                  boxShape:
+                      NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+                  depth: 8,
+                  lightSource: LightSource.topLeft,
+                ),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.35,
+                  height: MediaQuery.of(context).size.width * 0.3,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    onPageChanged: (index) {
+                      setState(() {
+                        currentIndex = index;
+                      });
+                    },
+                    itemCount: flags.length,
+                    itemBuilder: (context, index) {
+                      return Image.asset(
+                        flags[index]['path']!,
+                        fit: BoxFit.contain,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: nextFlag,
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.black,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                ),
+                child: NeumorphicIcon(
+                  Icons.arrow_right,
+                  size: 70,
+                  style: NeumorphicStyle(
+                    color: Colors.grey[400],
+                    depth: 2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // ✅ Only show one button at a time
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 110.0),
+            child: isLoggedIn
+                ? PressableButton(
+                    onPressed: _initiateBattle,
                     padding: const EdgeInsets.symmetric(
                         vertical: 12, horizontal: 18),
                     child: Center(
@@ -372,22 +267,84 @@ class _StartPageState extends State<StartPage> {
                         style: Theme.of(context).textTheme.bodyLarge,
                       ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (!isLoggedIn)
-                  PressableButton(
+                  )
+                : PressableButton(
+                    onPressed: _navigateToLogin,
                     padding: const EdgeInsets.symmetric(
                         vertical: 12, horizontal: 18),
-                    onPressed: _navigateToLogin,
-                    child: Text(
-                      'Login',
-                      style: Theme.of(context).textTheme.labelLarge,
+                    child: Center(
+                      child: Text(
+                        "Login",
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
                     ),
                   ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Bottom Icons (Leaderboard & Match History) FIXED
+          Padding(
+            padding: const EdgeInsets.only(bottom: 20), // Move it up slightly
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LeaderboardScreen(
+                          username: profilProvider.username,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      NeumorphicIcon(
+                        Icons.leaderboard,
+                        size: MediaQuery.of(context).size.width * 0.15,
+                        style: NeumorphicStyle(
+                          color: Colors.grey[400],
+                          depth: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 40), // Space between icons
+
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MatchHistoryScreen(
+                            username: profilProvider.username),
+                      ),
+                    );
+                  },
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      NeumorphicIcon(
+                        Icons.history,
+                        size: MediaQuery.of(context).size.width * 0.15,
+                        style: NeumorphicStyle(
+                          color: Colors.blue[300],
+                          depth: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
+
+          const Spacer(),
         ],
       ),
     );

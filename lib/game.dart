@@ -541,9 +541,9 @@ class _GameScreenState extends State<GameScreen> {
                   Alignment.topCenter, // Ensures it's centered horizontally
               child: Transform.translate(
                 offset: _statusText == "Correct!"
-                    ? Offset(0, 200)
+                    ? Offset(0, 180)
                     : Offset(0,
-                        200), // Moves it down from the top (adjust as needed)
+                        180), // Moves it down from the top (adjust as needed)
                 child: AnimatedOpacity(
                   opacity: _showStatus ? 1 : 0,
                   duration: const Duration(milliseconds: 800),
@@ -1281,14 +1281,23 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 ),
               ),
               if (_showStatus)
-                ResultAnimation(
-                  isCorrect: _statusText == "Correct!",
-                  onAnimationEnd: () {
-                    setState(() {
-                      _showStatus = false; // Hide animation when done
-                    });
-                  },
-                ),
+                Align(
+                    alignment: Alignment
+                        .topCenter, // Ensures it's centered horizontally
+                    child: Transform.translate(
+                      offset: _statusText == "Correct!"
+                          ? Offset(0, 180)
+                          : Offset(0,
+                              180), // Moves it down from the top (adjust as needed)
+                      child: ResultAnimation(
+                        isCorrect: _statusText == "Correct!",
+                        onAnimationEnd: () {
+                          setState(() {
+                            _showStatus = false;
+                          });
+                        },
+                      ),
+                    ))
             ])));
   }
 
