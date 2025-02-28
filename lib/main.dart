@@ -356,7 +356,7 @@ class _MyHomePageState extends State<MyHomePage>
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
                   Icons.gamepad,
-                  size: MediaQuery.of(context).size.width * 0.11,
+                  size: 40,
                   style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
@@ -369,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage>
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
                   Icons.menu_book,
-                  size: MediaQuery.of(context).size.width * 0.11,
+                  size: 40,
                   style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
@@ -382,7 +382,7 @@ class _MyHomePageState extends State<MyHomePage>
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
                   Icons.person,
-                  size: MediaQuery.of(context).size.width * 0.11,
+                  size: 40,
                   style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
@@ -395,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage>
               SalomonBottomBarItem(
                 icon: NeumorphicIcon(
                   Icons.settings,
-                  size: MediaQuery.of(context).size.width * 0.11,
+                  size: 40,
                   style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
                 ),
                 title: Text(
