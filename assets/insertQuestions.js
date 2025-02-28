@@ -5,7 +5,7 @@ const QuestionSchema = new mongoose.Schema({
   language: { type: String, required: true },
   question: { type: String, required: true },
   answers: { type: [String], difficulty: 3, required: true },
-  difficulty: { type: int, required: true }
+  difficulty: { type: Number, required: true }
 });
 
 // Create the model

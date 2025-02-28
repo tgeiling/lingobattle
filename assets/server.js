@@ -69,7 +69,7 @@ const QuestionSchema = new mongoose.Schema({
   language: { type: String, required: true },
   question: { type: String, required: true },
   answers: { type: [String], required: true },
-  difficulty: { type: int, required: true }
+  difficulty: { type: Number, required: true }
 });
 
 const Question = mongoose.model('Question', QuestionSchema);
@@ -308,7 +308,19 @@ const MATCH_TIMEOUT = 301000; // 1 minute
 const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
     const player1 = matchmakingQueue.shift();
-    const player2 = matchmakingQueue.shift();
+
+    // Find a suitable opponent within 400 ELO range
+    let index = matchmakingQueue.findIndex(player2 => {
+      return Math.abs(player1.elo - player2.elo) <= 400;
+    });
+
+    if (index === -1) {
+      // No suitable match found, put player1 back in queue
+      matchmakingQueue.push(player1);
+      continue;
+    }
+
+    const player2 = matchmakingQueue.splice(index, 1)[0]; // Remove matched player from queue
 
     if (player1.username === player2.username) {
       console.log(`[ERROR] Player ${player1.username} tried to match with themselves.`);
@@ -319,18 +331,17 @@ const matchPlayers = async () => {
     clearTimeout(player1.timeout);
     clearTimeout(player2.timeout);
 
-    // Fetch ELO ratings from MongoDB
-    const user1 = await User.findOne({ username: player1.username });
-    const user2 = await User.findOne({ username: player2.username });
-
-    const elo1 = user1 ? user1.elo : 0;
-    const elo2 = user2 ? user2.elo : 0;
-
     const battleId = `${player1.socket.id}-${player2.socket.id}`;
+
+    // Assign difficulty level based on highest ELO in the match
+    let difficultyLevel = 1;
+    if (player1.elo >= 400 || player2.elo >= 400) difficultyLevel = 2;
+    if (player1.elo >= 800 || player2.elo >= 800) difficultyLevel = 3;
+    if (player1.elo >= 1200 || player2.elo >= 1200) difficultyLevel = 4;
 
     function getDifficultyDistribution(baseDifficulty) {
       const random = Math.random(); // Generates a value between 0 and 1
-    
+
       if (random < 0.02 && baseDifficulty < 4) {
         return { main: baseDifficulty + 1, mainCount: 5 }; // Rare challenge mode
       } else if (random < 0.10 && baseDifficulty < 4) {
@@ -341,19 +352,14 @@ const matchPlayers = async () => {
         return { main: baseDifficulty, mainCount: 5 }; // Standard: 5 from own category
       }
     }
-    
-    let difficultyLevel = 1;
-    if (player1.elo >= 400) difficultyLevel = 2;
-    if (player1.elo >= 800) difficultyLevel = 3;
-    if (player1.elo >= 1200) difficultyLevel = 4;
-    
+
     const { main, mainCount, extra, extraCount } = getDifficultyDistribution(difficultyLevel);
-    
+
     let questions = await Question.aggregate([
       { $match: { language: player1.language, difficulty: main } },
       { $sample: { size: mainCount } }
     ]);
-    
+
     if (extra) {
       let extraQuestions = await Question.aggregate([
         { $match: { language: player1.language, difficulty: extra } },
@@ -361,7 +367,7 @@ const matchPlayers = async () => {
       ]);
       questions = [...questions, ...extraQuestions];
     }
-    
+
     // Shuffle the final selection
     questions = questions.sort(() => Math.random() - 0.5);
 
@@ -373,8 +379,8 @@ const matchPlayers = async () => {
     // **Save match details including questions**
     activeBattles[battleId] = {
       players: [
-        { id: player1.socket.id, username: player1.username, elo: elo1 },
-        { id: player2.socket.id, username: player2.username, elo: elo2 },
+        { id: player1.socket.id, username: player1.username, elo: player1.elo },
+        { id: player2.socket.id, username: player2.username, elo: player2.elo },
       ],
       status: 'active',
       questions: questions.map(q => ({
@@ -415,8 +421,8 @@ const matchPlayers = async () => {
       matchId: battleId,
       opponentUsername: player2.username,
       language: player1.language,
-      elo: elo1,
-      opponentElo: elo2,
+      elo: player1.elo,
+      opponentElo: player2.elo,
       questions, // Send questions
     });
 
@@ -425,8 +431,8 @@ const matchPlayers = async () => {
       matchId: battleId,
       opponentUsername: player1.username,
       language: player2.language,
-      elo: elo2,
-      opponentElo: elo1,
+      elo: player2.elo,
+      opponentElo: player1.elo,
       questions, // Send questions
     });
 
@@ -437,13 +443,14 @@ const matchPlayers = async () => {
 
 
 
+
 // Handle WebSocket connections
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
 
   const matchmakingAttempts = new Map();
 
-  socket.on('joinQueue', (data) => {
+  socket.on('joinQueue', async (data) => {
     const { username, language } = data;
     const now = Date.now();
 
@@ -471,24 +478,27 @@ io.on('connection', (socket) => {
         return;
     }
 
-    // Check if username exists in DB
-    User.findOne({ username }).then(user => {
+    try {
+        // Fetch user from database to ensure they exist and retrieve their ELO
+        const user = await User.findOne({ username });
+
         if (!user) {
             console.log(`[ERROR] User ${username} not found.`);
             socket.emit('joinQueueError', { message: 'User not found. Please log in again.' });
             return;
         }
 
-        console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, Socket ID: ${socket.id}`);
+        console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, ELO: ${user.elo}, Socket ID: ${socket.id}`);
 
         // Remove any existing queue entry for this player before adding them
         matchmakingQueue = matchmakingQueue.filter((p) => p.username !== username);
 
-        // Create a player object with a reference to the timeout
+        // Create a player object with ELO and timeout reference
         const player = {
             socket,
             username,
             language,
+            elo: user.elo, // Ensure ELO is assigned!
             timeout: setTimeout(() => {
                 const isStillInQueue = matchmakingQueue.some((p) => p.socket.id === socket.id);
                 if (isStillInQueue) {
@@ -505,11 +515,12 @@ io.on('connection', (socket) => {
 
         // Attempt to match players
         matchPlayers();
-    }).catch(error => {
+    } catch (error) {
         console.error(`[DATABASE ERROR] Failed to fetch user: ${error}`);
         socket.emit('joinQueueError', { message: 'Server error. Please try again later.' });
-    });
-  });
+    }
+});
+
 
 
 
@@ -541,7 +552,7 @@ io.on('connection', (socket) => {
                 });
 
                 // Reward the remaining player
-                let newEloWin = remainingUser.elo + 15;
+                let newEloWin = remainingUser.elo + 100;
                 let newExpWin = remainingUser.exp + 100;
                 let newWinStreak = remainingUser.winStreak + 1;
                 await User.updateOne({ username: remainingPlayer.username }, { 
@@ -765,14 +776,14 @@ io.on('connection', (socket) => {
                 if (winner === player1.username) {
                     winStreak1 += 1;
                     exp1 += 100;
-                    elo1 += 15;
+                    elo1 += 100;
                     winStreak2 = 0;
                     exp2 = Math.max(0, exp2 - 100);
                     elo2 = Math.max(0, elo2 - 15);
                 } else if (winner === player2.username) {
                     winStreak2 += 1;
                     exp2 += 100;
-                    elo2 += 15;
+                    elo2 += 100;
                     winStreak1 = 0;
                     exp1 = Math.max(0, exp1 - 100);
                     elo1 = Math.max(0, elo1 - 15);
