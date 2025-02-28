@@ -541,9 +541,9 @@ class _GameScreenState extends State<GameScreen> {
                   Alignment.topCenter, // Ensures it's centered horizontally
               child: Transform.translate(
                 offset: _statusText == "Correct!"
-                    ? Offset(0, 0)
+                    ? Offset(0, 200)
                     : Offset(0,
-                        100), // Moves it down from the top (adjust as needed)
+                        200), // Moves it down from the top (adjust as needed)
                 child: AnimatedOpacity(
                   opacity: _showStatus ? 1 : 0,
                   duration: const Duration(milliseconds: 800),
