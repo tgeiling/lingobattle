@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'provider.dart';
 
@@ -9,6 +10,7 @@ class Ranks extends StatelessWidget {
       builder: (context, profile, child) {
         int elo = profile.elo;
         String imagePath = _getEloImage(elo);
+        String rankText = _getRank(elo);
 
         return GestureDetector(
           onTap: () => _showEloDialog(context),
@@ -18,10 +20,23 @@ class Ranks extends StatelessWidget {
             children: [
               Padding(
                 padding: EdgeInsets.only(left: 120, bottom: 60),
-                child: Image.asset(
-                  'assets/ranks/$imagePath.png',
-                  width: 200,
-                  height: 100,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      rankText,
+                      style: GoogleFonts.pressStart2p(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    Image.asset(
+                      'assets/ranks/$imagePath.png',
+                      width: 200,
+                      height: 100,
+                    ),
+                  ],
                 ),
               ),
             ],

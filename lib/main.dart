@@ -36,6 +36,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        scaffoldBackgroundColor: Colors.grey[50],
         primarySwatch: Colors.grey,
       ),
       home: MyHomePage(),
@@ -301,114 +302,69 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildBottomNavigationBar() {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
-    double pixelRatio = MediaQuery.of(context).devicePixelRatio;
-
-    // Calculate the width and height in actual pixels
-    double widthInPixels = screenWidth * pixelRatio;
-    double heightInPixels = screenHeight * pixelRatio;
-
-    // Calculate the diagonal in pixels
-    double diagonalPixels =
-        sqrt(pow(widthInPixels, 2) + pow(heightInPixels, 2));
-
-    // Convert the diagonal from pixels to inches
-    double diagonalInches = diagonalPixels /
-        pixelRatio /
-        160; // 160 is typically used as the DPI baseline
-
-    // A more reliable condition for detecting tablets
-    bool isTablet =
-        (diagonalInches >= 7.0 && (screenWidth / screenHeight) < 1.6);
-
-    bool isSmallScreen = screenWidth < 360;
-
-    double navHeight;
-
-    if (isSmallScreen) {
-      navHeight = 60;
-    } else if (isTablet) {
-      navHeight = 140;
-    } else {
-      navHeight = 90;
-    }
-
-    return SizedBox(
-      height: navHeight,
-      child: Column(
-        children: [
-          Container(
-            height: 1,
-            color: Colors.grey,
+    return SalomonBottomBar(
+      backgroundColor: Colors.grey[200],
+      currentIndex: _currentIndex,
+      onTap: (i) {
+        setState(() {
+          _currentIndex = i;
+          _pageController.jumpToPage(i);
+        });
+      },
+      items: [
+        SalomonBottomBarItem(
+          icon: NeumorphicIcon(
+            Icons.gamepad,
+            size: 40,
+            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
           ),
-          Expanded(
-              child: SalomonBottomBar(
-            backgroundColor: Colors.grey[200],
-            currentIndex: _currentIndex,
-            onTap: (i) {
-              setState(() {
-                _currentIndex = i;
-                _pageController.jumpToPage(i);
-              });
-            },
-            items: [
-              SalomonBottomBarItem(
-                icon: NeumorphicIcon(
-                  Icons.gamepad,
-                  size: 40,
-                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                ),
-                title: Text(
-                  "Game",
-                  style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.035),
-                ),
-                selectedColor: Colors.blueGrey[700],
-              ),
-              SalomonBottomBarItem(
-                icon: NeumorphicIcon(
-                  Icons.menu_book,
-                  size: 40,
-                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                ),
-                title: Text(
-                  "Learn",
-                  style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.035),
-                ),
-                selectedColor: Colors.blueGrey[700],
-              ),
-              SalomonBottomBarItem(
-                icon: NeumorphicIcon(
-                  Icons.person,
-                  size: 40,
-                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                ),
-                title: Text(
-                  "Profile",
-                  style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.035),
-                ),
-                selectedColor: Colors.blueGrey[700],
-              ),
-              SalomonBottomBarItem(
-                icon: NeumorphicIcon(
-                  Icons.settings,
-                  size: 40,
-                  style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-                ),
-                title: Text(
-                  "Settings",
-                  style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.035),
-                ),
-                selectedColor: Colors.blueGrey[700],
-              ),
-            ],
-          )),
-        ],
-      ),
+          title: Text(
+            "Game",
+            style:
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+          ),
+          selectedColor: Colors.blueGrey[700],
+        ),
+        SalomonBottomBarItem(
+          icon: NeumorphicIcon(
+            Icons.menu_book,
+            size: 40,
+            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
+          ),
+          title: Text(
+            "Learn",
+            style:
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+          ),
+          selectedColor: Colors.blueGrey[700],
+        ),
+        SalomonBottomBarItem(
+          icon: NeumorphicIcon(
+            Icons.person,
+            size: 40,
+            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
+          ),
+          title: Text(
+            "Profile",
+            style:
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+          ),
+          selectedColor: Colors.blueGrey[700],
+        ),
+        SalomonBottomBarItem(
+          icon: NeumorphicIcon(
+            Icons.settings,
+            size: 40,
+            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
+          ),
+          title: Text(
+            "Settings",
+            style:
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+          ),
+          selectedColor: Colors.blueGrey[700],
+        ),
+      ],
     );
   }
 }
