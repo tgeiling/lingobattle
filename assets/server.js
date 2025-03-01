@@ -23,6 +23,14 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
+const defaultElo = {
+  english: 0,
+  german: 0,
+  swiss: 0,
+  dutch: 0,
+  spanish: 0,
+};
+
 const UserSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
@@ -33,12 +41,13 @@ const UserSchema = new mongoose.Schema({
   completedLevels: { type: String, default: "" }, // JSON String
   title: { type: String, default: "" },
   skillLevel: { type: Number, default: 0 },
-  
-  // Updated: Store ELO as an object with language-based values
-  elo: { type: Map, of: Number, default: {} },
+
+  // ELO stored as a Map with default values
+  elo: { type: Map, of: Number, default: defaultElo },
 
   createdAt: { type: Date, default: Date.now },
 });
+
   
   const User = mongoose.model('User', UserSchema);
 
@@ -310,13 +319,19 @@ const matchPlayers = async () => {
     const language = player1.language; // Ensure we use the correct language for matchmaking
 
     // Ensure player1 has an ELO for this language
-    if (!player1.elo || typeof player1.elo !== "object") player1.elo = {};
-    player1.elo[language] = player1.elo[language] || 1000;
+    if (!player1.elo || typeof player1.elo !== "object" || player1.elo[language] === undefined) {
+      console.log(`[ERROR] Player ${player1.username} is missing ELO for language ${language}.`);
+      player1.socket.emit('joinQueueError', { message: `Missing ELO for language: ${language}. Please update your profile.` });
+      continue; // Skip this player and move to the next in queue
+    }
 
     // Find a suitable opponent within 400 ELO range **for the selected language**
     let index = matchmakingQueue.findIndex(player2 => {
-      if (!player2.elo || typeof player2.elo !== "object") player2.elo = {};
-      player2.elo[language] = player2.elo[language] || 1000;
+      if (!player2.elo || typeof player2.elo !== "object" || player2.elo[language] === undefined) {
+        console.log(`[ERROR] Player ${player2.username} is missing ELO for language ${language}.`);
+        player2.socket.emit('joinQueueError', { message: `Missing ELO for language: ${language}. Please update your profile.` });
+        return false;
+      }
       return Math.abs(player1.elo[language] - player2.elo[language]) <= 400;
     });
 
@@ -448,6 +463,7 @@ const matchPlayers = async () => {
 };
 
 
+
 // Handle WebSocket connections
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
@@ -529,9 +545,9 @@ io.on('connection', (socket) => {
 
 
   socket.on('playerLeft', async (data) => {
-    const { matchId, username, language } = data;
+    const { matchId, username } = data;
 
-    console.log(`[PLAYER LEFT] ${username} left the match ${matchId} in language ${language}`);
+    console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
 
     if (activeBattles[matchId]) {
         const battle = activeBattles[matchId];
@@ -541,27 +557,32 @@ io.on('connection', (socket) => {
         if (leavingPlayer && remainingPlayer) {
             console.log(`[FORFEIT] ${username} forfeited. ${remainingPlayer.username} wins.`);
 
+            // Fetch user data
             const user = await User.findOne({ username: leavingPlayer.username });
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
             if (user && remainingUser) {
-                // Deduct ELO & Reset win streak for the player who left
-                let newElo = Math.max(0, (user.elo.get(language) || 0) - 15);
+                // Penalize the leaving player
+                let newElo = Math.max(0, user.elo - 15);
                 let newExp = Math.max(0, user.exp - 100);
-                user.elo.set(language, newElo);
-                user.winStreak = 0;
-                await user.save();
+                await User.updateOne({ username: leavingPlayer.username }, { 
+                    elo: newElo, 
+                    exp: newExp, 
+                    winStreak: 0  // Reset win streak for leaver
+                });
 
                 // Reward the remaining player
-                let newEloWin = (remainingUser.elo.get(language) || 0) + 100;
+                let newEloWin = remainingUser.elo + 15;
                 let newExpWin = remainingUser.exp + 100;
                 let newWinStreak = remainingUser.winStreak + 1;
-                remainingUser.elo.set(language, newEloWin);
-                remainingUser.winStreak = newWinStreak;
-                await remainingUser.save();
+                await User.updateOne({ username: remainingPlayer.username }, { 
+                    elo: newEloWin, 
+                    exp: newExpWin, 
+                    winStreak: newWinStreak  // Increase win streak
+                });
 
                 console.log(`[ELO UPDATE] ${leavingPlayer.username} penalized. New ELO: ${newElo}`);
-                console.log(`[ELO UPDATE] ${remainingPlayer.username} rewarded. New ELO: ${newEloWin}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
 
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Opponent left. You win!',
@@ -576,12 +597,15 @@ io.on('connection', (socket) => {
   });
 
 
+
   // Handle player disconnection
   socket.on('disconnect', async () => {
     console.log(`[DISCONNECTED] User disconnected: ${socket.id}`);
 
+    // Remove from queue
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
 
+    // Find active battle
     for (const battleId in activeBattles) {
         const battle = activeBattles[battleId];
         const playerIndex = battle.players.findIndex((p) => p.id === socket.id);
@@ -592,9 +616,11 @@ io.on('connection', (socket) => {
 
             console.log(`[DISCONNECT] Player ${disconnectedPlayer.username} left Battle ID: ${battleId}`);
 
+            // Fetch user data
             const user = await User.findOne({ username: disconnectedPlayer.username });
 
             if (!remainingPlayer) {
+                console.log(`[INFO] No remaining player. Removing battle.`);
                 delete activeBattles[battleId];
                 return;
             }
@@ -602,33 +628,42 @@ io.on('connection', (socket) => {
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
             if (user && remainingUser) {
-                let newElo = Math.max(0, (user.elo.get(language) || 0) - 15);
+                // Penalize disconnected player
+                let newElo = Math.max(0, user.elo - 15);
                 let newExp = Math.max(0, user.exp - 100);
-                user.elo.set(language, newElo);
-                user.winStreak = 0;
-                await user.save();
+                await User.updateOne({ username: disconnectedPlayer.username }, { 
+                    elo: newElo, 
+                    exp: newExp, 
+                    winStreak: 0  // Reset win streak for disconnector
+                });
 
-                let newEloWin = (remainingUser.elo.get(language) || 0) + 100;
+                // Reward the remaining player
+                let newEloWin = remainingUser.elo + 15;
                 let newExpWin = remainingUser.exp + 100;
                 let newWinStreak = remainingUser.winStreak + 1;
-                remainingUser.elo.set(language, newEloWin);
-                remainingUser.winStreak = newWinStreak;
-                await remainingUser.save();
+                await User.updateOne({ username: remainingPlayer.username }, { 
+                    elo: newEloWin, 
+                    exp: newExpWin, 
+                    winStreak: newWinStreak  // Increase win streak
+                });
 
                 console.log(`[ELO UPDATE] ${disconnectedPlayer.username} penalized. New ELO: ${newElo}`);
-                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
 
+                // Notify remaining player
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Your opponent disconnected. You win!',
                     result: 'opponentDisconnected',
                     questions: battle.questions || [],
                 });
 
+                // Remove battle from active list
                 delete activeBattles[battleId];
             }
         }
     }
 });
+
 
 
 

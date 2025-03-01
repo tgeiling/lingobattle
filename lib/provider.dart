@@ -111,6 +111,12 @@ class ProfileProvider with ChangeNotifier {
     await prefs.setInt('skillLevel', _skillLevel);
     await prefs.setString('language_levels', _completedLevelsJson);
 
+    // Ensure all languages have default ELO before saving
+    List<String> languages = ["english", "german", "swiss", "dutch", "spanish"];
+    for (String lang in languages) {
+      _eloMap.putIfAbsent(lang, () => 0);
+    }
+
     // Store elo map as JSON string
     await prefs.setString('eloMap', jsonEncode(_eloMap));
   }
@@ -130,6 +136,12 @@ class ProfileProvider with ChangeNotifier {
       _eloMap = Map<String, int>.from(jsonDecode(eloJson));
     }
 
+    // Ensure all languages have default ELO (avoid missing values)
+    List<String> languages = ["english", "german", "swiss", "dutch", "spanish"];
+    for (String lang in languages) {
+      _eloMap.putIfAbsent(lang, () => 0);
+    }
+
     notifyListeners();
   }
 
@@ -145,6 +157,18 @@ class ProfileProvider with ChangeNotifier {
       // Convert JSON elo data into a Map<String, int>
       if (profileData.containsKey('elo')) {
         _eloMap = Map<String, int>.from(profileData['elo']);
+      }
+
+      // Ensure all languages have default ELO (avoid missing values)
+      List<String> languages = [
+        "english",
+        "german",
+        "swiss",
+        "dutch",
+        "spanish"
+      ];
+      for (String lang in languages) {
+        _eloMap.putIfAbsent(lang, () => 0);
       }
 
       notifyListeners();
