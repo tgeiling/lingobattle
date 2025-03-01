@@ -1334,6 +1334,14 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   Future<bool> _showLeaveConfirmationDialog(BuildContext context) async {
+    final List<Map<String, dynamic>> formattedQuestions = questions.map((q) {
+      return {
+        'question': q.question, // Extracting question as string
+        'answers':
+            List<String>.from(q.answers), // Ensuring answers is a List<String>
+      };
+    }).toList();
+
     return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -1359,7 +1367,7 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       builder: (context) => MultiplayerResultScreen(
                         results: {
                           'message': 'You left the game.',
-                          'questions': questions,
+                          'questions': formattedQuestions,
                           'result': 'lossByLeave',
                           'player1': {
                             'username': widget.username,
