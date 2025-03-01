@@ -181,7 +181,10 @@ class _StartPageState extends State<StartPage> {
     return Scaffold(
         body: Stack(
       children: [
-        Positioned(right: 0, top: 0, child: Ranks()),
+        Positioned(
+            right: 0,
+            top: 0,
+            child: Ranks(currentLanguage: flags[currentIndex]['language']!)),
         Column(
           children: [
             const Spacer(),

@@ -51,20 +51,21 @@ Future<bool> updateProfile({
   required String token,
   int? winStreak,
   int? exp,
-  String? completedLevels, // Now a map for per-language progress
+  String? completedLevels, // Per-language progress
   String? title,
-  int? elo,
+  Map<String, int>? eloMap, // Now supports multiple ELOs per language
   int? skillLevel,
 }) async {
   final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/updateProfile');
 
   Map<String, dynamic> body = {};
+
   if (winStreak != null) body['winStreak'] = winStreak;
   if (exp != null) body['exp'] = exp;
   if (completedLevels != null)
     body['completedLevels'] = completedLevels; // Send as map
   if (title != null) body['title'] = title;
-  if (elo != null) body['elo'] = elo;
+  if (eloMap != null && eloMap.isNotEmpty) body['elo'] = eloMap; // Now a map
   if (skillLevel != null) body['skillLevel'] = skillLevel;
 
   try {
@@ -74,10 +75,11 @@ Future<bool> updateProfile({
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode(body),
+      body: jsonEncode(body), // Convert to JSON
     );
 
     if (response.statusCode == 200) {
+      print('Profile updated successfully.');
       return true;
     } else {
       print('Failed to update profile: ${response.body}');

@@ -23,25 +23,24 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
-// User schema and model
 const UserSchema = new mongoose.Schema({
   username: { type: String, unique: true, required: true },
   password: { type: String, required: true },
-  
+
   winStreak: { type: Number, default: 0 }, 
   exp: { type: Number, default: 0 }, 
 
-  //JSON
-  completedLevels: { type: String, default: "" },
-
+  completedLevels: { type: String, default: "" }, // JSON String
   title: { type: String, default: "" },
-  elo: { type: Number, default: 0 },
   skillLevel: { type: Number, default: 0 },
   
+  // Updated: Store ELO as an object with language-based values
+  elo: { type: Map, of: Number, default: {} },
+
   createdAt: { type: Date, default: Date.now },
 });
-
-const User = mongoose.model('User', UserSchema);
+  
+  const User = mongoose.model('User', UserSchema);
 
 const MatchResultSchema = new mongoose.Schema({
   matchId: { type: String, required: true, unique: true },
@@ -308,10 +307,17 @@ const MATCH_TIMEOUT = 301000; // 1 minute
 const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
     const player1 = matchmakingQueue.shift();
+    const language = player1.language; // Ensure we use the correct language for matchmaking
 
-    // Find a suitable opponent within 400 ELO range
+    // Ensure player1 has an ELO for this language
+    if (!player1.elo || typeof player1.elo !== "object") player1.elo = {};
+    player1.elo[language] = player1.elo[language] || 1000;
+
+    // Find a suitable opponent within 400 ELO range **for the selected language**
     let index = matchmakingQueue.findIndex(player2 => {
-      return Math.abs(player1.elo - player2.elo) <= 400;
+      if (!player2.elo || typeof player2.elo !== "object") player2.elo = {};
+      player2.elo[language] = player2.elo[language] || 1000;
+      return Math.abs(player1.elo[language] - player2.elo[language]) <= 400;
     });
 
     if (index === -1) {
@@ -335,9 +341,10 @@ const matchPlayers = async () => {
 
     // Assign difficulty level based on highest ELO in the match
     let difficultyLevel = 1;
-    if (player1.elo >= 400 || player2.elo >= 400) difficultyLevel = 2;
-    if (player1.elo >= 800 || player2.elo >= 800) difficultyLevel = 3;
-    if (player1.elo >= 1200 || player2.elo >= 1200) difficultyLevel = 4;
+    const highestElo = Math.max(player1.elo[language], player2.elo[language]);
+    if (highestElo >= 400) difficultyLevel = 2;
+    if (highestElo >= 800) difficultyLevel = 3;
+    if (highestElo >= 1200) difficultyLevel = 4;
 
     function getDifficultyDistribution(baseDifficulty) {
       const random = Math.random(); // Generates a value between 0 and 1
@@ -379,8 +386,8 @@ const matchPlayers = async () => {
     // **Save match details including questions**
     activeBattles[battleId] = {
       players: [
-        { id: player1.socket.id, username: player1.username, elo: player1.elo },
-        { id: player2.socket.id, username: player2.username, elo: player2.elo },
+        { id: player1.socket.id, username: player1.username, elo: player1.elo[language] },
+        { id: player2.socket.id, username: player2.username, elo: player2.elo[language] },
       ],
       status: 'active',
       questions: questions.map(q => ({
@@ -421,8 +428,8 @@ const matchPlayers = async () => {
       matchId: battleId,
       opponentUsername: player2.username,
       language: player1.language,
-      elo: player1.elo,
-      opponentElo: player2.elo,
+      elo: player1.elo[language],
+      opponentElo: player2.elo[language],
       questions, // Send questions
     });
 
@@ -431,17 +438,14 @@ const matchPlayers = async () => {
       matchId: battleId,
       opponentUsername: player1.username,
       language: player2.language,
-      elo: player2.elo,
-      opponentElo: player1.elo,
+      elo: player2.elo[language],
+      opponentElo: player1.elo[language],
       questions, // Send questions
     });
 
     console.log(`[BATTLE STARTED] Sent questions to both players.`);
   }
 };
-
-
-
 
 
 // Handle WebSocket connections
@@ -519,15 +523,15 @@ io.on('connection', (socket) => {
         console.error(`[DATABASE ERROR] Failed to fetch user: ${error}`);
         socket.emit('joinQueueError', { message: 'Server error. Please try again later.' });
     }
-});
+  });
 
 
 
 
   socket.on('playerLeft', async (data) => {
-    const { matchId, username } = data;
+    const { matchId, username, language } = data;
 
-    console.log(`[PLAYER LEFT] ${username} left the match ${matchId}`);
+    console.log(`[PLAYER LEFT] ${username} left the match ${matchId} in language ${language}`);
 
     if (activeBattles[matchId]) {
         const battle = activeBattles[matchId];
@@ -537,32 +541,27 @@ io.on('connection', (socket) => {
         if (leavingPlayer && remainingPlayer) {
             console.log(`[FORFEIT] ${username} forfeited. ${remainingPlayer.username} wins.`);
 
-            // Fetch user data
             const user = await User.findOne({ username: leavingPlayer.username });
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
             if (user && remainingUser) {
-                // Penalize the leaving player
-                let newElo = Math.max(0, user.elo - 15);
+                // Deduct ELO & Reset win streak for the player who left
+                let newElo = Math.max(0, (user.elo.get(language) || 0) - 15);
                 let newExp = Math.max(0, user.exp - 100);
-                await User.updateOne({ username: leavingPlayer.username }, { 
-                    elo: newElo, 
-                    exp: newExp, 
-                    winStreak: 0  // Reset win streak for leaver
-                });
+                user.elo.set(language, newElo);
+                user.winStreak = 0;
+                await user.save();
 
                 // Reward the remaining player
-                let newEloWin = remainingUser.elo + 100;
+                let newEloWin = (remainingUser.elo.get(language) || 0) + 100;
                 let newExpWin = remainingUser.exp + 100;
                 let newWinStreak = remainingUser.winStreak + 1;
-                await User.updateOne({ username: remainingPlayer.username }, { 
-                    elo: newEloWin, 
-                    exp: newExpWin, 
-                    winStreak: newWinStreak  // Increase win streak
-                });
+                remainingUser.elo.set(language, newEloWin);
+                remainingUser.winStreak = newWinStreak;
+                await remainingUser.save();
 
                 console.log(`[ELO UPDATE] ${leavingPlayer.username} penalized. New ELO: ${newElo}`);
-                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} rewarded. New ELO: ${newEloWin}`);
 
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Opponent left. You win!',
@@ -577,15 +576,12 @@ io.on('connection', (socket) => {
   });
 
 
-
   // Handle player disconnection
   socket.on('disconnect', async () => {
     console.log(`[DISCONNECTED] User disconnected: ${socket.id}`);
 
-    // Remove from queue
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);
 
-    // Find active battle
     for (const battleId in activeBattles) {
         const battle = activeBattles[battleId];
         const playerIndex = battle.players.findIndex((p) => p.id === socket.id);
@@ -596,11 +592,9 @@ io.on('connection', (socket) => {
 
             console.log(`[DISCONNECT] Player ${disconnectedPlayer.username} left Battle ID: ${battleId}`);
 
-            // Fetch user data
             const user = await User.findOne({ username: disconnectedPlayer.username });
 
             if (!remainingPlayer) {
-                console.log(`[INFO] No remaining player. Removing battle.`);
                 delete activeBattles[battleId];
                 return;
             }
@@ -608,41 +602,33 @@ io.on('connection', (socket) => {
             const remainingUser = await User.findOne({ username: remainingPlayer.username });
 
             if (user && remainingUser) {
-                // Penalize disconnected player
-                let newElo = Math.max(0, user.elo - 15);
+                let newElo = Math.max(0, (user.elo.get(language) || 0) - 15);
                 let newExp = Math.max(0, user.exp - 100);
-                await User.updateOne({ username: disconnectedPlayer.username }, { 
-                    elo: newElo, 
-                    exp: newExp, 
-                    winStreak: 0  // Reset win streak for disconnector
-                });
+                user.elo.set(language, newElo);
+                user.winStreak = 0;
+                await user.save();
 
-                // Reward the remaining player
-                let newEloWin = remainingUser.elo + 15;
+                let newEloWin = (remainingUser.elo.get(language) || 0) + 100;
                 let newExpWin = remainingUser.exp + 100;
                 let newWinStreak = remainingUser.winStreak + 1;
-                await User.updateOne({ username: remainingPlayer.username }, { 
-                    elo: newEloWin, 
-                    exp: newExpWin, 
-                    winStreak: newWinStreak  // Increase win streak
-                });
+                remainingUser.elo.set(language, newEloWin);
+                remainingUser.winStreak = newWinStreak;
+                await remainingUser.save();
 
                 console.log(`[ELO UPDATE] ${disconnectedPlayer.username} penalized. New ELO: ${newElo}`);
-                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}, New Win Streak: ${newWinStreak}`);
+                console.log(`[ELO UPDATE] ${remainingPlayer.username} awarded. New ELO: ${newEloWin}`);
 
-                // Notify remaining player
                 io.to(remainingPlayer.id).emit('battleEnded', {
                     message: 'Your opponent disconnected. You win!',
                     result: 'opponentDisconnected',
                     questions: battle.questions || [],
                 });
 
-                // Remove battle from active list
                 delete activeBattles[battleId];
             }
         }
     }
-  });
+});
 
 
 
@@ -705,7 +691,7 @@ io.on('connection', (socket) => {
   socket.on('submitResults', async (data) => {
     const { matchId, username, correctAnswers, language } = data;
 
-    console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId}`);
+    console.log(`[SUBMIT RESULTS] Received results from ${username} for match ${matchId} in language ${language}`);
 
     if (activeBattles[matchId]) {
         const battle = activeBattles[matchId];
@@ -717,98 +703,83 @@ io.on('connection', (socket) => {
             // Check if both players have submitted their results
             if (battle.players.every((p) => p.correctAnswers !== undefined)) {
                 const [player1, player2] = battle.players;
-
-                try {
-                    // Save match results to MongoDB, including questions
-                    const matchResult = await MatchResult.findOneAndUpdate(
-                        { matchId },
-                        {
-                            $set: {
-                                players: [
-                                    {
-                                        username: player1.username,
-                                        correctAnswers: player1.correctAnswers,
-                                        progress: player1.progress,
-                                    },
-                                    {
-                                        username: player2.username,
-                                        correctAnswers: player2.correctAnswers,
-                                        progress: player2.progress,
-                                    },
-                                ],
-                                language: language,
-                                questions: battle.questions.map(q => ({
-                                    question: q.question,
-                                    answers: q.answers
-                                })), // Save questions from the battle
-                            },
-                        },
-                        { upsert: true, new: true }
-                    );
-
-                    console.log(`[MATCH SAVED] Results and questions saved for match ${matchId}`);
-                } catch (err) {
-                    console.error(`[DATABASE ERROR] Failed to save match results: ${err}`);
-                }
-
-                // Determine the winner
                 let winner = null;
+
                 if (player1.correctAnswers > player2.correctAnswers) {
                     winner = player1.username;
                 } else if (player2.correctAnswers > player1.correctAnswers) {
                     winner = player2.username;
                 }
 
-                console.log(`Winner: ${winner || 'Draw'}`);
-
-                // Fetch users from DB
+                // Fetch user profiles
                 const user1 = await User.findOne({ username: player1.username });
                 const user2 = await User.findOne({ username: player2.username });
 
-                let winStreak1 = user1?.winStreak || 0;
-                let exp1 = user1?.exp || 0;
-                let elo1 = user1?.elo || 0;
-
-                let winStreak2 = user2?.winStreak || 0;
-                let exp2 = user2?.exp || 0;
-                let elo2 = user2?.elo || 0;
-
-                if (winner === player1.username) {
-                    winStreak1 += 1;
-                    exp1 += 100;
-                    elo1 += 100;
-                    winStreak2 = 0;
-                    exp2 = Math.max(0, exp2 - 100);
-                    elo2 = Math.max(0, elo2 - 15);
-                } else if (winner === player2.username) {
-                    winStreak2 += 1;
-                    exp2 += 100;
-                    elo2 += 100;
-                    winStreak1 = 0;
-                    exp1 = Math.max(0, exp1 - 100);
-                    elo1 = Math.max(0, elo1 - 15);
-                } else { // Draw case
-                    winStreak1 = 0;
-                    winStreak2 = 0;
-                    exp1 = Math.max(0, exp1 - 5);
-                    elo1 = Math.max(0, elo1 - 5);
-                    exp2 = Math.max(0, exp2 - 5);
-                    elo2 = Math.max(0, elo2 - 5);
+                if (!user1 || !user2) {
+                    console.log(`[ERROR] One or both users not found in DB.`);
+                    return;
                 }
 
-                // Update user profiles in the database
-                await User.updateOne({ username: player1.username }, { winStreak: winStreak1, exp: exp1, elo: elo1 });
-                await User.updateOne({ username: player2.username }, { winStreak: winStreak2, exp: exp2, elo: elo2 });
+                // Ensure both users have ELO values for the language
+                user1.elo.set(language, user1.elo.get(language) || 1000);
+                user2.elo.set(language, user2.elo.get(language) || 1000);
+
+                let elo1 = user1.elo.get(language);
+                let elo2 = user2.elo.get(language);
+
+                let winStreak1 = user1.winStreak || 0;
+                let winStreak2 = user2.winStreak || 0;
+                let exp1 = user1.exp || 0;
+                let exp2 = user2.exp || 0;
+
+                // **ELO & XP Handling**
+                if (winner === player1.username) {
+                    // Player 1 Wins
+                    elo1 += 100;
+                    elo2 = Math.max(0, elo2 - 15);
+                    winStreak1 += 1;
+                    winStreak2 = 0;
+                    exp1 += 100;
+                    exp2 = Math.max(0, exp2 - 50);
+                } else if (winner === player2.username) {
+                    // Player 2 Wins
+                    elo2 += 100;
+                    elo1 = Math.max(0, elo1 - 15);
+                    winStreak2 += 1;
+                    winStreak1 = 0;
+                    exp2 += 100;
+                    exp1 = Math.max(0, exp1 - 50);
+                } else {
+                    // **Draw Case**
+                    console.log(`[DRAW] ${player1.username} vs ${player2.username}`);
+                    winStreak1 = 0;
+                    winStreak2 = 0;
+                    elo1 = Math.max(0, elo1 - 5);
+                    elo2 = Math.max(0, elo2 - 5);
+                    exp1 += 25;
+                    exp2 += 25;
+                }
+
+                // **Update users in DB**
+                user1.elo.set(language, elo1);
+                user2.elo.set(language, elo2);
+                user1.winStreak = winStreak1;
+                user2.winStreak = winStreak2;
+                user1.exp = exp1;
+                user2.exp = exp2;
+
+                await user1.save();
+                await user2.save();
 
                 console.log(`[PROFILE UPDATE] ${player1.username} - ELO: ${elo1}, EXP: ${exp1}, WinStreak: ${winStreak1}`);
                 console.log(`[PROFILE UPDATE] ${player2.username} - ELO: ${elo2}, EXP: ${exp2}, WinStreak: ${winStreak2}`);
 
-                // Notify both players of the match outcome
+                // Notify players
                 battle.players.forEach((p) => {
                     io.to(p.id).emit('battleEnded', {
                         message: 'Match finished!',
                         result: {
-                            winner,
+                            winner: winner || "draw",
                             player1: {
                                 username: player1.username,
                                 progress: player1.progress,
@@ -830,7 +801,7 @@ io.on('connection', (socket) => {
                     });
                 });
 
-                // Remove the match from active battles
+                // Remove match from active battles
                 delete activeBattles[matchId];
             }
         }
@@ -838,6 +809,7 @@ io.on('connection', (socket) => {
         console.log(`[ERROR] Match ID ${matchId} not found in active battles`);
     }
   });
+
 
 
   // Leave matchmaking queue

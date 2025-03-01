@@ -13,14 +13,22 @@ class ProfileProvider with ChangeNotifier {
   String _completedLevelsJson = "{}"; // Stored as JSON String
   String _username = "";
   String _title = "";
-  int _elo = 0;
+  Map<String, int> _eloMap = {};
   int _skillLevel = 0;
 
   int get winStreak => _winStreak;
   int get exp => _exp;
   String get username => _username;
   String get title => _title;
-  int get elo => _elo;
+  int getElo(String language) {
+    return _eloMap[language] ?? 0; // Default to 0 if not set
+  }
+
+  Map<String, int> getEloMap() {
+    return Map<String, int>.from(
+        _eloMap); // Returns a copy to prevent modifications
+  }
+
   int get skilllevel => _skillLevel;
 
   Map<String, int> get completedLevels {
@@ -70,8 +78,8 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  void setElo(int elo) {
-    _elo = elo;
+  void setElo(String language, int elo) {
+    _eloMap[language] = elo;
     notifyListeners();
     savePreferences();
   }
@@ -94,28 +102,35 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
-  Future<void> loadPreferences() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    _winStreak = prefs.getInt('winStreak') ?? 0;
-    _exp = prefs.getInt('exp') ?? 0;
-    _username = prefs.getString('username') ?? "";
-    _title = prefs.getString('title') ?? "";
-    _elo = prefs.getInt('elo') ?? 0;
-    _skillLevel = prefs.getInt('skillLevel') ?? 0;
-    _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
-
-    notifyListeners();
-  }
-
   Future<void> savePreferences() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
     await prefs.setString('username', _username);
     await prefs.setString('title', _title);
-    await prefs.setInt('elo', _elo);
     await prefs.setInt('skillLevel', _skillLevel);
     await prefs.setString('language_levels', _completedLevelsJson);
+
+    // Store elo map as JSON string
+    await prefs.setString('eloMap', jsonEncode(_eloMap));
+  }
+
+  Future<void> loadPreferences() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    _winStreak = prefs.getInt('winStreak') ?? 0;
+    _exp = prefs.getInt('exp') ?? 0;
+    _username = prefs.getString('username') ?? "";
+    _title = prefs.getString('title') ?? "";
+    _skillLevel = prefs.getInt('skillLevel') ?? 0;
+    _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
+
+    // Load elo map
+    String? eloJson = prefs.getString('eloMap');
+    if (eloJson != null) {
+      _eloMap = Map<String, int>.from(jsonDecode(eloJson));
+    }
+
+    notifyListeners();
   }
 
   Future<void> syncProfile(String token) async {
@@ -123,14 +138,13 @@ class ProfileProvider with ChangeNotifier {
     if (profileData != null) {
       _winStreak = profileData['winStreak'] ?? _winStreak;
       _exp = profileData['exp'] ?? _exp;
-      _elo = profileData['elo'] ?? _elo;
       _username = profileData['username'] ?? _username;
       _title = profileData['title'] ?? _title;
       _skillLevel = profileData['skillLevel'] ?? _skillLevel;
 
-      // If completedLevels is in the response, update it
-      if (profileData.containsKey('completedLevels')) {
-        _completedLevelsJson = jsonEncode(profileData['completedLevels']);
+      // Convert JSON elo data into a Map<String, int>
+      if (profileData.containsKey('elo')) {
+        _eloMap = Map<String, int>.from(profileData['elo']);
       }
 
       notifyListeners();

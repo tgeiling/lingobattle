@@ -37,22 +37,11 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
 
             // 🔹 Right side (🔥 Streak next to 👑 ELO)
-            Row(
-              children: [
-                _gamePill(
-                  iconPath: 'assets/flame.png',
-                  text: '${profile.winStreak}',
-                  color: Colors.redAccent,
-                  context: context,
-                ),
-                const SizedBox(width: 12), // Space between streak & ELO
-                _gamePill(
-                  iconPath: 'assets/crown.png',
-                  text: '${profile.elo}',
-                  color: Colors.amber,
-                  context: context,
-                ),
-              ],
+            _gamePill(
+              iconPath: 'assets/flame.png',
+              text: '${profile.winStreak}',
+              color: Colors.redAccent,
+              context: context,
             ),
           ],
         ),

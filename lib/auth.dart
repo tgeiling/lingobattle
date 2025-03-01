@@ -233,8 +233,14 @@ class _LoginScreenState extends State<LoginScreen> {
           if (profileData.containsKey('title')) {
             profileProvider.setTitle(profileData['title']);
           }
-          if (profileData.containsKey('elo')) {
-            profileProvider.setElo(profileData['elo']);
+          if (profileData.containsKey('elo') && profileData['elo'] is Map) {
+            Map<String, dynamic> eloMap = profileData['elo'];
+
+            eloMap.forEach((language, eloValue) {
+              if (eloValue is int) {
+                profileProvider.setElo(language, eloValue);
+              }
+            });
           }
           if (profileData.containsKey('skillLevel')) {
             profileProvider.setSkillLevel(profileData['skillLevel']);
@@ -260,7 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 winStreak: profileProvider.winStreak,
                 exp: profileProvider.exp,
                 title: profileProvider.title,
-                elo: profileProvider.elo,
+                eloMap: profileProvider.getEloMap(),
                 skillLevel: profileProvider.skilllevel,
                 completedLevels: profileProvider.completedLevelsJson,
               ).then((success) {
