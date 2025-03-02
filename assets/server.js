@@ -282,22 +282,30 @@ app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
 
 app.get('/leaderboard', async (req, res) => {
   try {
-      let { page = 1, limit = 20, username } = req.query;
+      let { page = 1, limit = 20, username, language } = req.query;
       page = parseInt(page);
       limit = parseInt(limit);
 
-      // Fetch paginated leaderboard
-      const topPlayers = await User.find({})
-          .sort({ elo: -1 }) // Sort by ELO
-          .skip((page - 1) * limit) // Pagination logic
-          .limit(limit)
-          .select('username elo winStreak');
+      if (!language) {
+          return res.status(400).json({ message: "Language parameter is required." });
+      }
+
+      // Fetch paginated leaderboard, sorting by the selected language's ELO
+      const topPlayers = await User.find({
+          [`elo.${language}`]: { $exists: true } // Ensure the selected language exists in the ELO map
+      })
+      .sort({ [`elo.${language}`]: -1 }) // Sort by ELO for the specific language
+      .skip((page - 1) * limit) // Pagination logic
+      .limit(limit)
+      .select(`username elo winStreak`); // Selecting necessary fields
 
       let userRank = null;
       if (username) {
-          const user = await User.findOne({ username }).select('elo');
-          if (user) {
-              userRank = await User.countDocuments({ elo: { $gt: user.elo } }) + 1;
+          const user = await User.findOne({ username }).select(`elo`);
+          if (user && user.elo && user.elo[language] !== undefined) {
+              userRank = await User.countDocuments({
+                  [`elo.${language}`]: { $gt: user.elo[language] } 
+              }) + 1;
           }
       }
 
@@ -308,6 +316,7 @@ app.get('/leaderboard', async (req, res) => {
       res.status(500).json({ message: 'Failed to fetch leaderboard' });
   }
 });
+
 
 
 

@@ -53,7 +53,7 @@ class Ranks extends StatelessWidget {
   }
 
   void _showEloDialog(BuildContext context, ProfileProvider profile) {
-    Map<String, int> eloMap = profile.getEloMap as Map<String, int>;
+    Map<String, int> eloMap = profile.getEloMap();
     List<MapEntry<String, int>> nonZeroEloEntries =
         eloMap.entries.where((entry) => entry.value > 0).toList();
 
