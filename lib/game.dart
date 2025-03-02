@@ -697,6 +697,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     opponentProgress = List<String>.filled(questions.length, "unanswered");
     _textInputController = TextEditingController();
 
+    _shuffledAnswers = List.from(questions[currentQuestionIndex].answers);
+
     _initializeWordHandling();
     _startTimer();
 
