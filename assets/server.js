@@ -77,7 +77,8 @@ const QuestionSchema = new mongoose.Schema({
   language: { type: String, required: true },
   question: { type: String, required: true },
   answers: { type: [String], required: true },
-  difficulty: { type: Number, required: true }
+  difficulty: { type: Number, required: true },
+  type: { type: String, required: true}
 });
 
 const Question = mongoose.model('Question', QuestionSchema);
@@ -114,10 +115,21 @@ app.post('/register', async (req, res) => {
           return res.status(400).json({ message: "Invalid username", errors });
       }
 
+      // Validate password length
+      if (!password || password.length < 6) {
+          return res.status(400).json({ 
+              message: "Invalid password", 
+              errors: ["Password must be at least 6 characters long."] 
+          });
+      }
+
       // Check if username already exists
       const existingUser = await User.findOne({ username });
       if (existingUser) {
-          return res.status(400).json({ message: "Username already exists", errors: ["This username is already taken."] });
+          return res.status(400).json({ 
+              message: "Username already exists", 
+              errors: ["This username is already taken."] 
+          });
       }
 
       // Hash the password
@@ -142,6 +154,7 @@ app.post('/register', async (req, res) => {
       res.status(500).json({ message: "Server error" });
   }
 });
+
 
 
 const loginLimiter = rateLimit({
@@ -373,9 +386,9 @@ const matchPlayers = async () => {
 
       if (random < 0.02 && baseDifficulty < 4) {
         return { main: baseDifficulty + 1, mainCount: 5 }; // Rare challenge mode
-      } else if (random < 0.10 && baseDifficulty < 4) {
-        return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: 2 }; // 3+2 mix
       } else if (random < 0.30 && baseDifficulty < 4) {
+        return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: 2 }; // 3+2 mix
+      } else if (random < 0.50 && baseDifficulty < 4) {
         return { main: baseDifficulty, mainCount: 4, extra: baseDifficulty + 1, extraCount: 1 }; // 4+1 mix
       } else {
         return { main: baseDifficulty, mainCount: 5 }; // Standard: 5 from own category

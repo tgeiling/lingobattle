@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'provider.dart';
@@ -12,8 +13,7 @@ class Ranks extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<ProfileProvider>(
       builder: (context, profile, child) {
-        int elo = profile
-            .getElo(currentLanguage); // Get ELO for the selected language
+        int elo = profile.getElo(currentLanguage);
         String imagePath = _getEloImage(elo);
         String rankText = _getRank(elo);
 
@@ -23,27 +23,38 @@ class Ranks extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 120, bottom: 60),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Neumorphic(
+                    style: NeumorphicStyle(
+                      depth: 8,
+                      boxShape: NeumorphicBoxShape.roundRect(
+                        BorderRadius.circular(20),
+                      ),
+                      color: Colors.grey[200],
+                      intensity: 0.6,
+                      shadowDarkColor: Colors.grey[600],
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Text(
                       rankText,
                       style: GoogleFonts.pressStart2p(
-                        fontSize: 16,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[800],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    Image.asset(
-                      'assets/ranks/$imagePath.png',
-                      width: 200,
-                      height: 100,
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 12),
+                  Image.asset(
+                    'assets/ranks/$imagePath.png',
+                    width: 180,
+                    height: 90,
+                    fit: BoxFit.contain,
+                  ),
+                ],
               ),
             ],
           ),
@@ -62,13 +73,12 @@ class Ranks extends StatelessWidget {
       builder: (context) {
         return AlertDialog(
           title: const Text("ELO Progression"),
-          content: Container(
+          content: SizedBox(
             height: 350,
             width: double.maxFinite,
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Display all non-zero ELO values at the top
                   if (nonZeroEloEntries.isNotEmpty) ...[
                     const Text(
                       "ELO by Language:",
@@ -86,21 +96,16 @@ class Ranks extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                   ],
-
-                  // ELO progression list
                   ...List.generate(16, (index) {
                     int eloValue = index * 100;
                     String rank = _getRank(eloValue);
                     String imagePath = _getEloImage(eloValue);
 
                     return ListTile(
-                      leading: Transform.scale(
-                        scale: 2.5,
-                        child: Image.asset(
-                          'assets/ranks/$imagePath.png',
-                          width: 25,
-                          height: 25,
-                        ),
+                      leading: Image.asset(
+                        'assets/ranks/$imagePath.png',
+                        width: 40,
+                        height: 40,
                       ),
                       title: Text('$rank - Step ${(index % 4) + 1}'),
                       subtitle: Text('ELO: $eloValue'),

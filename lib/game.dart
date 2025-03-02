@@ -45,6 +45,8 @@ class _GameScreenState extends State<GameScreen> {
   late FocusNode _focusNode;
   late Timer _timer = Timer(Duration.zero, () {});
   double _progress = 1.0;
+  String? selectedAnswer;
+  List<String> _shuffledAnswers = [];
 
   @override
   void initState() {
@@ -56,6 +58,7 @@ class _GameScreenState extends State<GameScreen> {
         .map((questionData) => MultiplayerQuestion(
               question: questionData['question'] as String,
               answers: List<String>.from(questionData['answers'] as List),
+              type: questionData['type'] as String,
             ))
         .toList();
 
@@ -134,31 +137,38 @@ class _GameScreenState extends State<GameScreen> {
 
   void _submitAnswer() {
     setState(() {
-      String userAnswer = _currentSentenceInputs.join(" ").trim().toLowerCase();
-      String correctAnswer = questions[currentQuestionIndex]
-          .answers
-          .join(" ")
-          .trim()
-          .toLowerCase();
+      MultiplayerQuestion currentQuestion = questions[currentQuestionIndex];
+      bool isCorrect = false;
 
-      if (userAnswer == correctAnswer) {
-        questionResults[currentQuestionIndex] = "correct";
-        _triggerResultAnimation(true);
-        correctAnswers++;
-      } else {
-        questionResults[currentQuestionIndex] = "incorrect";
-        _triggerResultAnimation(false);
+      if (currentQuestion.type == "fill") {
+        String userAnswer =
+            _currentSentenceInputs.join(" ").trim().toLowerCase();
+        String correctAnswer =
+            currentQuestion.answers.join(" ").trim().toLowerCase();
+        isCorrect = userAnswer == correctAnswer;
+      } else if (currentQuestion.type == "pick") {
+        isCorrect = selectedAnswer != null &&
+            currentQuestion.answers.first.toLowerCase() ==
+                selectedAnswer?.toLowerCase();
       }
+
+      questionResults[currentQuestionIndex] =
+          isCorrect ? "correct" : "incorrect";
+      _triggerResultAnimation(isCorrect);
+
+      if (isCorrect) correctAnswers++;
 
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
         currentWordIndex = 0;
+        selectedAnswer = null;
         _initializeWordHandling();
+        _shuffledAnswers = List.from(questions[currentQuestionIndex].answers)
+          ..shuffle();
         _startTimer();
       } else {
         Provider.of<LevelNotifier>(context, listen: false)
             .updateLevelStatus(widget.language, widget.level.id);
-        //Provider.of<LevelNotifier>(context, listen: false).saveLanguages();
         _showCompletionDialog();
       }
     });
@@ -326,7 +336,8 @@ class _GameScreenState extends State<GameScreen> {
                   ),
                 ),
                 SizedBox(height: 20),
-                if (questions[currentQuestionIndex].answers.length > 1)
+                if (questions[currentQuestionIndex].answers.length > 1 &&
+                    questions[currentQuestionIndex].type == "fill")
                   Text(
                       "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
                 GestureDetector(
@@ -389,32 +400,36 @@ class _GameScreenState extends State<GameScreen> {
                           spacing = defaultSpacing;
                         }
 
+                        List<Widget> letterBoxes = [];
+
                         // Generate the letter boxes
-                        List<Widget> letterBoxes = List.generate(
-                          _letterBoxes.length,
-                          (index) => Neumorphic(
-                            style: NeumorphicStyle(
-                              depth: -2,
-                              boxShape: NeumorphicBoxShape.roundRect(
-                                BorderRadius.circular(4),
+                        if (questions[currentQuestionIndex].type == "fill") {
+                          letterBoxes = List.generate(
+                            _letterBoxes.length,
+                            (index) => Neumorphic(
+                              style: NeumorphicStyle(
+                                depth: -2,
+                                boxShape: NeumorphicBoxShape.roundRect(
+                                  BorderRadius.circular(4),
+                                ),
                               ),
-                            ),
-                            child: SizedBox(
-                              width: boxWidth,
-                              height: boxHeight,
-                              child: Center(
-                                child: Text(
-                                  _letterBoxes[index],
-                                  style: GoogleFonts.pressStart2p(
-                                    fontSize: boxWidth * 0.5,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey[800],
+                              child: SizedBox(
+                                width: boxWidth,
+                                height: boxHeight,
+                                child: Center(
+                                  child: Text(
+                                    _letterBoxes[index],
+                                    style: GoogleFonts.pressStart2p(
+                                      fontSize: boxWidth * 0.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey[800],
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        );
+                          );
+                        }
 
                         // Single row with dynamic scaling and centering
                         return Row(
@@ -424,7 +439,10 @@ class _GameScreenState extends State<GameScreen> {
                             Wrap(
                               alignment: WrapAlignment.center,
                               spacing: spacing,
-                              children: letterBoxes,
+                              children:
+                                  questions[currentQuestionIndex].type == "fill"
+                                      ? letterBoxes
+                                      : [],
                             ),
                           ],
                         );
@@ -567,35 +585,64 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
-    List<String> parts = question.question.split("_____");
-    List<Widget> widgets = [];
-    for (int i = 0; i < parts.length; i++) {
-      widgets.add(Text(
-        parts[i],
-        style: const TextStyle(fontSize: 18, color: Colors.black),
-      ));
-      if (i < parts.length - 1) {
-        widgets.add(
-          SizedBox(
-            width: 80,
-            child: Neumorphic(
-              style: NeumorphicStyle(
-                depth: -2,
-                boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
-              ),
-              child: Center(
-                child: Text(
-                  _currentSentenceInputs[i] ?? "",
-                  style: const TextStyle(fontSize: 18, color: Colors.black),
+    if (question.type == "fill") {
+      List<String> parts = question.question.split("_____");
+      List<Widget> widgets = [];
+
+      for (int i = 0; i < parts.length; i++) {
+        widgets.add(Text(
+          parts[i],
+          style: const TextStyle(fontSize: 18, color: Colors.black),
+        ));
+        if (i < parts.length - 1) {
+          widgets.add(
+            SizedBox(
+              width: 80,
+              child: Neumorphic(
+                style: NeumorphicStyle(
+                  depth: -2,
+                  boxShape:
+                      NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
+                ),
+                child: Center(
+                  child: Text(
+                    _currentSentenceInputs[i] ?? "",
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
+          );
+        }
       }
+      return widgets;
+    } else {
+      List<Widget> widgets = [
+        Text(
+          question.question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+      ];
+
+      widgets.addAll(_shuffledAnswers.map((answer) {
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              selectedAnswer = answer;
+            });
+            _submitAnswer();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                selectedAnswer == answer ? Colors.blue : Colors.grey[300],
+          ),
+          child: Text(answer),
+        );
+      }).toList());
+
+      return widgets;
     }
-    return widgets;
   }
 }
 
@@ -636,6 +683,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   late FocusNode _focusNode;
   late Timer _timer = Timer(Duration.zero, () {});
   double _progress = 1.0;
+  String? selectedAnswer;
+  List<String> _shuffledAnswers = [];
 
   @override
   void initState() {
@@ -809,13 +858,24 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
   void submitAnswer() {
     setState(() {
-      // Combine all entered words into a single string
-      final typedAnswer = _currentSentenceInputs.join(" ").trim();
-      final correctAnswer =
-          questions[currentQuestionIndex].answers.join(" ").trim();
+      MultiplayerQuestion currentQuestion = questions[currentQuestionIndex];
+      bool isCorrect = false;
 
-      // Check if the typed answer matches the correct answer
-      bool isCorrect = typedAnswer.toLowerCase() == correctAnswer.toLowerCase();
+      if (currentQuestion.type == "fill") {
+        // Fill-in-the-blank logic
+        String userAnswer =
+            _currentSentenceInputs.join(" ").trim().toLowerCase();
+        String correctAnswer =
+            currentQuestion.answers.join(" ").trim().toLowerCase();
+        isCorrect = userAnswer == correctAnswer;
+      } else if (currentQuestion.type == "pick") {
+        // Multiple-choice logic
+        isCorrect = selectedAnswer != null &&
+            currentQuestion.answers.first.toLowerCase() ==
+                selectedAnswer?.toLowerCase();
+      }
+
+      // Update answer results
       questionResults[currentQuestionIndex] = isCorrect ? "correct" : "wrong";
       correctAnswers =
           questionResults.where((result) => result == "correct").length;
@@ -829,12 +889,15 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
         'status': questionResults[currentQuestionIndex],
       });
 
-      // Reset UI for the next question or end the game
+      // Reset for the next question or end the game
       if (currentQuestionIndex < questions.length - 1) {
         currentQuestionIndex++;
         currentWordIndex = 0;
+        selectedAnswer = null;
         _textInputController.clear();
         _initializeWordHandling();
+        _shuffledAnswers = List.from(questions[currentQuestionIndex].answers)
+          ..shuffle(); // Shuffle only once per question
         _startTimer();
       } else {
         _sendResultsToServer();
@@ -1302,35 +1365,64 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
-    List<String> parts = question.question.split("_____");
-    List<Widget> widgets = [];
-    for (int i = 0; i < parts.length; i++) {
-      widgets.add(Text(
-        parts[i],
-        style: const TextStyle(fontSize: 18, color: Colors.black),
-      ));
-      if (i < parts.length - 1) {
-        widgets.add(
-          SizedBox(
-            width: 80,
-            child: Neumorphic(
-              style: NeumorphicStyle(
-                depth: -2,
-                boxShape:
-                    NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
-              ),
-              child: Center(
-                child: Text(
-                  _currentSentenceInputs[i] ?? "",
-                  style: const TextStyle(fontSize: 18, color: Colors.black),
+    if (question.type == "fill") {
+      List<String> parts = question.question.split("_____");
+      List<Widget> widgets = [];
+
+      for (int i = 0; i < parts.length; i++) {
+        widgets.add(Text(
+          parts[i],
+          style: const TextStyle(fontSize: 18, color: Colors.black),
+        ));
+        if (i < parts.length - 1) {
+          widgets.add(
+            SizedBox(
+              width: 80,
+              child: Neumorphic(
+                style: NeumorphicStyle(
+                  depth: -2,
+                  boxShape:
+                      NeumorphicBoxShape.roundRect(BorderRadius.circular(4)),
+                ),
+                child: Center(
+                  child: Text(
+                    _currentSentenceInputs[i] ?? "",
+                    style: const TextStyle(fontSize: 18, color: Colors.black),
+                  ),
                 ),
               ),
             ),
-          ),
-        );
+          );
+        }
       }
+      return widgets;
+    } else {
+      List<Widget> widgets = [
+        Text(
+          question.question,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 20),
+      ];
+
+      widgets.addAll(_shuffledAnswers.map((answer) {
+        return ElevatedButton(
+          onPressed: () {
+            setState(() {
+              selectedAnswer = answer;
+            });
+            submitAnswer();
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor:
+                selectedAnswer == answer ? Colors.blue : Colors.grey[300],
+          ),
+          child: Text(answer),
+        );
+      }).toList());
+
+      return widgets;
     }
-    return widgets;
   }
 
   Future<bool> _showLeaveConfirmationDialog(BuildContext context) async {

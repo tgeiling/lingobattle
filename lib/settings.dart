@@ -50,7 +50,7 @@ class SettingsPage extends StatelessWidget {
               },
             ),
           _SettingsTile(
-            title: 'AGB',
+            title: 'Terms and Conditions',
             icon: Icons.article,
             onTap: () {
               Navigator.push(

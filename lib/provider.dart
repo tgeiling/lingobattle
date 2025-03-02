@@ -361,24 +361,29 @@ class LevelNotifier with ChangeNotifier {
           reward: 100,
           questions: [
             {
-              "question": "The cat is _____ the table. _____ _____ qwe",
-              "answers": ["under", "jo", "jo"]
+              "question": "Hello, how _____ you?",
+              "answers": ["are"],
+              "type": "fill"
             },
             {
-              "question": "I go _____ school every day. _____ _____",
-              "answers": ["to", "jo", "jo", "jo"]
+              "question": "Apfel",
+              "answers": ["Apple", "Mapple", "Gover", "Rover"],
+              "type": "pick"
             },
             {
               "question": "She is sitting _____ the chair.",
-              "answers": ["on"]
+              "answers": ["on"],
+              "type": "fill"
             },
             {
               "question": "We are going _____ the park.",
-              "answers": ["to"]
+              "answers": ["to"],
+              "type": "fill"
             },
             {
               "question": "He plays football _____ the evening.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
           ],
         ),
@@ -389,23 +394,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "I am _____ my homework now.",
-              "answers": ["doing"]
+              "answers": ["doing"],
+              "type": "fill"
             },
             {
               "question": "They are _____ to the cinema.",
-              "answers": ["going"]
+              "answers": ["going"],
+              "type": "fill"
             },
             {
               "question": "The dog is sleeping _____ the couch.",
-              "answers": ["on"]
+              "answers": ["on"],
+              "type": "fill"
             },
             {
               "question": "He is interested _____ music.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "The book is _____ the bag.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
           ],
         ),
@@ -416,23 +426,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "I am _____ to the market.",
-              "answers": ["going"]
+              "answers": ["going"],
+              "type": "fill"
             },
             {
               "question": "She is _____ a letter to her friend.",
-              "answers": ["writing"]
+              "answers": ["writing"],
+              "type": "fill"
             },
             {
               "question": "We are _____ dinner in the kitchen.",
-              "answers": ["making"]
+              "answers": ["making"],
+              "type": "fill"
             },
             {
               "question": "They are _____ to the movie theater.",
-              "answers": ["going"]
+              "answers": ["going"],
+              "type": "fill"
             },
             {
               "question": "The kids are _____ outside.",
-              "answers": ["playing"]
+              "answers": ["playing"],
+              "type": "fill"
             },
           ],
         ),
@@ -443,23 +458,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The bird is _____ the tree.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "He _____ to school by bus.",
-              "answers": ["goes"]
+              "answers": ["goes"],
+              "type": "fill"
             },
             {
               "question": "We _____ to visit our grandparents tomorrow.",
-              "answers": ["plan"]
+              "answers": ["plan"],
+              "type": "fill"
             },
             {
               "question": "She _____ a beautiful dress yesterday.",
-              "answers": ["bought"]
+              "answers": ["bought"],
+              "type": "fill"
             },
             {
               "question": "They _____ playing in the garden now.",
-              "answers": ["are"]
+              "answers": ["are"],
+              "type": "fill"
             },
           ],
         ),
@@ -470,23 +490,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Good morning! How _____ you?",
-              "answers": ["are"]
+              "answers": ["are"],
+              "type": "fill"
             },
             {
               "question": "Can you please pass _____ the salt?",
-              "answers": ["me"]
+              "answers": ["me"],
+              "type": "fill"
             },
             {
               "question": "I would like to _____ some coffee.",
-              "answers": ["have"]
+              "answers": ["have"],
+              "type": "fill"
             },
             {
               "question": "Do you know _____ the weather will be tomorrow?",
-              "answers": ["what"]
+              "answers": ["what"],
+              "type": "fill"
             },
             {
               "question": "He has been working _____ the project all day.",
-              "answers": ["on"]
+              "answers": ["on"],
+              "type": "fill"
             },
           ],
         ),
@@ -497,23 +522,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The teacher asked us to _____ quietly.",
-              "answers": ["sit"]
+              "answers": ["sit"],
+              "type": "fill"
             },
             {
               "question": "She wants to _____ the piano.",
-              "answers": ["play"]
+              "answers": ["play"],
+              "type": "fill"
             },
             {
               "question": "He is going to _____ his homework later.",
-              "answers": ["finish"]
+              "answers": ["finish"],
+              "type": "fill"
             },
             {
               "question": "Can you _____ me a favor?",
-              "answers": ["do"]
+              "answers": ["do"],
+              "type": "fill"
             },
             {
               "question": "I need to _____ some groceries.",
-              "answers": ["buy"]
+              "answers": ["buy"],
+              "type": "fill"
             },
           ],
         ),
@@ -524,23 +554,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "How _____ you doing today?",
-              "answers": ["are"]
+              "answers": ["are"],
+              "type": "fill"
             },
             {
               "question": "Could you _____ me the way to the station?",
-              "answers": ["tell"]
+              "answers": ["tell"],
+              "type": "fill"
             },
             {
               "question": "He _____ the answer to the question.",
-              "answers": ["knows"]
+              "answers": ["knows"],
+              "type": "fill"
             },
             {
               "question": "They are _____ to the park together.",
-              "answers": ["going"]
+              "answers": ["going"],
+              "type": "fill"
             },
             {
               "question": "I _____ to see the doctor this afternoon.",
-              "answers": ["need"]
+              "answers": ["need"],
+              "type": "fill"
             },
           ],
         ),
@@ -551,23 +586,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The boy is reading _____ the library.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "She was born _____ April.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "We are planning to go _____ vacation soon.",
-              "answers": ["on"]
+              "answers": ["on"],
+              "type": "fill"
             },
             {
               "question": "He is very good _____ mathematics.",
-              "answers": ["at"]
+              "answers": ["at"],
+              "type": "fill"
             },
             {
               "question": "I need to finish this project _____ Friday.",
-              "answers": ["by"]
+              "answers": ["by"],
+              "type": "fill"
             },
           ],
         ),
@@ -578,23 +618,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "The car is parked _____ the garage.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "They met _____ the coffee shop.",
-              "answers": ["at"]
+              "answers": ["at"],
+              "type": "fill"
             },
             {
               "question": "She is looking _____ her lost keys.",
-              "answers": ["for"]
+              "answers": ["for"],
+              "type": "fill"
             },
             {
               "question": "I will call you _____ I get home.",
-              "answers": ["when"]
+              "answers": ["when"],
+              "type": "fill"
             },
             {
               "question": "The cat jumped _____ the fence.",
-              "answers": ["over"]
+              "answers": ["over"],
+              "type": "fill"
             },
           ],
         ),
@@ -605,23 +650,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "He has been working _____ this problem for hours.",
-              "answers": ["on"]
+              "answers": ["on"],
+              "type": "fill"
             },
             {
               "question": "They are discussing the plan _____ the meeting.",
-              "answers": ["during"]
+              "answers": ["during"],
+              "type": "fill"
             },
             {
               "question": "She is preparing _____ her exams.",
-              "answers": ["for"]
+              "answers": ["for"],
+              "type": "fill"
             },
             {
               "question": "The presentation is scheduled _____ next Monday.",
-              "answers": ["for"]
+              "answers": ["for"],
+              "type": "fill"
             },
             {
               "question": "I am very proud _____ my achievements.",
-              "answers": ["of"]
+              "answers": ["of"],
+              "type": "fill"
             },
           ],
         ),
@@ -634,23 +684,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Hund liegt _____ dem Tisch.",
-              "answers": ["unter"]
+              "answers": ["unter"],
+              "type": "fill"
             },
             {
               "question": "Ich gehe _____ die Schule.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Sie sitzt _____ dem Stuhl.",
-              "answers": ["auf"]
+              "answers": ["auf"],
+              "type": "fill"
             },
             {
               "question": "Wir fahren _____ den Park.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Er spielt Fußball _____ dem Abend.",
-              "answers": ["am"]
+              "answers": ["am"],
+              "type": "fill"
             },
           ],
         ),
@@ -661,23 +716,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich mache gerade _____ meine Hausaufgaben.",
-              "answers": ["an"]
+              "answers": ["an"],
+              "type": "fill"
             },
             {
               "question": "Sie gehen _____ das Kino.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Der Hund schläft _____ dem Sofa.",
-              "answers": ["auf"]
+              "answers": ["auf"],
+              "type": "fill"
             },
             {
               "question": "Er interessiert sich _____ Musik.",
-              "answers": ["für"]
+              "answers": ["für"],
+              "type": "fill"
             },
             {
               "question": "Das Buch liegt _____ der Tasche.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
           ],
         ),
@@ -688,23 +748,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich bin _____ den Supermarkt gegangen.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Er hat _____ einen Brief geschrieben.",
-              "answers": ["an"]
+              "answers": ["an"],
+              "type": "fill"
             },
             {
               "question": "Wir haben _____ Abendessen gekocht.",
-              "answers": ["das"]
+              "answers": ["das"],
+              "type": "fill"
             },
             {
               "question": "Sie sind _____ das Kino gegangen.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Die Kinder spielen _____ draußen.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
           ],
         ),
@@ -715,23 +780,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Vogel ist _____ dem Baum.",
-              "answers": ["auf"]
+              "answers": ["auf"],
+              "type": "fill"
             },
             {
               "question": "Er fährt _____ mit dem Bus.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
             {
               "question": "Wir wollen _____ unsere Großeltern besuchen.",
-              "answers": ["heute"]
+              "answers": ["heute"],
+              "type": "fill"
             },
             {
               "question": "Sie hat _____ ein schönes Kleid gekauft.",
-              "answers": ["gestern"]
+              "answers": ["gestern"],
+              "type": "fill"
             },
             {
               "question": "Sie _____ jetzt im Garten spielen.",
-              "answers": ["können"]
+              "answers": ["können"],
+              "type": "fill"
             },
           ],
         ),
@@ -742,23 +812,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Guten Morgen! Wie _____ es Ihnen?",
-              "answers": ["geht"]
+              "answers": ["geht"],
+              "type": "fill"
             },
             {
               "question": "Können Sie mir bitte _____ den Zucker geben?",
-              "answers": ["noch"]
+              "answers": ["noch"],
+              "type": "fill"
             },
             {
               "question": "Ich möchte gerne _____ eine Tasse Kaffee bestellen.",
-              "answers": ["noch"]
+              "answers": ["noch"],
+              "type": "fill"
             },
             {
               "question": "Wissen Sie, wie _____ Wetter morgen sein wird?",
-              "answers": ["das"]
+              "answers": ["das"],
+              "type": "fill"
             },
             {
               "question": "Er arbeitet schon den ganzen Tag _____ dem Projekt.",
-              "answers": ["an"]
+              "answers": ["an"],
+              "type": "fill"
             },
           ],
         ),
@@ -769,23 +844,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Lehrer bat uns, _____ leise zu bleiben.",
-              "answers": ["bitte"]
+              "answers": ["bitte"],
+              "type": "fill"
             },
             {
               "question": "Sie möchte _____ Klavier spielen.",
-              "answers": ["gerne"]
+              "answers": ["gerne"],
+              "type": "fill"
             },
             {
               "question": "Er wird später _____ seine Hausaufgaben machen.",
-              "answers": ["noch"]
+              "answers": ["noch"],
+              "type": "fill"
             },
             {
               "question": "Können Sie mir _____ einen Gefallen tun?",
-              "answers": ["bitte"]
+              "answers": ["bitte"],
+              "type": "fill"
             },
             {
               "question": "Ich muss noch _____ einkaufen gehen.",
-              "answers": ["etwas"]
+              "answers": ["etwas"],
+              "type": "fill"
             },
           ],
         ),
@@ -796,24 +876,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Wie _____ es dir heute?",
-              "answers": ["geht"]
+              "answers": ["geht"],
+              "type": "fill"
             },
             {
               "question":
                   "Könntest du mir bitte _____ den Weg zum Bahnhof zeigen?",
-              "answers": ["noch"]
+              "answers": ["noch"],
+              "type": "fill"
             },
             {
               "question": "Er _____ die Antwort auf die Frage.",
-              "answers": ["weiß"]
+              "answers": ["weiß"],
+              "type": "fill"
             },
             {
               "question": "Sie sind _____ gemeinsam in den Park gegangen.",
-              "answers": ["oft"]
+              "answers": ["oft"],
+              "type": "fill"
             },
             {
               "question": "Ich _____ später zum Arzt gehen.",
-              "answers": ["muss"]
+              "answers": ["muss"],
+              "type": "fill"
             },
           ],
         ),
@@ -824,24 +909,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Der Junge liest _____ in der Bibliothek.",
-              "answers": ["viel"]
+              "answers": ["viel"],
+              "type": "fill"
             },
             {
               "question": "Sie wurde im _____ April geboren.",
-              "answers": ["Monat"]
+              "answers": ["Monat"],
+              "type": "fill"
             },
             {
               "question": "Wir planen bald in den Urlaub zu _____ gehen.",
-              "answers": ["fahren"]
+              "answers": ["fahren"],
+              "type": "fill"
             },
             {
               "question": "Er ist sehr gut in _____ Mathematik.",
-              "answers": ["der"]
+              "answers": ["der"],
+              "type": "fill"
             },
             {
               "question":
                   "Ich muss dieses Projekt bis _____ Freitag fertigstellen.",
-              "answers": ["nächsten"]
+              "answers": ["nächsten"],
+              "type": "fill"
             },
           ],
         ),
@@ -852,23 +942,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Das Auto steht _____ der Garage.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Sie haben sich _____ im Café getroffen.",
-              "answers": ["heute"]
+              "answers": ["heute"],
+              "type": "fill"
             },
             {
               "question": "Sie sucht _____ ihre verlorenen Schlüssel.",
-              "answers": ["nach"]
+              "answers": ["nach"],
+              "type": "fill"
             },
             {
               "question": "Ich rufe dich an, wenn ich _____ nach Hause komme.",
-              "answers": ["gleich"]
+              "answers": ["gleich"],
+              "type": "fill"
             },
             {
               "question": "Die Katze sprang _____ über den Zaun.",
-              "answers": ["schnell"]
+              "answers": ["schnell"],
+              "type": "fill"
             },
           ],
         ),
@@ -879,24 +974,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Er arbeitet seit Stunden _____ an diesem Problem.",
-              "answers": ["noch"]
+              "answers": ["noch"],
+              "type": "fill"
             },
             {
               "question": "Sie besprechen den Plan _____ im Meeting.",
-              "answers": ["heute"]
+              "answers": ["heute"],
+              "type": "fill"
             },
             {
               "question": "Sie bereitet sich _____ auf ihre Prüfungen vor.",
-              "answers": ["gerade"]
+              "answers": ["gerade"],
+              "type": "fill"
             },
             {
               "question":
                   "Die Präsentation ist für nächsten Montag _____ angesetzt.",
-              "answers": ["schon"]
+              "answers": ["schon"],
+              "type": "fill"
             },
             {
               "question": "Ich bin sehr stolz _____ auf meine Leistungen.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
           ],
         ),
@@ -909,23 +1009,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El gato está _____ la mesa.",
-              "answers": ["debajo de"]
+              "answers": ["debajo de"],
+              "type": "fill"
             },
             {
               "question": "Voy _____ la escuela todos los días.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "Ella está sentada _____ la silla.",
-              "answers": ["en"]
+              "answers": ["en"],
+              "type": "fill"
             },
             {
               "question": "Vamos _____ el parque esta tarde.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "Él juega fútbol _____ la tarde.",
-              "answers": ["por"]
+              "answers": ["por"],
+              "type": "fill"
             },
           ],
         ),
@@ -936,23 +1041,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Estoy _____ mi tarea ahora.",
-              "answers": ["haciendo"]
+              "answers": ["haciendo"],
+              "type": "fill"
             },
             {
               "question": "Ellos están yendo _____ el cine.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "El perro está durmiendo _____ el sofá.",
-              "answers": ["en"]
+              "answers": ["en"],
+              "type": "fill"
             },
             {
               "question": "Ella está interesada _____ la música.",
-              "answers": ["en"]
+              "answers": ["en"],
+              "type": "fill"
             },
             {
               "question": "El libro está _____ la mochila.",
-              "answers": ["en"]
+              "answers": ["en"],
+              "type": "fill"
             },
           ],
         ),
@@ -963,23 +1073,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Voy _____ el mercado.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "Ella está _____ una carta a su amiga.",
-              "answers": ["escribiendo"]
+              "answers": ["escribiendo"],
+              "type": "fill"
             },
             {
               "question": "Estamos _____ la cena en la cocina.",
-              "answers": ["preparando"]
+              "answers": ["preparando"],
+              "type": "fill"
             },
             {
               "question": "Ellos están _____ al cine juntos.",
-              "answers": ["yendo"]
+              "answers": ["yendo"],
+              "type": "fill"
             },
             {
               "question": "Los niños están _____ afuera.",
-              "answers": ["jugando"]
+              "answers": ["jugando"],
+              "type": "fill"
             },
           ],
         ),
@@ -990,23 +1105,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El pájaro está _____ el árbol.",
-              "answers": ["en"]
+              "answers": ["en"],
+              "type": "fill"
             },
             {
               "question": "Él va _____ la escuela en autobús.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "Vamos _____ visitar a nuestros abuelos mañana.",
-              "answers": ["a"]
+              "answers": ["a"],
+              "type": "fill"
             },
             {
               "question": "Ella _____ un vestido bonito ayer.",
-              "answers": ["compró"]
+              "answers": ["compró"],
+              "type": "fill"
             },
             {
               "question": "Ellos están _____ en el jardín ahora.",
-              "answers": ["jugando"]
+              "answers": ["jugando"],
+              "type": "fill"
             },
           ],
         ),
@@ -1017,24 +1137,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "¡Buenos días! ¿Cómo _____ estás?",
-              "answers": ["te"]
+              "answers": ["te"],
+              "type": "fill"
             },
             {
               "question": "¿Puedes pasarme _____ la sal, por favor?",
-              "answers": [""]
+              "answers": [""],
+              "type": "fill"
             },
             {
               "question": "Me gustaría _____ una taza de café.",
-              "answers": ["pedir"]
+              "answers": ["pedir"],
+              "type": "fill"
             },
             {
               "question": "¿Sabes cómo estará _____ el clima mañana?",
-              "answers": [""]
+              "answers": [""],
+              "type": "fill"
             },
             {
               "question":
                   "Ha estado trabajando _____ en el proyecto todo el día.",
-              "answers": ["sin descanso"]
+              "answers": ["sin descanso"],
+              "type": "fill"
             },
           ],
         ),
@@ -1046,23 +1171,28 @@ class LevelNotifier with ChangeNotifier {
             {
               "question":
                   "El profesor nos pidió _____ que estemos en silencio.",
-              "answers": ["amablemente"]
+              "answers": ["amablemente"],
+              "type": "fill"
             },
             {
               "question": "Ella quiere _____ tocar el piano.",
-              "answers": ["aprender a"]
+              "answers": ["aprender a"],
+              "type": "fill"
             },
             {
               "question": "Él va a _____ hacer su tarea más tarde.",
-              "answers": ["terminar"]
+              "answers": ["terminar"],
+              "type": "fill"
             },
             {
               "question": "¿Puedes hacerme _____ un favor?",
-              "answers": [""]
+              "answers": [""],
+              "type": "fill"
             },
             {
               "question": "Necesito _____ comprar algunos comestibles.",
-              "answers": ["urgentemente"]
+              "answers": ["urgentemente"],
+              "type": "fill"
             },
           ],
         ),
@@ -1073,23 +1203,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "¿Cómo _____ te sientes hoy?",
-              "answers": ["bien"]
+              "answers": ["bien"],
+              "type": "fill"
             },
             {
               "question": "¿Puedes decirme _____ cómo llegar a la estación?",
-              "answers": ["fácilmente"]
+              "answers": ["fácilmente"],
+              "type": "fill"
             },
             {
               "question": "Él sabe _____ la respuesta a la pregunta.",
-              "answers": ["exactamente"]
+              "answers": ["exactamente"],
+              "type": "fill"
             },
             {
               "question": "Ellos están _____ yendo al parque juntos.",
-              "answers": ["felices"]
+              "answers": ["felices"],
+              "type": "fill"
             },
             {
               "question": "Tengo que _____ visitar al médico esta tarde.",
-              "answers": ["urgentemente"]
+              "answers": ["urgentemente"],
+              "type": "fill"
             },
           ],
         ),
@@ -1100,24 +1235,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El niño está leyendo _____ en la biblioteca.",
-              "answers": ["tranquilamente"]
+              "answers": ["tranquilamente"],
+              "type": "fill"
             },
             {
               "question": "Ella nació _____ en abril.",
-              "answers": ["durante"]
+              "answers": ["durante"],
+              "type": "fill"
             },
             {
               "question": "Estamos planeando ir _____ de vacaciones pronto.",
-              "answers": ["a algún lugar tropical"]
+              "answers": ["a algún lugar tropical"],
+              "type": "fill"
             },
             {
               "question": "Él es muy bueno _____ en matemáticas.",
-              "answers": ["practicando"]
+              "answers": ["practicando"],
+              "type": "fill"
             },
             {
               "question":
                   "Necesito terminar este proyecto _____ para el viernes.",
-              "answers": ["mañana"]
+              "answers": ["mañana"],
+              "type": "fill"
             },
           ],
         ),
@@ -1128,23 +1268,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "El coche está estacionado _____ en el garaje.",
-              "answers": ["adentro"]
+              "answers": ["adentro"],
+              "type": "fill"
             },
             {
               "question": "Ellos se encontraron _____ en la cafetería.",
-              "answers": ["por casualidad"]
+              "answers": ["por casualidad"],
+              "type": "fill"
             },
             {
               "question": "Ella está buscando _____ sus llaves perdidas.",
-              "answers": ["ansiosamente"]
+              "answers": ["ansiosamente"],
+              "type": "fill"
             },
             {
               "question": "Te llamaré _____ cuando llegue a casa.",
-              "answers": ["tan pronto"]
+              "answers": ["tan pronto"],
+              "type": "fill"
             },
             {
               "question": "El gato saltó _____ sobre la valla.",
-              "answers": ["grácilmente"]
+              "answers": ["grácilmente"],
+              "type": "fill"
             },
           ],
         ),
@@ -1156,24 +1301,29 @@ class LevelNotifier with ChangeNotifier {
             {
               "question":
                   "Él ha estado trabajando _____ en este problema por horas.",
-              "answers": ["arduamente"]
+              "answers": ["arduamente"],
+              "type": "fill"
             },
             {
               "question": "Están discutiendo el plan _____ en la reunión.",
-              "answers": ["detenidamente"]
+              "answers": ["detenidamente"],
+              "type": "fill"
             },
             {
               "question": "Ella se está preparando _____ para sus exámenes.",
-              "answers": ["diligentemente"]
+              "answers": ["diligentemente"],
+              "type": "fill"
             },
             {
               "question":
                   "La presentación está programada _____ para el próximo lunes.",
-              "answers": ["puntualmente"]
+              "answers": ["puntualmente"],
+              "type": "fill"
             },
             {
               "question": "Estoy muy orgulloso _____ de mis logros.",
-              "answers": ["profundamente"]
+              "answers": ["profundamente"],
+              "type": "fill"
             },
           ],
         ),
@@ -1186,23 +1336,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De kat zit _____ de tafel.",
-              "answers": ["onder"]
+              "answers": ["onder"],
+              "type": "fill"
             },
             {
               "question": "Ik ga _____ school elke dag.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question": "Zij zit _____ de stoel.",
-              "answers": ["op"]
+              "answers": ["op"],
+              "type": "fill"
             },
             {
               "question": "Wij gaan _____ het park vanmiddag.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question": "Hij speelt voetbal _____ de middag.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
           ],
         ),
@@ -1213,23 +1368,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ik ben _____ mijn huiswerk nu.",
-              "answers": ["bezig met"]
+              "answers": ["bezig met"],
+              "type": "fill"
             },
             {
               "question": "Zij gaan _____ de bioscoop.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question": "De hond slaapt _____ de bank.",
-              "answers": ["onder"]
+              "answers": ["onder"],
+              "type": "fill"
             },
             {
               "question": "Zij is geïnteresseerd _____ muziek.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Het boek zit _____ de tas.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
           ],
         ),
@@ -1240,25 +1400,30 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ik ga _____ de markt.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question":
                   "Zij is _____ een brief aan haar vriend aan het schrijven.",
-              "answers": ["bezig met"]
+              "answers": ["bezig met"],
+              "type": "fill"
             },
             {
               "question":
                   "Wij zijn _____ het avondeten in de keuken aan het bereiden.",
-              "answers": ["bezig met"]
+              "answers": ["bezig met"],
+              "type": "fill"
             },
             {
               "question": "Zij gaan _____ de bioscoop samen.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question": "De kinderen zijn _____ buiten aan het spelen.",
-              "answers": ["aan het"]
+              "answers": ["aan het"],
+              "type": "fill"
             },
           ],
         ),
@@ -1269,23 +1434,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De vogel zit _____ de boom.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Hij gaat _____ school met de bus.",
-              "answers": ["naar"]
+              "answers": ["naar"],
+              "type": "fill"
             },
             {
               "question": "Wij gaan _____ onze grootouders morgen bezoeken.",
-              "answers": ["om"]
+              "answers": ["om"],
+              "type": "fill"
             },
             {
               "question": "Zij heeft gisteren _____ een mooie jurk gekocht.",
-              "answers": ["al"]
+              "answers": ["al"],
+              "type": "fill"
             },
             {
               "question": "Zij zijn nu _____ in de tuin aan het spelen.",
-              "answers": ["bezig"]
+              "answers": ["bezig"],
+              "type": "fill"
             },
           ],
         ),
@@ -1296,23 +1466,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Goedemorgen! Hoe _____ jij?",
-              "answers": ["gaat het"]
+              "answers": ["gaat het"],
+              "type": "fill"
             },
             {
               "question": "Kun je mij alsjeblieft _____ het zout aangeven?",
-              "answers": ["even"]
+              "answers": ["even"],
+              "type": "fill"
             },
             {
               "question": "Ik zou graag _____ een kopje koffie willen.",
-              "answers": ["hebben"]
+              "answers": ["hebben"],
+              "type": "fill"
             },
             {
               "question": "Weet jij hoe _____ het weer morgen zal zijn?",
-              "answers": ["exact"]
+              "answers": ["exact"],
+              "type": "fill"
             },
             {
               "question": "Hij is al de hele dag _____ met dat project bezig.",
-              "answers": ["druk"]
+              "answers": ["druk"],
+              "type": "fill"
             },
           ],
         ),
@@ -1323,23 +1498,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De leraar vroeg ons _____ stil te zijn.",
-              "answers": ["om"]
+              "answers": ["om"],
+              "type": "fill"
             },
             {
               "question": "Zij wil graag _____ piano leren spelen.",
-              "answers": ["op de"]
+              "answers": ["op de"],
+              "type": "fill"
             },
             {
               "question": "Hij gaat later _____ zijn huiswerk maken.",
-              "answers": ["af"]
+              "answers": ["af"],
+              "type": "fill"
             },
             {
               "question": "Kun je mij alsjeblieft _____ een gunst verlenen?",
-              "answers": ["eventjes"]
+              "answers": ["eventjes"],
+              "type": "fill"
             },
             {
               "question": "Ik moet nog even _____ boodschappen doen.",
-              "answers": ["wat"]
+              "answers": ["wat"],
+              "type": "fill"
             },
           ],
         ),
@@ -1350,23 +1530,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Hoe _____ je vandaag?",
-              "answers": ["voel jij"]
+              "answers": ["voel jij"],
+              "type": "fill"
             },
             {
               "question": "Kun je mij _____ de weg naar het station wijzen?",
-              "answers": ["precies"]
+              "answers": ["precies"],
+              "type": "fill"
             },
             {
               "question": "Hij weet _____ het antwoord op de vraag.",
-              "answers": ["altijd"]
+              "answers": ["altijd"],
+              "type": "fill"
             },
             {
               "question": "Zij gaan _____ naar het park samen.",
-              "answers": ["vaak"]
+              "answers": ["vaak"],
+              "type": "fill"
             },
             {
               "question": "Ik moet vanmiddag _____ naar de dokter.",
-              "answers": ["zeker"]
+              "answers": ["zeker"],
+              "type": "fill"
             },
           ],
         ),
@@ -1377,23 +1562,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De jongen leest _____ in de bibliotheek.",
-              "answers": ["rustig"]
+              "answers": ["rustig"],
+              "type": "fill"
             },
             {
               "question": "Zij werd geboren _____ in april.",
-              "answers": ["ergens"]
+              "answers": ["ergens"],
+              "type": "fill"
             },
             {
               "question": "Wij zijn van plan _____ op vakantie te gaan.",
-              "answers": ["binnenkort"]
+              "answers": ["binnenkort"],
+              "type": "fill"
             },
             {
               "question": "Hij is heel goed _____ wiskunde.",
-              "answers": ["in"]
+              "answers": ["in"],
+              "type": "fill"
             },
             {
               "question": "Ik moet dit project _____ voor vrijdag afronden.",
-              "answers": ["zeker"]
+              "answers": ["zeker"],
+              "type": "fill"
             },
           ],
         ),
@@ -1404,23 +1594,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De auto staat geparkeerd _____ in de garage.",
-              "answers": ["binnen"]
+              "answers": ["binnen"],
+              "type": "fill"
             },
             {
               "question": "Zij ontmoetten elkaar _____ in het café.",
-              "answers": ["voor het eerst"]
+              "answers": ["voor het eerst"],
+              "type": "fill"
             },
             {
               "question": "Zij zoekt _____ naar haar verloren sleutels.",
-              "answers": ["nog steeds"]
+              "answers": ["nog steeds"],
+              "type": "fill"
             },
             {
               "question": "Ik bel je zodra ik _____ thuis ben.",
-              "answers": ["direct"]
+              "answers": ["direct"],
+              "type": "fill"
             },
             {
               "question": "De kat sprong _____ over het hek.",
-              "answers": ["snel"]
+              "answers": ["snel"],
+              "type": "fill"
             },
           ],
         ),
@@ -1431,24 +1626,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Hij werkt al uren _____ aan dit probleem.",
-              "answers": ["geconcentreerd"]
+              "answers": ["geconcentreerd"],
+              "type": "fill"
             },
             {
               "question":
                   "Zij bespreken het plan _____ tijdens de vergadering.",
-              "answers": ["uitgebreid"]
+              "answers": ["uitgebreid"],
+              "type": "fill"
             },
             {
               "question": "Zij bereidt zich _____ op haar examens voor.",
-              "answers": ["nauwgezet"]
+              "answers": ["nauwgezet"],
+              "type": "fill"
             },
             {
               "question": "De presentatie is gepland _____ voor maandag.",
-              "answers": ["volledig"]
+              "answers": ["volledig"],
+              "type": "fill"
             },
             {
               "question": "Ik ben heel trots _____ op mijn prestaties.",
-              "answers": ["volledig"]
+              "answers": ["volledig"],
+              "type": "fill"
             },
           ],
         ),
@@ -1461,23 +1661,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "De Hund isch _____ im Garte.",
-              "answers": ["draa"]
+              "answers": ["draa"],
+              "type": "fill"
             },
             {
               "question": "Ich gang _____ zum Coiffeur morn.",
-              "answers": ["zu"]
+              "answers": ["zu"],
+              "type": "fill"
             },
             {
               "question": "Si sind _____ use mit de Chind spaziere.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Er schlaft _____ uf em Sofa.",
-              "answers": ["gerade"]
+              "answers": ["gerade"],
+              "type": "fill"
             },
             {
               "question": "Mir gönd _____ is Kino hüt Abig.",
-              "answers": ["äbe"]
+              "answers": ["äbe"],
+              "type": "fill"
             },
           ],
         ),
@@ -1488,23 +1693,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Chasch mir bitte _____ d Tasse gä?",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "De Zug chunnt _____ pünktlich hüt.",
-              "answers": ["sicher"]
+              "answers": ["sicher"],
+              "type": "fill"
             },
             {
               "question": "D Chatz isch _____ underem Tisch.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Ich bruuche _____ es neues Paar Schue.",
-              "answers": ["unbedingt"]
+              "answers": ["unbedingt"],
+              "type": "fill"
             },
             {
               "question": "D Lüt warted _____ vor em Lädele.",
-              "answers": ["geduldig"]
+              "answers": ["geduldig"],
+              "type": "fill"
             },
           ],
         ),
@@ -1515,23 +1725,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Mir gönd _____ uf de Märt morn.",
-              "answers": ["gemeinsam"]
+              "answers": ["gemeinsam"],
+              "type": "fill"
             },
             {
               "question": "Er schribt _____ e Brief an sini Fründin.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "D Kinder händ _____ im Garte gspilt.",
-              "answers": ["lang"]
+              "answers": ["lang"],
+              "type": "fill"
             },
             {
               "question": "Ich gang jetzt _____ in d Stadt.",
-              "answers": ["schnell"]
+              "answers": ["schnell"],
+              "type": "fill"
             },
             {
               "question": "D Fründin chunt _____ use zum Znüni.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
           ],
         ),
@@ -1542,23 +1757,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Si hät _____ es buchi Buech gläse.",
-              "answers": ["letzt"]
+              "answers": ["letzt"],
+              "type": "fill"
             },
             {
               "question": "Er het _____ sine Fründ tröffe im Bistro.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "D Chind gönd _____ in d Schuel morn.",
-              "answers": ["zämä"]
+              "answers": ["zämä"],
+              "type": "fill"
             },
             {
               "question": "Ich ha hüt _____ z vil Arbeit gha.",
-              "answers": ["mal wieder"]
+              "answers": ["mal wieder"],
+              "type": "fill"
             },
             {
               "question": "Si gönd _____ immer zäme laufe am See.",
-              "answers": ["gern"]
+              "answers": ["gern"],
+              "type": "fill"
             },
           ],
         ),
@@ -1569,23 +1789,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Wie _____ geits dir?",
-              "answers": ["guet"]
+              "answers": ["guet"],
+              "type": "fill"
             },
             {
               "question": "Hesch _____ chli meh Salz für mi?",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Ich wür gern _____ e Chafi bstelle.",
-              "answers": ["sofort"]
+              "answers": ["sofort"],
+              "type": "fill"
             },
             {
               "question": "Weisch, wenn de Zug _____ chunnt?",
-              "answers": ["ungefähr"]
+              "answers": ["ungefähr"],
+              "type": "fill"
             },
             {
               "question": "Si schaffed _____ scho e ganze Tag an dem Projekt.",
-              "answers": ["intensiv"]
+              "answers": ["intensiv"],
+              "type": "fill"
             },
           ],
         ),
@@ -1596,23 +1821,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "D Lärerin hät gseit, mir sötted _____ ruig sii.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Er wott _____ sine Vater cho hole.",
-              "answers": ["sofort"]
+              "answers": ["sofort"],
+              "type": "fill"
             },
             {
               "question": "Si probiert _____ d Antwort z finde.",
-              "answers": ["ganz schnell"]
+              "answers": ["ganz schnell"],
+              "type": "fill"
             },
             {
               "question": "Chasch mir bitte _____ d Chiste bringe?",
-              "answers": ["schnell"]
+              "answers": ["schnell"],
+              "type": "fill"
             },
             {
               "question": "Ich bruuche no _____ züüg vom Lädele.",
-              "answers": ["chli"]
+              "answers": ["chli"],
+              "type": "fill"
             },
           ],
         ),
@@ -1623,23 +1853,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Wo _____ geisch hüt no?",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Si gönd _____ us em Huus hüt am Nomittag.",
-              "answers": ["schön"]
+              "answers": ["schön"],
+              "type": "fill"
             },
             {
               "question": "Chasch mir _____ d Weg zeige zur Post?",
-              "answers": ["bitte"]
+              "answers": ["bitte"],
+              "type": "fill"
             },
             {
               "question": "Er mues _____ sine Kolleg abhole.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Ich ha vergässe _____ d Schlüsel daheime.",
-              "answers": ["leider"]
+              "answers": ["leider"],
+              "type": "fill"
             },
           ],
         ),
@@ -1650,23 +1885,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "D Schüler sind _____ am Lerne.",
-              "answers": ["fleißig"]
+              "answers": ["fleißig"],
+              "type": "fill"
             },
             {
               "question": "Mir gönd _____ am Sunntig i d Kirche.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
             {
               "question": "Si bruuche meh Zit _____ zum Läse.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
             {
               "question": "Er isch _____ e guete Schachspieler.",
-              "answers": ["bescht"]
+              "answers": ["bescht"],
+              "type": "fill"
             },
             {
               "question": "D Lärerin hät _____ es guets Vorbild gheit.",
-              "answers": ["oft"]
+              "answers": ["oft"],
+              "type": "fill"
             },
           ],
         ),
@@ -1677,23 +1917,28 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Ich ha _____ e E-Mail gschribe hüt.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Mir gönd _____ chli spaziere mit em Hund.",
-              "answers": ["bald"]
+              "answers": ["bald"],
+              "type": "fill"
             },
             {
               "question": "Si het _____ d Antwort gli gfunde.",
-              "answers": ["schnell"]
+              "answers": ["schnell"],
+              "type": "fill"
             },
             {
               "question": "Er isch _____ ganz müed gsi nach em Schaffe.",
-              "answers": ["komplett"]
+              "answers": ["komplett"],
+              "type": "fill"
             },
             {
               "question": "Chasch mir hilfe _____ d Üebig mache?",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
           ],
         ),
@@ -1704,24 +1949,29 @@ class LevelNotifier with ChangeNotifier {
           questions: [
             {
               "question": "Er het _____ e wyt Ziit im Usland glebt.",
-              "answers": ["grad"]
+              "answers": ["grad"],
+              "type": "fill"
             },
             {
               "question": "Si redet _____ über de nöie Vertrag.",
-              "answers": ["oft"]
+              "answers": ["oft"],
+              "type": "fill"
             },
             {
               "question": "Si bruuched meh Zit _____ für s Examen vorzbereite.",
-              "answers": ["schnell"]
+              "answers": ["schnell"],
+              "type": "fill"
             },
             {
               "question":
                   "D Präsentation isch _____ für nächste Wuche abgmacht.",
-              "answers": ["sofort"]
+              "answers": ["sofort"],
+              "type": "fill"
             },
             {
               "question": "Ich bi stolz _____ uf mini Arbeite bis jetzt.",
-              "answers": ["immer"]
+              "answers": ["immer"],
+              "type": "fill"
             },
           ],
         ),
