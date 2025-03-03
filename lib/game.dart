@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:google_fonts/google_fonts.dart';
 
@@ -460,13 +463,52 @@ class _GameScreenState extends State<GameScreen> {
                     autofocus: true,
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Placeholder for Back button when it's not visible
-                    if (currentWordIndex > 0)
+                if (questions[currentQuestionIndex].type == "fill")
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Placeholder for Back button when it's not visible
+                      if (currentWordIndex > 0)
+                        NeumorphicButton(
+                          onPressed: _previousWord,
+                          style: NeumorphicStyle(
+                            depth: 4,
+                            intensity: 0.8,
+                            shape: NeumorphicShape.convex,
+                            boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(12),
+                            ),
+                            color: Colors.grey[200],
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.arrow_back,
+                                color: Colors.grey,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                "Back to Last Word",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          width:
+                              160, // Match the width of the "Back to Last Word" button
+                        ),
+                      const SizedBox(width: 16), // Space between buttons
                       NeumorphicButton(
-                        onPressed: _previousWord,
+                        onPressed: _nextWord,
                         style: NeumorphicStyle(
                           depth: 4,
                           intensity: 0.8,
@@ -479,77 +521,39 @@ class _GameScreenState extends State<GameScreen> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
                         child: Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.arrow_back,
-                              color: Colors.grey,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              "Back to Last Word",
-                              style: TextStyle(
+                            Text(
+                              currentWordIndex <
+                                      questions[currentQuestionIndex]
+                                              .answers
+                                              .length -
+                                          1
+                                  ? "Next Word"
+                                  : "Submit Answer",
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
                                 color: Colors.black,
                               ),
                             ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              currentWordIndex <
+                                      questions[currentQuestionIndex]
+                                              .answers
+                                              .length -
+                                          1
+                                  ? Icons.arrow_forward
+                                  : Icons.check,
+                              color: Colors.grey,
+                              size: 20,
+                            ),
                           ],
                         ),
-                      )
-                    else
-                      SizedBox(
-                        width:
-                            160, // Match the width of the "Back to Last Word" button
                       ),
-                    const SizedBox(width: 16), // Space between buttons
-                    NeumorphicButton(
-                      onPressed: _nextWord,
-                      style: NeumorphicStyle(
-                        depth: 4,
-                        intensity: 0.8,
-                        shape: NeumorphicShape.convex,
-                        boxShape: NeumorphicBoxShape.roundRect(
-                          BorderRadius.circular(12),
-                        ),
-                        color: Colors.grey[200],
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            currentWordIndex <
-                                    questions[currentQuestionIndex]
-                                            .answers
-                                            .length -
-                                        1
-                                ? "Next Word"
-                                : "Submit Answer",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: Colors.black,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Icon(
-                            currentWordIndex <
-                                    questions[currentQuestionIndex]
-                                            .answers
-                                            .length -
-                                        1
-                                ? Icons.arrow_forward
-                                : Icons.check,
-                            color: Colors.grey,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
                 SizedBox(height: 50),
               ],
             ),
@@ -649,20 +653,43 @@ class _GameScreenState extends State<GameScreen> {
   Widget _buildSingleTranslatableWord(String word) {
     String sanitizedWord = _sanitizeWord(word);
 
-    return GestureDetector(
-      onTapDown: (details) =>
-          _showTranslation(sanitizedWord, details.globalPosition),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.only(left: 22),
-          child: Text(
-            word, // Display original word
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return FutureBuilder<String>(
+      future: _getTranslation(sanitizedWord),
+      builder: (context, snapshot) {
+        String translatedWord = snapshot.data ?? sanitizedWord;
+
+        return GestureDetector(
+          onTapDown: (details) =>
+              _showTranslation(sanitizedWord, details.globalPosition),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.only(left: 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    translatedWord, // Display original word
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  Future<String> _getTranslation(String word) async {
+    final String jsonString =
+        await rootBundle.loadString('assets/translations.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'german';
+
+    return jsonData["words"][word]?[selectedLanguage] ?? word;
   }
 
   List<Widget> _buildTranslatableText(String sentence) {
@@ -1333,13 +1360,52 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                         autofocus: true,
                       ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Placeholder for Back button when it's not visible
-                        if (currentWordIndex > 0)
+                    if (questions[currentQuestionIndex].type == "fill")
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // Placeholder for Back button when it's not visible
+                          if (currentWordIndex > 0)
+                            NeumorphicButton(
+                              onPressed: _previousWord,
+                              style: NeumorphicStyle(
+                                depth: 4,
+                                intensity: 0.8,
+                                shape: NeumorphicShape.convex,
+                                boxShape: NeumorphicBoxShape.roundRect(
+                                  BorderRadius.circular(12),
+                                ),
+                                color: Colors.grey[200],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 12),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.arrow_back,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    "Back to Last Word",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            SizedBox(
+                              width:
+                                  160, // Match the width of the "Back to Last Word" button
+                            ),
+                          const SizedBox(width: 16), // Space between buttons
                           NeumorphicButton(
-                            onPressed: _previousWord,
+                            onPressed: _nextWord,
                             style: NeumorphicStyle(
                               depth: 4,
                               intensity: 0.8,
@@ -1352,77 +1418,39 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.arrow_back,
-                                  color: Colors.grey,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  "Back to Last Word",
-                                  style: TextStyle(
+                                Text(
+                                  currentWordIndex <
+                                          questions[currentQuestionIndex]
+                                                  .answers
+                                                  .length -
+                                              1
+                                      ? "Next Word"
+                                      : "Submit Answer",
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                     color: Colors.black,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
+                                Icon(
+                                  currentWordIndex <
+                                          questions[currentQuestionIndex]
+                                                  .answers
+                                                  .length -
+                                              1
+                                      ? Icons.arrow_forward
+                                      : Icons.check,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
                               ],
                             ),
-                          )
-                        else
-                          SizedBox(
-                            width:
-                                160, // Match the width of the "Back to Last Word" button
                           ),
-                        const SizedBox(width: 16), // Space between buttons
-                        NeumorphicButton(
-                          onPressed: _nextWord,
-                          style: NeumorphicStyle(
-                            depth: 4,
-                            intensity: 0.8,
-                            shape: NeumorphicShape.convex,
-                            boxShape: NeumorphicBoxShape.roundRect(
-                              BorderRadius.circular(12),
-                            ),
-                            color: Colors.grey[200],
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                currentWordIndex <
-                                        questions[currentQuestionIndex]
-                                                .answers
-                                                .length -
-                                            1
-                                    ? "Next Word"
-                                    : "Submit Answer",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Icon(
-                                currentWordIndex <
-                                        questions[currentQuestionIndex]
-                                                .answers
-                                                .length -
-                                            1
-                                    ? Icons.arrow_forward
-                                    : Icons.check,
-                                color: Colors.grey,
-                                size: 20,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     SizedBox(height: 50)
                   ],
                 ),
@@ -1512,20 +1540,43 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   Widget _buildSingleTranslatableWord(String word) {
     String sanitizedWord = _sanitizeWord(word);
 
-    return GestureDetector(
-      onTapDown: (details) =>
-          _showTranslation(sanitizedWord, details.globalPosition),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Container(
-          padding: const EdgeInsets.only(left: 22),
-          child: Text(
-            word, // Display original word
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return FutureBuilder<String>(
+      future: _getTranslation(sanitizedWord),
+      builder: (context, snapshot) {
+        String translatedWord = snapshot.data ?? sanitizedWord;
+
+        return GestureDetector(
+          onTapDown: (details) =>
+              _showTranslation(sanitizedWord, details.globalPosition),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.only(left: 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    translatedWord, // Display original word
+                    style: const TextStyle(
+                        fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
+  }
+
+  Future<String> _getTranslation(String word) async {
+    final String jsonString =
+        await rootBundle.loadString('assets/translations.json');
+    final Map<String, dynamic> jsonData = json.decode(jsonString);
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'german';
+
+    return jsonData["words"][word]?[selectedLanguage] ?? word;
   }
 
   List<Widget> _buildTranslatableText(String sentence) {

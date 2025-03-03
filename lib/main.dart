@@ -68,11 +68,6 @@ class _MyHomePageState extends State<MyHomePage>
   bool _showAuthenticateMessage = true;
   bool _isLoading = true;
 
-  //animation
-  /* bool _showCoins = false;
-  late AnimationController _controller;
-  final int numCoins = 8; */
-
   @override
   void initState() {
     super.initState();
@@ -100,29 +95,78 @@ class _MyHomePageState extends State<MyHomePage>
     });
     _checkInitialConnectivity();
 
-    //animation
-/*     _controller = AnimationController(
-      duration: Duration(seconds: 2),
-      vsync: this,
-    ); */
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final profileProvider =
+          Provider.of<ProfileProvider>(context, listen: false);
+      if (profileProvider.nativeLanguage.isEmpty) {
+        _showNativeLanguageDialog();
+      }
+    });
   }
 
-  //animation
-  /* void triggerAnimation() {
-    setState(() {
-      _showCoins = true;
-    });
+  void _showNativeLanguageDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Select Your Native Language"),
+          content: StatefulBuilder(
+            builder: (context, setState) {
+              String? selectedLanguage;
+              Map<String, String> flagAssets = {
+                "English": "assets/flags/english.png",
+                "German": "assets/flags/german.png",
+                "Spanish": "assets/flags/spanish.png",
+                "Dutch": "assets/flags/dutch.png",
+              };
 
-    _controller.forward(from: 0.0).then((_) {
-      setState(() {
-        _showCoins = false;
-      });
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  DropdownButton<String>(
+                    value: selectedLanguage,
+                    hint: Text("Choose a language"),
+                    isExpanded: true,
+                    items: flagAssets.entries.map((entry) {
+                      return DropdownMenuItem(
+                        value: entry.key,
+                        child: Row(
+                          children: [
+                            Image.asset(
+                              entry.value,
+                              width: 24, // Adjust flag size
+                              height: 24,
+                            ),
+                            SizedBox(width: 10),
+                            Text(entry.key),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          selectedLanguage = value;
+                        });
 
-      Future.delayed(Duration(seconds: 1), () {
-        setState(() {});
-      });
-    });
-  } */
+                        final profileProvider = Provider.of<ProfileProvider>(
+                          context,
+                          listen: false,
+                        );
+                        profileProvider.setNativeLanguage(value);
+                        Navigator.pop(context); // Close dialog
+                      }
+                    },
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
 
   void triggerAnimation() {
     print("placeholder");

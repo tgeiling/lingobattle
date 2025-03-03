@@ -252,6 +252,10 @@ class _LoginScreenState extends State<LoginScreen> {
             profileProvider.setCompletedLevels(completedLevelsData);
           }
 
+          if (profileData.containsKey('nativeLanguage')) {
+            profileProvider.setNativeLanguage(profileData['nativeLanguage']);
+          }
+
           await profileProvider.savePreferences();
           levelProvider.loadLevelsAfterStart();
 
@@ -269,6 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 eloMap: profileProvider.getEloMap(),
                 skillLevel: profileProvider.skilllevel,
                 completedLevels: profileProvider.completedLevelsJson,
+                nativeLanguage: profileProvider.nativeLanguage,
               ).then((success) {
                 if (success) {
                   print("Profile updated successfully.");

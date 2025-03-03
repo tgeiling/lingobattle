@@ -15,6 +15,7 @@ class ProfileProvider with ChangeNotifier {
   String _title = "";
   Map<String, int> _eloMap = {};
   int _skillLevel = 0;
+  String _nativeLanguage = "";
 
   int get winStreak => _winStreak;
   int get exp => _exp;
@@ -30,6 +31,7 @@ class ProfileProvider with ChangeNotifier {
   }
 
   int get skilllevel => _skillLevel;
+  String get nativeLanguage => _nativeLanguage;
 
   Map<String, int> get completedLevels {
     try {
@@ -90,6 +92,12 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
+  void setNativeLanguage(String language) {
+    _nativeLanguage = language;
+    notifyListeners();
+    savePreferences();
+  }
+
   void incrementWinStreak() {
     _winStreak++;
     notifyListeners();
@@ -119,6 +127,7 @@ class ProfileProvider with ChangeNotifier {
 
     // Store elo map as JSON string
     await prefs.setString('eloMap', jsonEncode(_eloMap));
+    await prefs.setString('nativeLanguage', _nativeLanguage);
   }
 
   Future<void> loadPreferences() async {
@@ -129,6 +138,7 @@ class ProfileProvider with ChangeNotifier {
     _title = prefs.getString('title') ?? "";
     _skillLevel = prefs.getInt('skillLevel') ?? 0;
     _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
+    _nativeLanguage = prefs.getString('nativeLanguage') ?? "";
 
     // Load elo map
     String? eloJson = prefs.getString('eloMap');
@@ -153,6 +163,7 @@ class ProfileProvider with ChangeNotifier {
       _username = profileData['username'] ?? _username;
       _title = profileData['title'] ?? _title;
       _skillLevel = profileData['skillLevel'] ?? _skillLevel;
+      _nativeLanguage = profileData['nativeLanguage'] ?? _nativeLanguage;
 
       // Convert JSON elo data into a Map<String, int>
       if (profileData.containsKey('elo')) {
@@ -360,7 +371,7 @@ class LevelNotifier with ChangeNotifier {
               "type": "fill"
             },
             {
-              "question": "Apfel",
+              "question": "Apple",
               "answers": ["Apple", "Mapple", "Gover", "Rover"],
               "type": "pick"
             },
