@@ -294,7 +294,6 @@ class LeaderboardLanguageSelector extends StatelessWidget {
       'German': 'assets/flags_20x20/german.png',
       'Spanish': 'assets/flags_20x20/spanish.png',
       'Dutch': 'assets/flags_20x20/dutch.png',
-      'Swiss': 'assets/flags_20x20/swiss.png',
     };
 
     // Ensure selectedLanguage is valid; default to first available language

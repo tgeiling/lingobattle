@@ -35,7 +35,6 @@ class _StartPageState extends State<StartPage> {
     {'language': 'german', 'path': 'assets/flags/german.png'},
     {'language': 'spanish', 'path': 'assets/flags/spanish.png'},
     {'language': 'dutch', 'path': 'assets/flags/dutch.png'},
-    {'language': 'swiss', 'path': 'assets/flags/swiss.png'}
   ];
   late PageController _pageController;
   late IO.Socket socket;

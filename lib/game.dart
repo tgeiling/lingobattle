@@ -1130,7 +1130,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                       ),
                     ),
                     SizedBox(height: 20),
-                    if (questions[currentQuestionIndex].answers.length > 1)
+                    if (questions[currentQuestionIndex].answers.length > 1 &&
+                        questions[currentQuestionIndex].answers == "fill")
                       Text(
                           "${currentWordIndex + 1}/${questions[currentQuestionIndex].answers.length}"),
                     GestureDetector(
@@ -1199,32 +1200,37 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                               spacing = defaultSpacing;
                             }
 
+                            List<Widget> letterBoxes = [];
+
                             // Generate the letter boxes
-                            List<Widget> letterBoxes = List.generate(
-                              _letterBoxes.length,
-                              (index) => Neumorphic(
-                                style: NeumorphicStyle(
-                                  depth: -2,
-                                  boxShape: NeumorphicBoxShape.roundRect(
-                                    BorderRadius.circular(4),
+                            if (questions[currentQuestionIndex].type ==
+                                "fill") {
+                              letterBoxes = List.generate(
+                                _letterBoxes.length,
+                                (index) => Neumorphic(
+                                  style: NeumorphicStyle(
+                                    depth: -2,
+                                    boxShape: NeumorphicBoxShape.roundRect(
+                                      BorderRadius.circular(4),
+                                    ),
                                   ),
-                                ),
-                                child: SizedBox(
-                                  width: boxWidth,
-                                  height: boxHeight,
-                                  child: Center(
-                                    child: Text(
-                                      _letterBoxes[index],
-                                      style: GoogleFonts.pressStart2p(
-                                        fontSize: boxWidth * 0.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.grey[800],
+                                  child: SizedBox(
+                                    width: boxWidth,
+                                    height: boxHeight,
+                                    child: Center(
+                                      child: Text(
+                                        _letterBoxes[index],
+                                        style: GoogleFonts.pressStart2p(
+                                          fontSize: boxWidth * 0.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.grey[800],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
+                              );
+                            }
 
                             // Single row with dynamic scaling and centering
                             return Row(
@@ -1234,7 +1240,11 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                                 Wrap(
                                   alignment: WrapAlignment.center,
                                   spacing: spacing,
-                                  children: letterBoxes,
+                                  children:
+                                      questions[currentQuestionIndex].type ==
+                                              "fill"
+                                          ? letterBoxes
+                                          : [],
                                 ),
                               ],
                             );
