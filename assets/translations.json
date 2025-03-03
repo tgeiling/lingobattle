@@ -1,0 +1,36 @@
+{
+    "languages": ["german", "spanish", "dutch", "english"],
+    "words": {
+      "hello": {
+        "german": "hallo",
+        "spanish": "hola",
+        "dutch": "hallo",
+        "english": "hello"
+      },
+      "thank": {
+        "german": "danke",
+        "spanish": "gracias",
+        "dutch": "dank",
+        "english": "thank"
+      },
+      "apple": {
+        "german": "apfel",
+        "spanish": "manzana",
+        "dutch": "appel",
+        "english": "apple"
+      },
+      "dog": {
+        "german": "hund",
+        "spanish": "perro",
+        "dutch": "hond",
+        "english": "dog"
+      },
+      "goodbye": {
+        "german": "auf wiedersehen",
+        "spanish": "adiós",
+        "dutch": "tot ziens",
+        "english": "goodbye"
+      }
+    }
+  }
+  

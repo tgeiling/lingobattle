@@ -16,6 +16,7 @@ import 'provider.dart';
 import 'multiplayerquestion.dart';
 import 'elements.dart';
 import 'services.dart';
+import 'translation.dart';
 
 bool _isInitialized = false;
 
@@ -585,15 +586,14 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
+    List<Widget> widgets = [];
+
     if (question.type == "fill") {
       List<String> parts = question.question.split("_____");
-      List<Widget> widgets = [];
 
       for (int i = 0; i < parts.length; i++) {
-        widgets.add(Text(
-          parts[i],
-          style: const TextStyle(fontSize: 18, color: Colors.black),
-        ));
+        widgets.addAll(_buildTranslatableText(parts[i]));
+
         if (i < parts.length - 1) {
           widgets.add(
             SizedBox(
@@ -615,34 +615,106 @@ class _GameScreenState extends State<GameScreen> {
           );
         }
       }
-      return widgets;
     } else {
-      List<Widget> widgets = [
-        Text(
-          question.question,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      String word = question.question;
+
+      widgets.add(_buildSingleTranslatableWord(word));
+
+      widgets.add(const SizedBox(height: 30));
+
+      widgets.add(
+        Wrap(
+          spacing: 8.0, // Space between buttons
+          runSpacing: 8.0, // Space between rows
+          alignment: WrapAlignment.center, // Center align buttons
+          children: _shuffledAnswers.map((answer) {
+            return PressableButton(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              onPressed: () {
+                setState(() {
+                  selectedAnswer = answer;
+                });
+                _submitAnswer();
+              },
+              child: Text(answer),
+            );
+          }).toList(),
         ),
-        const SizedBox(height: 20),
-      ];
-
-      widgets.addAll(_shuffledAnswers.map((answer) {
-        return ElevatedButton(
-          onPressed: () {
-            setState(() {
-              selectedAnswer = answer;
-            });
-            _submitAnswer();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                selectedAnswer == answer ? Colors.blue : Colors.grey[300],
-          ),
-          child: Text(answer),
-        );
-      }).toList());
-
-      return widgets;
+      );
     }
+
+    return widgets;
+  }
+
+  Widget _buildSingleTranslatableWord(String word) {
+    String sanitizedWord = _sanitizeWord(word);
+
+    return GestureDetector(
+      onTapDown: (details) =>
+          _showTranslation(sanitizedWord, details.globalPosition),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.only(left: 22),
+          child: Text(
+            word, // Display original word
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildTranslatableText(String sentence) {
+    List<Widget> wordWidgets = [];
+    List<String> words = sentence.split(" ");
+
+    for (int i = 0; i < words.length; i++) {
+      String sanitizedWord = _sanitizeWord(words[i]);
+
+      wordWidgets.add(
+        GestureDetector(
+          onTapDown: (details) =>
+              _showTranslation(sanitizedWord, details.globalPosition),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              words[i], // Display original word
+              style: const TextStyle(fontSize: 18, color: Colors.black),
+            ),
+          ),
+        ),
+      );
+
+      // Add space between words
+      if (i < words.length - 1) {
+        wordWidgets.add(const SizedBox(width: 4));
+      }
+    }
+
+    return wordWidgets;
+  }
+
+  String _sanitizeWord(String word) {
+    return word.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+  }
+
+  void _showTranslation(String word, Offset position) {
+    final overlay = Overlay.of(context);
+
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => TranslationWidget(
+        word: word,
+        position: Offset(position.dx, position.dy + 15), // ✅ Lower by 15 pixels
+        onDismiss: () {
+          overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlay.insert(overlayEntry);
   }
 }
 
@@ -1377,15 +1449,14 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   List<Widget> _buildSentenceWithGap(MultiplayerQuestion question) {
+    List<Widget> widgets = [];
+
     if (question.type == "fill") {
       List<String> parts = question.question.split("_____");
-      List<Widget> widgets = [];
 
       for (int i = 0; i < parts.length; i++) {
-        widgets.add(Text(
-          parts[i],
-          style: const TextStyle(fontSize: 18, color: Colors.black),
-        ));
+        widgets.addAll(_buildTranslatableText(parts[i]));
+
         if (i < parts.length - 1) {
           widgets.add(
             SizedBox(
@@ -1407,34 +1478,106 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           );
         }
       }
-      return widgets;
     } else {
-      List<Widget> widgets = [
-        Text(
-          question.question,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      String word = question.question;
+
+      widgets.add(_buildSingleTranslatableWord(word));
+
+      widgets.add(const SizedBox(height: 30));
+
+      widgets.add(
+        Wrap(
+          spacing: 8.0, // Space between buttons
+          runSpacing: 8.0, // Space between rows
+          alignment: WrapAlignment.center, // Center align buttons
+          children: _shuffledAnswers.map((answer) {
+            return PressableButton(
+              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+              onPressed: () {
+                setState(() {
+                  selectedAnswer = answer;
+                });
+                submitAnswer();
+              },
+              child: Text(answer),
+            );
+          }).toList(),
         ),
-        const SizedBox(height: 20),
-      ];
-
-      widgets.addAll(_shuffledAnswers.map((answer) {
-        return ElevatedButton(
-          onPressed: () {
-            setState(() {
-              selectedAnswer = answer;
-            });
-            submitAnswer();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                selectedAnswer == answer ? Colors.blue : Colors.grey[300],
-          ),
-          child: Text(answer),
-        );
-      }).toList());
-
-      return widgets;
+      );
     }
+
+    return widgets;
+  }
+
+  Widget _buildSingleTranslatableWord(String word) {
+    String sanitizedWord = _sanitizeWord(word);
+
+    return GestureDetector(
+      onTapDown: (details) =>
+          _showTranslation(sanitizedWord, details.globalPosition),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.only(left: 22),
+          child: Text(
+            word, // Display original word
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildTranslatableText(String sentence) {
+    List<Widget> wordWidgets = [];
+    List<String> words = sentence.split(" ");
+
+    for (int i = 0; i < words.length; i++) {
+      String sanitizedWord = _sanitizeWord(words[i]);
+
+      wordWidgets.add(
+        GestureDetector(
+          onTapDown: (details) =>
+              _showTranslation(sanitizedWord, details.globalPosition),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              words[i], // Display original word
+              style: const TextStyle(fontSize: 18, color: Colors.black),
+            ),
+          ),
+        ),
+      );
+
+      // Add space between words
+      if (i < words.length - 1) {
+        wordWidgets.add(const SizedBox(width: 4));
+      }
+    }
+
+    return wordWidgets;
+  }
+
+  String _sanitizeWord(String word) {
+    return word.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '');
+  }
+
+  void _showTranslation(String word, Offset position) {
+    final overlay = Overlay.of(context);
+
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => TranslationWidget(
+        word: word,
+        position: Offset(position.dx, position.dy + 15), // ✅ Lower by 15 pixels
+        onDismiss: () {
+          overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlay.insert(overlayEntry);
   }
 
   Future<bool> _showLeaveConfirmationDialog(BuildContext context) async {
