@@ -60,6 +60,8 @@ class _StartPageState extends State<StartPage> {
       'transports': ['websocket'],
     });
 
+    if (socket.connected) return;
+
     socket.connect();
 
     // Listen for WebSocket events
@@ -119,6 +121,8 @@ class _StartPageState extends State<StartPage> {
       _showErrorDialog("Please login in the profile first.");
       return;
     }
+
+    _initializeSocket();
 
     // Listen for matchmaking errors
     socket.off('joinQueueError'); // Prevent multiple listeners

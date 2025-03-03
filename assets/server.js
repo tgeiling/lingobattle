@@ -608,7 +608,10 @@ io.on('connection', (socket) => {
             // Penalize the leaving player in the relevant language
             let newElo = Math.max(0, user.elo.get(language) - 15);
             let newExp = Math.max(0, user.exp - 100);
+            let newStreak = 0;
             user.elo.set(language, newElo);
+            user.exp = newExp;
+            user.winStreak = newStreak;
             await user.save();
 
             // Reward the remaining player in the relevant language
@@ -672,9 +675,10 @@ io.on('connection', (socket) => {
             // Penalize disconnected player in the relevant language
             let newElo = Math.max(0, user.elo.get(language) - 15);
             let newExp = Math.max(0, user.exp - 100);
+            let newStreak = 0;
             user.elo.set(language, newElo);
             user.exp = newExp;
-            user.winStreak = 0;
+            user.winStreak = newStreak;
             await user.save();
 
             // Reward the remaining player in the relevant language
