@@ -218,6 +218,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (token != null) {
         final profileData = await fetchProfile(token);
 
+        final String nativeLanguage = profileProvider.nativeLanguage;
+
         if (profileData != null && profileData.containsKey('completedLevels')) {
           await prefs.clear();
 
@@ -252,13 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
             profileProvider.setCompletedLevels(completedLevelsData);
           }
 
-          if (profileData.containsKey('nativeLanguage')) {
-            profileProvider.setNativeLanguage(profileData['nativeLanguage']);
-          }
+          profileProvider.setNativeLanguage(nativeLanguage);
 
           await profileProvider.savePreferences();
           levelProvider.loadLevelsAfterStart();
-
           widget.setAuthenticated(true);
           Navigator.popUntil(context, (route) => route.isFirst);
         } else {
@@ -288,6 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           profileProvider.loadPreferences();
           widget.setAuthenticated(true);
+
           Navigator.popUntil(context, (route) => route.isFirst);
         }
       } else {

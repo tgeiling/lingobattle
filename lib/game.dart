@@ -640,7 +640,10 @@ class _GameScreenState extends State<GameScreen> {
                 });
                 _submitAnswer();
               },
-              child: Text(answer),
+              child: Text(
+                answer,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             );
           }).toList(),
         ),
@@ -656,7 +659,9 @@ class _GameScreenState extends State<GameScreen> {
     return FutureBuilder<String>(
       future: _getTranslation(sanitizedWord),
       builder: (context, snapshot) {
-        String translatedWord = snapshot.data ?? sanitizedWord;
+        String displayedWord = snapshot.hasData
+            ? snapshot.data!
+            : "..."; // ✅ Show "..." while loading
 
         return GestureDetector(
           onTapDown: (details) =>
@@ -669,9 +674,9 @@ class _GameScreenState extends State<GameScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    translatedWord, // Display original word
+                    displayedWord, // ✅ Show translated word or "..."
                     style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
+                        fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -1527,7 +1532,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 });
                 submitAnswer();
               },
-              child: Text(answer),
+              child: Text(
+                answer,
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
             );
           }).toList(),
         ),
@@ -1543,7 +1551,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     return FutureBuilder<String>(
       future: _getTranslation(sanitizedWord),
       builder: (context, snapshot) {
-        String translatedWord = snapshot.data ?? sanitizedWord;
+        String displayedWord = snapshot.hasData
+            ? snapshot.data!
+            : "..."; // ✅ Show "..." while loading
 
         return GestureDetector(
           onTapDown: (details) =>
@@ -1556,9 +1566,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    translatedWord, // Display original word
+                    displayedWord, // ✅ Show translated word or "..."
                     style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold),
+                        fontSize: 26, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),

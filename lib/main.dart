@@ -84,7 +84,8 @@ class _MyHomePageState extends State<MyHomePage>
     });
     Future.microtask(() =>
         Provider.of<ProfileProvider>(context, listen: false).loadPreferences());
-    //Future.microtask(() => Provider.of<LevelNotifier>(context, listen: false).loadLevelsAfterStart());
+    Future.microtask(() => Provider.of<LevelNotifier>(context, listen: false)
+        .loadLevelsAfterStart());
     WidgetsBinding.instance.addObserver(this);
 
     // Initialize connectivity
@@ -96,11 +97,11 @@ class _MyHomePageState extends State<MyHomePage>
     _checkInitialConnectivity();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final profileProvider =
-          Provider.of<ProfileProvider>(context, listen: false);
-      if (profileProvider.nativeLanguage.isEmpty) {
-        _showNativeLanguageDialog();
-      }
+      Future.delayed(Duration(seconds: 3), () {
+        if (profileProvider.nativeLanguage.isEmpty) {
+          _showNativeLanguageDialog();
+        }
+      });
     });
   }
 

@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'elements.dart';
+import 'provider.dart';
 
 class TranslationWidget extends StatefulWidget {
   final String word;
@@ -63,8 +65,9 @@ class _TranslationWidgetState extends State<TranslationWidget> {
   }
 
   Future<String> _getSelectedLanguage() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    return prefs.getString('selectedLanguage') ?? 'german'; // Default to German
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    return profileProvider.nativeLanguage.toLowerCase();
   }
 
   @override

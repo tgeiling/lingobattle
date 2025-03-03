@@ -163,7 +163,6 @@ class ProfileProvider with ChangeNotifier {
       _username = profileData['username'] ?? _username;
       _title = profileData['title'] ?? _title;
       _skillLevel = profileData['skillLevel'] ?? _skillLevel;
-      _nativeLanguage = profileData['nativeLanguage'] ?? _nativeLanguage;
 
       // Convert JSON elo data into a Map<String, int>
       if (profileData.containsKey('elo')) {
@@ -216,10 +215,10 @@ class LevelNotifier with ChangeNotifier {
     // Load saved levels data from SharedPreferences
     String? savedData = prefs.getString('language_levels');
 
-    if (savedData != null && savedData.isNotEmpty) {
+    if (savedData != "{}") {
       try {
         // Check if the JSON is double-encoded (string inside string)
-        if (savedData.startsWith('"') && savedData.endsWith('"')) {
+        if (savedData!.startsWith('"') && savedData.endsWith('"')) {
           savedData = json.decode(savedData); // Decode once if needed
         }
 
