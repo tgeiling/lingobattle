@@ -7,36 +7,25 @@ client = translate.Client()
 
 JSON_FILE = "translated_words.json"
 
-def detect_language(text):
-    """Detects the language of a given text. If undetected, default to English."""
-    try:
-        result = client.detect_language(text)
-        detected_lang = result.get("language", "und")
-
-        if detected_lang == "und":  # If language is undefined, assume English
-            print(f"⚠️ Warning: Could not detect language for '{text}', defaulting to English.")
-            return "en"
-
-        return detected_lang
-
-    except Exception as e:
-        print(f"❌ Error detecting language for '{text}': {e}")
-        return "en"  # Default to English if detection fails
-
-def translate_word(word, source_lang):
-    """Translates a word into German, Spanish, Dutch, and English, excluding the detected language."""
-    target_languages = {"german": "de", "spanish": "es", "dutch": "nl", "english": "en"}
+def translate_word(word):
+    """Translates a word into English, German, Spanish, and Dutch while ensuring correct structuring."""
+    target_languages = {"english": "en", "german": "de", "spanish": "es", "dutch": "nl"}
     translations = {}
 
     for lang, code in target_languages.items():
-        if source_lang != code:  # Skip translating to the detected language
-            try:
-                translated_text = client.translate(word, target_language=code, source_language=source_lang)["translatedText"]
-                translations[lang] = translated_text
-            except Exception as e:
-                print(f"❌ Error translating '{word}' to {lang}: {e}")
-                translations[lang] = ""  # Store empty translation if an error occurs
-                time.sleep(1)  # Small delay to avoid rate limits
+        try:
+            translated_text = client.translate(word, target_language=code)["translatedText"]
+            
+            # Ensure that the word isn't appearing unmodified in the translation
+            if translated_text.lower() == word.lower():
+                print(f"⚠️ Warning: '{word}' translated identically in {lang}. Might need manual review.")
+            
+            translations[lang] = translated_text
+        
+        except Exception as e:
+            print(f"❌ Error translating '{word}' to {lang}: {e}")
+            translations[lang] = ""  # Store empty translation if an error occurs
+            time.sleep(1)  # Small delay to avoid rate limits
 
     return translations
 
@@ -46,7 +35,7 @@ def save_to_json(data):
         json.dump(data, json_file, ensure_ascii=False, indent=4)
 
 def process_words_from_file(file_path):
-    """Reads words from a file, detects language, translates, and saves results to JSON incrementally."""
+    """Reads words from a file, translates them, and saves results to JSON incrementally."""
     
     words_dict = {}
 
@@ -69,13 +58,12 @@ def process_words_from_file(file_path):
         if word in words_dict:  # Skip already processed words
             continue
 
-        source_lang = detect_language(word)
-        translations = translate_word(word, source_lang)
+        translations = translate_word(word)
         words_dict[word] = translations
 
         # Save JSON file **incrementally** after each word
         save_to_json({
-            "languages": ["german", "spanish", "dutch", "english"],
+            "languages": ["english", "german", "spanish", "dutch"],
             "words": words_dict
         })
 

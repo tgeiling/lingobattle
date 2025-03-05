@@ -387,17 +387,17 @@ const matchPlayers = async () => {
 
     function getDifficultyDistribution(baseDifficulty) {
       const random = Math.random(); // Generates a value between 0 and 1
-
-      if (random < 0.02 && baseDifficulty < 4) {
-        return { main: baseDifficulty + 1, mainCount: 5 }; // Rare challenge mode
-      } else if (random < 0.30 && baseDifficulty < 4) {
-        return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: 2 }; // 3+2 mix
-      } else if (random < 0.50 && baseDifficulty < 4) {
-        return { main: baseDifficulty, mainCount: 4, extra: baseDifficulty + 1, extraCount: 1 }; // 4+1 mix
+  
+      if (random < 0.02) {
+          return { main: baseDifficulty, mainCount: 5, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 2 : 0 }; // Rare challenge mode
+      } else if (random < 0.30) {
+          return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 4 : 2 }; // 3+2 mix, but 3+4 for difficulty 4
+      } else if (random < 0.50) {
+          return { main: baseDifficulty, mainCount: 4, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 3 : 1 }; // 4+1 mix, but 4+3 for difficulty 4
       } else {
-        return { main: baseDifficulty, mainCount: 5 }; // Standard: 5 from own category
+          return { main: baseDifficulty, mainCount: 5 }; // Standard: 5 from own category
       }
-    }
+  }
 
     const { main, mainCount, extra, extraCount } = getDifficultyDistribution(difficultyLevel);
 
@@ -432,6 +432,7 @@ const matchPlayers = async () => {
       questions: questions.map(q => ({
         question: q.question,
         answers: q.answers,
+        type: q.type,
       })),
       language: language,
     };
@@ -451,6 +452,7 @@ const matchPlayers = async () => {
             questions: questions.map(q => ({
               question: q.question,
               answers: q.answers,
+              type: q.type,
             })),
           },
         },

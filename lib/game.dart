@@ -171,9 +171,13 @@ class _GameScreenState extends State<GameScreen> {
           ..shuffle();
         _startTimer();
       } else {
-        Provider.of<LevelNotifier>(context, listen: false)
-            .updateLevelStatus(widget.language, widget.level.id);
-        _showCompletionDialog();
+        if (correctAnswers >= 4) {
+          Provider.of<LevelNotifier>(context, listen: false)
+              .updateLevelStatus(widget.language, widget.level.id);
+          _showCompletionDialog(true);
+        } else {
+          _showCompletionDialog(false);
+        }
       }
     });
   }
@@ -197,23 +201,240 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
-  void _showCompletionDialog() {
+  void _showCompletionDialog(bool isWin) {
+    String resultText = isWin ? "Win" : "Loss";
+    Color resultColor = isWin ? Colors.green : Colors.red;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Game Over"),
-        content:
-            Text("You got $correctAnswers out of ${questions.length} correct!"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text("OK"),
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        backgroundColor: Colors.grey[200],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              NeumorphicText(
+                "Question Review",
+                style: NeumorphicStyle(depth: 4, color: Colors.black),
+                textStyle: NeumorphicTextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                resultText,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  color: resultColor,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Expanded(
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: questions.length,
+                  itemBuilder: (context, index) {
+                    final question = questions[index].question;
+                    final answers = questions[index].answers as List;
+                    final isPickQuestion = questions[index].type == "pick";
+
+                    return Neumorphic(
+                      padding: const EdgeInsets.all(12),
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      style: NeumorphicStyle(
+                        shape: NeumorphicShape.flat,
+                        depth: 4,
+                        lightSource: LightSource.topLeft,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(10)),
+                        color: Colors.white,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Q${index + 1}: $question",
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          isPickQuestion
+                              ? RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: "Answer: ${answers[0]}",
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                      if (answers.length > 1)
+                                        TextSpan(
+                                          text:
+                                              ", ${answers.sublist(1).join(", ")}",
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                )
+                              : Text(
+                                  answers.length > 1
+                                      ? "Answers: ${answers.join(", ")}"
+                                      : "Answer: ${answers[0]}",
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              PressableButton(
+                onPressed: () => {
+                  Navigator.pop(context),
+                  Navigator.pop(context),
+                },
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Text(
+                  "Close",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
+    );
+  }
+
+  void _showQuestionResultsDialog(
+      BuildContext context, List<dynamic> questions) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          backgroundColor: Colors.grey[200],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                NeumorphicText(
+                  "Question Review",
+                  style: NeumorphicStyle(depth: 4, color: Colors.black),
+                  textStyle: NeumorphicTextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Expanded(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: questions.length,
+                    itemBuilder: (context, index) {
+                      final question = questions[index]
+                          .question; // Accessing via dot notation
+                      final answers = questions[index].answers as List;
+                      final isPickQuestion = questions[index].type ==
+                          "pick"; // Access via dot notation
+
+                      return Neumorphic(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        style: NeumorphicStyle(
+                          shape: NeumorphicShape.flat,
+                          depth: 4,
+                          lightSource: LightSource.topLeft,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                              BorderRadius.circular(10)),
+                          color: Colors.white,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Q${index + 1}: $question",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            isPickQuestion
+                                ? RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              "Answer: ${answers[0]}", // Highlight first answer
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Colors.blue, // Highlight color
+                                          ),
+                                        ),
+                                        if (answers.length > 1)
+                                          TextSpan(
+                                            text:
+                                                ", ${answers.sublist(1).join(", ")}", // Other answers
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  )
+                                : Text(
+                                    answers.length > 1
+                                        ? "Answers: ${answers.join(", ")}"
+                                        : "Answer: ${answers[0]}",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 10),
+                PressableButton(
+                  onPressed: () => Navigator.pop(context),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: Text(
+                    "Close",
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -691,23 +912,28 @@ class _GameScreenState extends State<GameScreen> {
     final String jsonString =
         await rootBundle.loadString('assets/translations.json');
     final Map<String, dynamic> jsonData = json.decode(jsonString);
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'german';
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final nativeLanguage = profileProvider.nativeLanguage;
 
-    return jsonData["words"][word]?[selectedLanguage] ?? word;
+    return jsonData["words"][word]?[nativeLanguage.toLowerCase()] ?? word;
   }
 
   List<Widget> _buildTranslatableText(String sentence) {
     List<Widget> wordWidgets = [];
     List<String> words = sentence.split(" ");
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     for (int i = 0; i < words.length; i++) {
       String sanitizedWord = _sanitizeWord(words[i]);
 
       wordWidgets.add(
         GestureDetector(
-          onTapDown: (details) =>
-              _showTranslation(sanitizedWord, details.globalPosition),
+          onTapDown: (details) => {
+            if (widget.language != profileProvider.nativeLanguage.toLowerCase())
+              {_showTranslation(sanitizedWord, details.globalPosition)}
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(
@@ -1583,23 +1809,28 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     final String jsonString =
         await rootBundle.loadString('assets/translations.json');
     final Map<String, dynamic> jsonData = json.decode(jsonString);
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String selectedLanguage = prefs.getString('selectedLanguage') ?? 'german';
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final nativeLanguage = profileProvider.nativeLanguage;
 
-    return jsonData["words"][word]?[selectedLanguage] ?? word;
+    return jsonData["words"][word]?[nativeLanguage.toLowerCase()] ?? word;
   }
 
   List<Widget> _buildTranslatableText(String sentence) {
     List<Widget> wordWidgets = [];
     List<String> words = sentence.split(" ");
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
 
     for (int i = 0; i < words.length; i++) {
       String sanitizedWord = _sanitizeWord(words[i]);
 
       wordWidgets.add(
         GestureDetector(
-          onTapDown: (details) =>
-              _showTranslation(sanitizedWord, details.globalPosition),
+          onTapDown: (details) => {
+            if (widget.language != profileProvider.nativeLanguage.toLowerCase())
+              {_showTranslation(sanitizedWord, details.globalPosition)}
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Text(
@@ -1644,9 +1875,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   Future<bool> _showLeaveConfirmationDialog(BuildContext context) async {
     final List<Map<String, dynamic>> formattedQuestions = questions.map((q) {
       return {
-        'question': q.question, // Extracting question as string
-        'answers':
-            List<String>.from(q.answers), // Ensuring answers is a List<String>
+        'question': q.question,
+        'answers': List<String>.from(q.answers),
+        'type': q.type
       };
     }).toList();
 
@@ -1926,8 +2157,9 @@ class MultiplayerResultScreen extends StatelessWidget {
                     itemCount: questions.length,
                     itemBuilder: (context, index) {
                       final question = questions[index]['question'];
-                      final answers =
-                          (questions[index]['answers'] as List).join(", ");
+                      final answers = (questions[index]['answers'] as List);
+                      final isPickQuestion = questions[index]['type'] == "pick";
+
                       return Neumorphic(
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -1950,12 +2182,38 @@ class MultiplayerResultScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text(
-                              answers.contains(",")
-                                  ? "Answers: $answers"
-                                  : "Answer: $answers",
-                              style: const TextStyle(fontSize: 14),
-                            ),
+                            isPickQuestion
+                                ? RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              "Answer: ${answers[0]}", // Highlight first answer
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color:
+                                                Colors.blue, // Highlight color
+                                          ),
+                                        ),
+                                        if (answers.length > 1)
+                                          TextSpan(
+                                            text:
+                                                ", ${answers.sublist(1).join(", ")}", // Other answers
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  )
+                                : Text(
+                                    answers.length > 1
+                                        ? "Answers: ${answers.join(", ")}"
+                                        : "Answer: ${answers[0]}",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
                           ],
                         ),
                       );
