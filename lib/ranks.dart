@@ -19,44 +19,33 @@ class Ranks extends StatelessWidget {
 
         return GestureDetector(
           onTap: () => _showEloDialog(context, profile),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Neumorphic(
-                    style: NeumorphicStyle(
-                      depth: 8,
-                      boxShape: NeumorphicBoxShape.roundRect(
-                        BorderRadius.circular(20),
-                      ),
-                      color: Colors.grey[200],
-                      intensity: 0.6,
-                      shadowDarkColor: Colors.grey[600],
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    child: Text(
-                      rankText,
-                      style: GoogleFonts.pressStart2p(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
-                      ),
-                    ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.grey[500],
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  rankText,
+                  style: GoogleFonts.pressStart2p(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: 12),
-                  Image.asset(
-                    'assets/ranks/$imagePath.png',
-                    width: 180,
-                    height: 90,
-                    fit: BoxFit.contain,
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 12),
+                Image.asset(
+                  'assets/ranks/$imagePath.png',
+                  width: 180,
+                  height: 46,
+                  fit: BoxFit.contain,
+                ),
+              ],
+            ),
           ),
         );
       },

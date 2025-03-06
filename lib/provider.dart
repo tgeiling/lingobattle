@@ -10,6 +10,7 @@ import 'level.dart';
 class ProfileProvider with ChangeNotifier {
   int _winStreak = 0;
   int _exp = 0;
+  int _coins = 0;
   String _completedLevelsJson = "{}"; // Stored as JSON String
   String _username = "";
   String _title = "";
@@ -19,6 +20,7 @@ class ProfileProvider with ChangeNotifier {
 
   int get winStreak => _winStreak;
   int get exp => _exp;
+  int get coins => _coins;
   String get username => _username;
   String get title => _title;
   int getElo(String language) {
@@ -57,6 +59,12 @@ class ProfileProvider with ChangeNotifier {
 
   void setExp(int experience) {
     _exp = experience;
+    notifyListeners();
+    savePreferences();
+  }
+
+  void setCoins(int coinAmount) {
+    _coins = coinAmount;
     notifyListeners();
     savePreferences();
   }
@@ -114,6 +122,7 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setInt('winStreak', _winStreak);
     await prefs.setInt('exp', _exp);
+    await prefs.setInt('coins', _coins);
     await prefs.setString('username', _username);
     await prefs.setString('title', _title);
     await prefs.setInt('skillLevel', _skillLevel);
@@ -134,6 +143,7 @@ class ProfileProvider with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     _winStreak = prefs.getInt('winStreak') ?? 0;
     _exp = prefs.getInt('exp') ?? 0;
+    _coins = prefs.getInt('coins') ?? 0;
     _username = prefs.getString('username') ?? "";
     _title = prefs.getString('title') ?? "";
     _skillLevel = prefs.getInt('skillLevel') ?? 0;
@@ -160,6 +170,7 @@ class ProfileProvider with ChangeNotifier {
     if (profileData != null) {
       _winStreak = profileData['winStreak'] ?? _winStreak;
       _exp = profileData['exp'] ?? _exp;
+      _coins = profileData['coins'] ?? _coins;
       _username = profileData['username'] ?? _username;
       _title = profileData['title'] ?? _title;
       _skillLevel = profileData['skillLevel'] ?? _skillLevel;

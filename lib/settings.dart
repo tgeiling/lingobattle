@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'auth.dart';
+import 'provider.dart';
+import 'services.dart';
 
 class SettingsPage extends StatelessWidget {
   final bool Function() isLoggedIn;
@@ -49,6 +51,18 @@ class SettingsPage extends StatelessWidget {
                 setAuthenticated(false);
               },
             ),
+          _SettingsTile(
+            title: 'Change Language',
+            icon: Icons.language,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ChangeLanguagePage(),
+                ),
+              );
+            },
+          ),
           _SettingsTile(
             title: 'Terms and Conditions',
             icon: Icons.article,
@@ -109,6 +123,130 @@ class _SettingsTile extends StatelessWidget {
             style: const TextStyle(color: Colors.black),
           ),
           onTap: onTap,
+        ),
+      ),
+    );
+  }
+}
+
+class ChangeLanguagePage extends StatelessWidget {
+  const ChangeLanguagePage({Key? key}) : super(key: key);
+
+  final List<Map<String, String>> languages = const [
+    {
+      'name': 'English',
+      'var': 'english',
+      'code': 'en',
+      'flag': 'assets/flags/english.png'
+    },
+    {
+      'name': 'Deutsch',
+      'var': 'german',
+      'code': 'de',
+      'flag': 'assets/flags/german.png'
+    },
+    {
+      'name': 'Español',
+      'var': 'spanish',
+      'code': 'es',
+      'flag': 'assets/flags/spanish.png'
+    },
+    {
+      'name': 'Netherlands',
+      'var': 'dutch',
+      'code': 'it',
+      'flag': 'assets/flags/dutch.png'
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
+        title: const Text(
+          'Change Language',
+          style: TextStyle(color: Colors.black),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              'Select your language:',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.5,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                ),
+                itemCount: languages.length,
+                itemBuilder: (context, index) {
+                  final language = languages[index];
+                  return GestureDetector(
+                    onTap: () {
+                      final profileProvider =
+                          Provider.of<ProfileProvider>(context, listen: false);
+
+                      profileProvider.setNativeLanguage(language['var']!);
+                      getAuthToken().then((token) {
+                        if (token != null) {
+                          updateProfile(
+                            token: token,
+                            nativeLanguage: profileProvider.nativeLanguage,
+                          ).then((success) {
+                            if (success) {
+                              print("Profile updated successfully.");
+                            } else {
+                              print("Failed to update profile.");
+                            }
+                          });
+                        } else {
+                          print("No auth token available.");
+                        }
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Neumorphic(
+                      style: NeumorphicStyle(
+                        depth: 6,
+                        intensity: 0.6,
+                        color: Colors.grey[300],
+                        boxShape: NeumorphicBoxShape.roundRect(
+                          BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            language['flag']!,
+                            width: 60,
+                            height: 40,
+                            fit: BoxFit.contain,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            language['name']!,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

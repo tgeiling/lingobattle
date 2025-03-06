@@ -37,6 +37,7 @@ const UserSchema = new mongoose.Schema({
 
   winStreak: { type: Number, default: 0 }, 
   exp: { type: Number, default: 0 }, 
+  coins: { type: Number, default: 0 },  
 
   completedLevels: { type: String, default: "" }, // JSON String
   title: { type: String, default: "" },
@@ -201,6 +202,7 @@ app.post('/updateProfile', authenticateToken, async (req, res) => {
     // Update general user fields if present
     if (req.body.winStreak !== undefined) user.winStreak = req.body.winStreak;
     if (req.body.exp !== undefined) user.exp = req.body.exp;
+    if (req.body.coins !== undefined) user.coins = req.body.coins;
     if (req.body.title !== undefined) user.title = req.body.title;
     if (req.body.elo !== undefined) user.elo = req.body.elo;
     if (req.body.skillLevel !== undefined) user.skillLevel = req.body.skillLevel;
@@ -228,6 +230,7 @@ app.get('/profile', authenticateToken, async (req, res) => {
       username: user.username,
       winStreak: user.winStreak,
       exp: user.exp,
+      coins: user.coins,
       completedLevels: user.completedLevels,
       title: user.title,
       elo: user.elo,
@@ -354,10 +357,9 @@ const matchPlayers = async () => {
     const player1 = matchmakingQueue.shift();
     const language = player1.language; // Use the correct language for matchmaking
 
-    // Find a suitable opponent within the 400 ELO range for the same language
     let index = matchmakingQueue.findIndex(player2 => {
-      return Math.abs(player1.elo[language] - player2.elo[language]) <= 400;
-    });
+      return player2.language === language;
+    }); 
 
     if (index === -1) {
       // No suitable match found, put player1 back in queue
@@ -614,18 +616,22 @@ io.on('connection', (socket) => {
             // Penalize the leaving player in the relevant language
             let newElo = Math.max(0, user.elo.get(language) - 15);
             let newExp = Math.max(0, user.exp - 100);
+            let newCoins = Math.max(0, user.coins - 10);
             let newStreak = 0;
             user.elo.set(language, newElo);
             user.exp = newExp;
+            user.coins = newCoins;
             user.winStreak = newStreak;
             await user.save();
 
             // Reward the remaining player in the relevant language
             let newEloWin = remainingUser.elo.get(language) + 15;
             let newExpWin = remainingUser.exp + 100;
+            let newCoinsWin = Math.max(0, remainingUser.coins + 40);
             let newWinStreak = remainingUser.winStreak + 1;
             remainingUser.elo.set(language, newEloWin);
             remainingUser.exp = newExpWin;
+            remainingUser.coins = newCoinsWin;
             remainingUser.winStreak = newWinStreak;
             await remainingUser.save();
 
@@ -681,18 +687,22 @@ io.on('connection', (socket) => {
             // Penalize disconnected player in the relevant language
             let newElo = Math.max(0, user.elo.get(language) - 15);
             let newExp = Math.max(0, user.exp - 100);
+            let newCoins = Math.max(0, user.coins - 10);
             let newStreak = 0;
             user.elo.set(language, newElo);
             user.exp = newExp;
+            user.coins = newCoins;
             user.winStreak = newStreak;
             await user.save();
 
             // Reward the remaining player in the relevant language
             let newEloWin = remainingUser.elo.get(language) + 15;
             let newExpWin = remainingUser.exp + 100;
+            let newCoinsWin = Math.max(0, remainingUser.coins + 40);
             let newWinStreak = remainingUser.winStreak + 1;
             remainingUser.elo.set(language, newEloWin);
             remainingUser.exp = newExpWin;
+            remainingUser.coins = newCoinsWin;
             remainingUser.winStreak = newWinStreak;
             await remainingUser.save();
 
@@ -802,10 +812,12 @@ io.on('connection', (socket) => {
                 let elo1 = user1.elo.get(language);
                 let elo2 = user2.elo.get(language);
 
-                let winStreak1 = user1.winStreak || 0;
-                let winStreak2 = user2.winStreak || 0;
-                let exp1 = user1.exp || 0;
-                let exp2 = user2.exp || 0;
+                let winStreak1 = user1.winStreak;
+                let winStreak2 = user2.winStreak;
+                let exp1 = user1.exp;
+                let exp2 = user2.exp;
+                let coins1 = user1.coins;
+                let coins2 = user2.coins;
 
                 // **ELO & XP Handling**
                 if (winner === player1.username) {
@@ -815,7 +827,9 @@ io.on('connection', (socket) => {
                     winStreak1 += 1;
                     winStreak2 = 0;
                     exp1 += 100;
-                    exp2 = Math.max(0, exp2 - 50);
+                    exp2 += 10;
+                    coins1 += 50;
+                    coins2 = Math.max(0, coins2 - 15);
                 } else if (winner === player2.username) {
                     // Player 2 Wins
                     elo2 += 100;
@@ -823,7 +837,9 @@ io.on('connection', (socket) => {
                     winStreak2 += 1;
                     winStreak1 = 0;
                     exp2 += 100;
-                    exp1 = Math.max(0, exp1 - 50);
+                    exp1 += 10;
+                    coins2 += 50;
+                    coins1 = Math.max(0, coins2 - 15);
                 } else {
                     // **Draw Case**
                     console.log(`[DRAW] ${player1.username} vs ${player2.username}`);
@@ -833,6 +849,8 @@ io.on('connection', (socket) => {
                     elo2 = Math.max(0, elo2 - 5);
                     exp1 += 25;
                     exp2 += 25;
+                    coins1 += 25;
+                    coins2 += 25;
                 }
 
                 // **Update users in DB**
@@ -842,12 +860,14 @@ io.on('connection', (socket) => {
                 user2.winStreak = winStreak2;
                 user1.exp = exp1;
                 user2.exp = exp2;
+                user1.coins = coins1;
+                user2.coins = coins2;
 
                 await user1.save();
                 await user2.save();
 
-                console.log(`[PROFILE UPDATE] ${player1.username} - ELO: ${elo1}, EXP: ${exp1}, WinStreak: ${winStreak1}`);
-                console.log(`[PROFILE UPDATE] ${player2.username} - ELO: ${elo2}, EXP: ${exp2}, WinStreak: ${winStreak2}`);
+                console.log(`[PROFILE UPDATE] ${player1.username} - ELO: ${elo1}, EXP: ${exp1},COINS: ${coins1}, WinStreak: ${winStreak1}`);
+                console.log(`[PROFILE UPDATE] ${player2.username} - ELO: ${elo2}, EXP: ${exp2},COINS: ${coins2}, WinStreak: ${winStreak2}`);
 
                 // Notify players
                 battle.players.forEach((p) => {
@@ -861,6 +881,7 @@ io.on('connection', (socket) => {
                                 correctAnswers: player1.correctAnswers,
                                 elo: elo1,
                                 exp: exp1,
+                                coins: coins1,
                                 winStreak: winStreak1
                             },
                             player2: {
@@ -869,6 +890,7 @@ io.on('connection', (socket) => {
                                 correctAnswers: player2.correctAnswers,
                                 elo: elo2,
                                 exp: exp2,
+                                coins: coins2,
                                 winStreak: winStreak2
                             },
                         },

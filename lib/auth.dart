@@ -232,6 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
           if (profileData.containsKey('exp')) {
             profileProvider.setExp(profileData['exp']);
           }
+
+          if (profileData.containsKey('coins')) {
+            profileProvider.setCoins(profileData['coins']);
+          }
           if (profileData.containsKey('title')) {
             profileProvider.setTitle(profileData['title']);
           }
@@ -268,6 +272,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 token: token,
                 winStreak: profileProvider.winStreak,
                 exp: profileProvider.exp,
+                coins: profileProvider.coins,
                 title: profileProvider.title,
                 eloMap: profileProvider.getEloMap(),
                 skillLevel: profileProvider.skilllevel,

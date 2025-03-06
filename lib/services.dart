@@ -51,6 +51,7 @@ Future<bool> updateProfile({
   required String token,
   int? winStreak,
   int? exp,
+  int? coins,
   String? completedLevels, // Per-language progress
   String? title,
   Map<String, int>? eloMap, // Now supports multiple ELOs per language
@@ -63,6 +64,7 @@ Future<bool> updateProfile({
 
   if (winStreak != null) body['winStreak'] = winStreak;
   if (exp != null) body['exp'] = exp;
+  if (coins != null) body['coins'] = coins;
   if (completedLevels != null)
     body['completedLevels'] = completedLevels; // Send as map
   if (title != null) body['title'] = title;
