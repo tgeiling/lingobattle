@@ -40,7 +40,15 @@ class ProfileProvider with ChangeNotifier {
   Map<String, int> get completedLevels {
     try {
       Map<String, dynamic> decoded = json.decode(_completedLevelsJson);
-      return decoded.map((key, value) => MapEntry(key, value as int));
+
+      // Convert `{ "english": [1, 3, 7], "german": [2, 5] }` to `{ "english": 7, "german": 5 }`
+      return decoded.map((language, completedList) {
+        if (completedList is List && completedList.isNotEmpty) {
+          return MapEntry(language,
+              completedList.cast<int>().reduce((a, b) => a > b ? a : b));
+        }
+        return MapEntry(language, 0); // If no levels completed, return 0
+      });
     } catch (e) {
       print("Error parsing completedLevels JSON: $e");
       return {};
@@ -234,34 +242,31 @@ class LevelNotifier with ChangeNotifier {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
     // Load saved levels data from SharedPreferences
-    String? savedData = prefs.getString('language_levels');
+    String savedData = prefs.getString('language_levels') ?? "";
 
-    if (savedData != "{}") {
+    if (savedData != null && savedData != "{}") {
       try {
         // Check if the JSON is double-encoded (string inside string)
-        if (savedData!.startsWith('"') && savedData.endsWith('"')) {
+        if (savedData.startsWith('"') && savedData.endsWith('"')) {
           savedData = json.decode(savedData); // Decode once if needed
         }
 
-        // Deserialize JSON and populate _languageLevels
-        Map<String, dynamic> jsonData = json.decode(savedData!);
+        // Deserialize JSON (expected format: { "english": [1, 3, 7], "german": [2, 5] })
+        Map<String, dynamic> jsonData = json.decode(savedData);
 
-        _languageLevels = jsonData.map((lang, levels) {
-          return MapEntry(
-            lang,
-            (levels as Map<String, dynamic>).map((key, value) {
-              if (value is Map<String, dynamic>) {
-                Level level = Level.fromJson(value);
+        // Initialize the full level structure with default levels
+        _initializeDefaultLevels();
 
-                // Ensure isDone is correctly set from the JSON data
-                level.isDone = value['isDone'] ?? false;
-
-                return MapEntry(int.parse(key), level);
-              } else {
-                throw Exception("Invalid value structure for level data.");
+        // Restore completed levels
+        jsonData.forEach((language, completedLevels) {
+          if (_languageLevels.containsKey(language) &&
+              completedLevels is List) {
+            for (int levelId in completedLevels.cast<int>()) {
+              if (_languageLevels[language]!.containsKey(levelId)) {
+                _languageLevels[language]![levelId]!.isDone = true;
               }
-            }),
-          );
+            }
+          }
         });
 
         print("Successfully loaded levels from SharedPreferences!");
@@ -281,19 +286,27 @@ class LevelNotifier with ChangeNotifier {
   Future<void> saveLanguages() async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    // Serialize _languageLevels to JSON and save it
-    String jsonData = json.encode(_languageLevels.map((lang, levels) {
+    // Extract completed levels (only IDs)
+    Map<String, List<int>> optimizedData = _languageLevels.map((lang, levels) {
       return MapEntry(
         lang,
-        levels.map((key, level) => MapEntry(key.toString(), level.toJson())),
+        levels.entries
+            .where((entry) => entry.value.isDone) // Only save completed levels
+            .map((entry) => entry.key) // Store only the level ID
+            .toList(),
       );
-    }));
+    });
 
+    // Convert to JSON and save to SharedPreferences
+    String jsonData = json.encode(optimizedData);
+    await prefs.setString('language_levels', jsonData);
+
+    // Send to server (optional)
     getAuthToken().then((token) {
       if (token != null) {
         updateProfile(
           token: token,
-          completedLevels: jsonData,
+          completedLevels: jsonData, // Send only optimized data
         ).then((success) {
           if (success) {
             print("Profile updated successfully.");
@@ -305,8 +318,6 @@ class LevelNotifier with ChangeNotifier {
         print("No auth token available.");
       }
     });
-
-    await prefs.setString('language_levels', jsonData);
   }
 
   Future<void> saveLanguagesSync() async {
@@ -365,15 +376,18 @@ class LevelNotifier with ChangeNotifier {
     notifyListeners();
   } */
 
-  void loadCompletedLevels(String language, int maxCompletedLevel) {
-    if (_languageLevels.containsKey(language)) {
-      _languageLevels[language]?.forEach((levelId, level) {
-        if (levelId <= maxCompletedLevel) {
-          level.isDone = true;
-        }
-      });
-    }
-    notifyListeners();
+  Map<String, List<int>> extractCompletedLevels(
+      Map<String, Map<int, Level>> levels) {
+    Map<String, List<int>> completedLevels = {};
+
+    levels.forEach((language, levelData) {
+      completedLevels[language] = levelData.entries
+          .where((entry) => entry.value.isDone) // Only save completed levels
+          .map((entry) => entry.key) // Save only the level ID
+          .toList();
+    });
+
+    return completedLevels;
   }
 
   void _initializeDefaultLevels() {
