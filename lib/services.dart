@@ -57,6 +57,7 @@ Future<bool> updateProfile({
   Map<String, int>? eloMap, // Now supports multiple ELOs per language
   int? skillLevel,
   String? nativeLanguage,
+  bool? acceptedGdpr,
 }) async {
   final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/updateProfile');
 
@@ -71,6 +72,7 @@ Future<bool> updateProfile({
   if (eloMap != null && eloMap.isNotEmpty) body['elo'] = eloMap; // Now a map
   if (skillLevel != null) body['skillLevel'] = skillLevel;
   if (nativeLanguage != null) body['nativeLanguage'] = nativeLanguage;
+  if (acceptedGdpr != null) body['acceptedGdpr'] = acceptedGdpr;
 
   try {
     final response = await http.post(

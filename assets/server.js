@@ -47,6 +47,8 @@ const UserSchema = new mongoose.Schema({
   elo: { type: Map, of: Number, default: defaultElo },
 
   nativeLanguage: { type: String, default: "" },
+  acceptedGdpr: { type: Boolean, default: false },
+
 
   createdAt: { type: Date, default: Date.now },
 });
@@ -208,6 +210,7 @@ app.post('/updateProfile', authenticateToken, async (req, res) => {
     if (req.body.skillLevel !== undefined) user.skillLevel = req.body.skillLevel;
     if (req.body.completedLevels !== undefined) user.completedLevels = req.body.completedLevels;
     if (req.body.nativeLanguage !== undefined) user.nativeLanguage = req.body.nativeLanguage;
+    if (req.body.acceptedGdpr !== undefined) user.acceptedGdpr = req.body.acceptedGdpr;
 
     await user.save();
     res.status(200).json({ message: 'Profile updated successfully' });
@@ -236,6 +239,7 @@ app.get('/profile', authenticateToken, async (req, res) => {
       elo: user.elo,
       skillLevel: user.skillLevel,
       nativeLanguage: user.nativeLanguage,
+      acceptedGdpr: user.acceptedGdpr,
     });
   } catch (error) {
     console.error("Fetching profile error:", error);

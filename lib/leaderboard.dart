@@ -21,8 +21,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   int? userRank;
   final ScrollController _scrollController = ScrollController();
 
-  // Track the selected language for ELO filtering
-  String selectedLanguage = "english"; // Default language
+  String selectedLanguage = "english";
 
   @override
   void initState() {
@@ -43,19 +42,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       return;
     }
 
-    // Reset pagination when changing languages
     if (!loadMore) {
       setState(() {
-        leaderboard.clear(); // Ensure we clear previous data
-        page = 1; // Reset page count when switching languages
+        leaderboard.clear();
+        page = 1;
         isLoading = true;
       });
     }
 
     final Uri apiUrl = Uri.parse(
         'http://34.159.152.1:3000/leaderboard?page=$page&limit=$limit&username=${widget.username}&language=$selectedLanguage');
-
-    print(apiUrl);
 
     try {
       final response = await http.get(
@@ -68,10 +64,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         setState(() {
           if (loadMore) {
             leaderboard.addAll(data['leaderboard']);
-            page++; // Increment page only on loadMore
+            page++;
           } else {
-            leaderboard =
-                data['leaderboard']; // Replace leaderboard when switching
+            leaderboard = data['leaderboard'];
           }
           userRank = data['userRank'];
           isLoading = false;
@@ -102,17 +97,26 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     }
   }
 
-  void _scrollToUserRank() {
+  void _jumpToUserRank() {
     if (userRank == null || leaderboard.isEmpty) return;
 
     final int index = (userRank! - 1) % limit;
-    if (index >= 0 && index < leaderboard.length) {
-      _scrollController.animateTo(
-        index * 80.0, // Adjust height per list item
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
+    final int targetPage = ((userRank! - 1) ~/ limit) + 1;
+
+    if (targetPage != page) {
+      page = targetPage;
+      _fetchLeaderboard();
     }
+
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (index >= 0 && index < leaderboard.length) {
+        _scrollController.animateTo(
+          index * 80.0,
+          duration: const Duration(milliseconds: 500),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   void _showErrorDialog(String message) {
@@ -144,9 +148,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         actions: [
           if (userRank != null)
             TextButton(
-              onPressed: _scrollToUserRank,
+              onPressed: _jumpToUserRank,
               child: Text(
-                "Go to My Rank (#$userRank)",
+                "Jump to My Rank (#$userRank)",
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -154,7 +158,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       ),
       body: Column(
         children: [
-          // **🔹 Language Selector Added**
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
             child: LeaderboardLanguageSelector(
@@ -171,7 +174,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               },
             ),
           ),
-
           Expanded(
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())

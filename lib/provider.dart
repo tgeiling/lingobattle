@@ -17,6 +17,7 @@ class ProfileProvider with ChangeNotifier {
   Map<String, int> _eloMap = {};
   int _skillLevel = 0;
   String _nativeLanguage = "";
+  bool _acceptedGdpr = false;
 
   int get winStreak => _winStreak;
   int get exp => _exp;
@@ -34,6 +35,7 @@ class ProfileProvider with ChangeNotifier {
 
   int get skilllevel => _skillLevel;
   String get nativeLanguage => _nativeLanguage;
+  bool get acceptedGdpr => _acceptedGdpr;
 
   Map<String, int> get completedLevels {
     try {
@@ -106,6 +108,12 @@ class ProfileProvider with ChangeNotifier {
     savePreferences();
   }
 
+  void setAcceptedGdpr(bool accepted) {
+    _acceptedGdpr = accepted;
+    notifyListeners();
+    savePreferences();
+  }
+
   void incrementWinStreak() {
     _winStreak++;
     notifyListeners();
@@ -137,6 +145,7 @@ class ProfileProvider with ChangeNotifier {
     // Store elo map as JSON string
     await prefs.setString('eloMap', jsonEncode(_eloMap));
     await prefs.setString('nativeLanguage', _nativeLanguage);
+    await prefs.setBool('acceptedGdpr', _acceptedGdpr);
   }
 
   Future<void> loadPreferences() async {
@@ -149,6 +158,7 @@ class ProfileProvider with ChangeNotifier {
     _skillLevel = prefs.getInt('skillLevel') ?? 0;
     _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
     _nativeLanguage = prefs.getString('nativeLanguage') ?? "";
+    _acceptedGdpr = prefs.getBool('acceptedGdpr') ?? false;
 
     // Load elo map
     String? eloJson = prefs.getString('eloMap');

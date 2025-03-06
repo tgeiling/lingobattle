@@ -260,6 +260,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
           profileProvider.setNativeLanguage(nativeLanguage);
 
+          if (profileData.containsKey('acceptedGdpr')) {
+            profileProvider.setAcceptedGdpr(profileData['acceptedGdpr']);
+          }
+
           await profileProvider.savePreferences();
           levelProvider.loadLevelsAfterStart();
           widget.setAuthenticated(true);
@@ -276,6 +280,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 title: profileProvider.title,
                 eloMap: profileProvider.getEloMap(),
                 skillLevel: profileProvider.skilllevel,
+                acceptedGdpr: profileProvider.acceptedGdpr,
                 completedLevels: profileProvider.completedLevelsJson,
                 nativeLanguage: profileProvider.nativeLanguage,
               ).then((success) {
@@ -402,6 +407,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _showGdprConsentDialog();
+    });
+  }
+
+  void _showGdprConsentDialog() {
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+
+    if (!profileProvider.acceptedGdpr) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('GDPR Consent Required'),
+            content: const Text(
+                'To use the multiplayer mode, you must agree to data collection under GDPR. If you do not agree, you can still play solo mode without data collection.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  profileProvider.setAcceptedGdpr(false);
+                  Navigator.of(context).pop();
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Decline'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  profileProvider.setAcceptedGdpr(true);
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Accept'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
 
   void _attemptRegister() async {
     setState(() {

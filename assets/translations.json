@@ -1472,7 +1472,7 @@
         },
         "cash": {
             "english": "cash",
-            "german": "kasse",
+            "german": "bargeld",
             "spanish": "dinero",
             "dutch": "contant geld"
         },
@@ -5557,10 +5557,10 @@
             "dutch": "kaart"
         },
         "kasse": {
-            "english": "box",
-            "german": "kasten",
-            "spanish": "caja",
-            "dutch": "doos"
+            "english": "cash register",
+            "german": "kasse",
+            "spanish": "caja registradora",
+            "dutch": "kassa"
         },
         "kat": {
             "english": "at",
