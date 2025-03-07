@@ -82,6 +82,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
           {"username": widget.username, "opponentUsername": opponentUsername}),
     );
     _initializeSocket();
+    await Future.delayed(const Duration(seconds: 1));
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -270,18 +271,13 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   @override
   Widget build(BuildContext context) {
     return NeumorphicButton(
-      onPressed: _showBattleRequestsDialog,
-      style: NeumorphicStyle(
-        depth: 4,
-        color: Colors.blueAccent,
-        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: const Text(
-        "Battle Requests",
-        style: TextStyle(
-            fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-      ),
-    );
+        onPressed: _showBattleRequestsDialog,
+        style: NeumorphicStyle(
+          depth: 4,
+          color: Colors.blueAccent,
+          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        child: Icon(Icons.mail));
   }
 }

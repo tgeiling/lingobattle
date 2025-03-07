@@ -2256,7 +2256,7 @@ void initializeSocket(
         'username':
             Provider.of<ProfileProvider>(context, listen: false).username,
         'language': language,
-        'friends': friendUsername, // Send the list of friends
+        'friend': friendUsername,
       });
     } else {
       // Otherwise, join the normal queue
