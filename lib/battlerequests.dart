@@ -32,7 +32,11 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          battleRequests = List<String>.from(data["battleRequests"]);
+          battleRequests = List<String>.from(data["battleRequests"] ?? []);
+          isLoading = false;
+        });
+      } else {
+        setState(() {
           isLoading = false;
         });
       }
@@ -107,7 +111,11 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                         isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : battleRequests.isEmpty
-                                ? const Text("No battle requests.")
+                                ? const Center(
+                                    child: Text(
+                                    "No battle requests found.",
+                                    style: TextStyle(fontSize: 16),
+                                  ))
                                 : SizedBox(
                                     height: 250,
                                     child: SingleChildScrollView(
