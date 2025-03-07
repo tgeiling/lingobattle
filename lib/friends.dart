@@ -9,6 +9,7 @@ import 'dart:convert';
 import 'elements.dart';
 import 'game.dart';
 import 'provider.dart';
+import 'socket.dart';
 
 class FriendsButton extends StatefulWidget {
   final String username;
@@ -285,32 +286,23 @@ class _FriendsButtonState extends State<FriendsButton> {
       return;
     }
 
-    final Uri url = Uri.parse("http://34.159.152.1:3000/battle/request");
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(
-          {"senderUsername": username, "receiverUsername": friendUsername}),
-    );
+    // Emit battle request using WebSocket
+    SocketService().sendBattleRequest(username, friendUsername);
 
-    if (response.statusCode == 200) {
-      _showMessageDialog("Battle request sent to $friendUsername!");
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SearchingOpponentScreen(
-            username: username,
-            language: "german",
-            onBackToMainMenu: widget.onBackToMainMenu,
-            friendUsername: friendUsername,
-          ),
+    _showMessageDialog("Battle request sent to $friendUsername!");
+
+    // Navigate to SearchingOpponentScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchingOpponentScreen(
+          username: username,
+          language: "german",
+          onBackToMainMenu: widget.onBackToMainMenu,
+          friendUsername: friendUsername,
         ),
-      );
-    } else {
-      final errorData = jsonDecode(response.body);
-      _showErrorDialog(
-          errorData['message'] ?? "Failed to send battle request.");
-    }
+      ),
+    );
   }
 
   void _showErrorDialog(String message) {

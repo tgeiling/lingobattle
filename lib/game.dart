@@ -2250,87 +2250,6 @@ class MultiplayerResultScreen extends StatelessWidget {
   }
 }
 
-void initializeSocket(
-  BuildContext context,
-  String language,
-  VoidCallback onBackToMainMenu,
-  String? friendUsername,
-) {
-  /* socket.onConnect((_) {
-    print('Connected to the server');
-
-    // If friends are provided, emit a friend match request
-    if (friendUsername != null && friendUsername.isNotEmpty) {
-      print("joined Friend Match");
-      socket.emit('joinFriendMatch', {
-        'username':
-            Provider.of<ProfileProvider>(context, listen: false).username,
-        'language': language,
-        'friend': friendUsername,
-      });
-    } else {
-      print("joined Queue");
-      socket.emit('joinQueue', {
-        'username':
-            Provider.of<ProfileProvider>(context, listen: false).username,
-        'language': language,
-      });
-    }
-  }); */
-
-  if (friendUsername != null && friendUsername.isNotEmpty) {
-    SocketService().joinFriendMatch(
-        Provider.of<ProfileProvider>(context, listen: false).username,
-        language,
-        friendUsername);
-  } else {
-    SocketService().joinQueue(
-        Provider.of<ProfileProvider>(context, listen: false).username,
-        language);
-  }
-
-  SocketService().socket.on('battleStart', (data) {
-    List<MultiplayerQuestion> questions = (data['questions'] as List)
-        .map((q) => MultiplayerQuestion.fromJson(q))
-        .toList();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => BattleStartScreen(
-          username: data['username'],
-          opponentUsername: data['opponentUsername'],
-          elo: data['elo'],
-          opponentElo: data['opponentElo'],
-          onBattleStart: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => MultiplayerGameScreen(
-                  username: data['username'],
-                  opponentUsername: data['opponentUsername'],
-                  matchId: data['matchId'],
-                  language: data['language'],
-                  questions: questions, // Pass the questions here
-                  onBackToMainMenu: onBackToMainMenu,
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  });
-
-  SocketService().socket.onDisconnect((_) {
-    print('Disconnected from the server');
-  });
-
-  if (!SocketService().socket.connected) {
-    SocketService().socket.connect();
-  }
-}
-
 class BattleScreen extends StatelessWidget {
   final dynamic battleData;
 
@@ -2391,6 +2310,90 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
       widget.onBackToMainMenu,
       widget.friendUsername,
     );
+  }
+
+  void initializeSocket(
+    BuildContext context,
+    String language,
+    VoidCallback onBackToMainMenu,
+    String? friendUsername,
+  ) {
+    /* socket.onConnect((_) {
+    print('Connected to the server');
+
+    // If friends are provided, emit a friend match request
+    if (friendUsername != null && friendUsername.isNotEmpty) {
+      print("joined Friend Match");
+      socket.emit('joinFriendMatch', {
+        'username':
+            Provider.of<ProfileProvider>(context, listen: false).username,
+        'language': language,
+        'friend': friendUsername,
+      });
+    } else {
+      print("joined Queue");
+      socket.emit('joinQueue', {
+        'username':
+            Provider.of<ProfileProvider>(context, listen: false).username,
+        'language': language,
+      });
+    }
+  }); */
+
+    if (friendUsername != null && friendUsername.isNotEmpty) {
+      SocketService().joinFriendMatch(
+          Provider.of<ProfileProvider>(context, listen: false).username,
+          language,
+          friendUsername);
+    } else {
+      SocketService().joinQueue(
+          Provider.of<ProfileProvider>(context, listen: false).username,
+          language);
+    }
+
+    SocketService().socket.on('battleStart', (data) {
+      if (!mounted) return;
+
+      List<MultiplayerQuestion> questions = (data['questions'] as List)
+          .map((q) => MultiplayerQuestion.fromJson(q))
+          .toList();
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BattleStartScreen(
+            username: data['username'],
+            opponentUsername: data['opponentUsername'],
+            elo: data['elo'],
+            opponentElo: data['opponentElo'],
+            onBattleStart: () {
+              if (!mounted) return;
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => MultiplayerGameScreen(
+                    username: data['username'],
+                    opponentUsername: data['opponentUsername'],
+                    matchId: data['matchId'],
+                    language: data['language'],
+                    questions: questions,
+                    onBackToMainMenu: onBackToMainMenu,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      );
+    });
+
+    SocketService().socket.onDisconnect((_) {
+      print('Disconnected from the server');
+    });
+
+    if (!SocketService().socket.connected) {
+      SocketService().socket.connect();
+    }
   }
 
   @override
