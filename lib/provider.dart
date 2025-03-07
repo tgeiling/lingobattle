@@ -18,6 +18,7 @@ class ProfileProvider with ChangeNotifier {
   int _skillLevel = 0;
   String _nativeLanguage = "";
   bool _acceptedGdpr = false;
+  List<String> _friends = [];
 
   int get winStreak => _winStreak;
   int get exp => _exp;
@@ -36,6 +37,7 @@ class ProfileProvider with ChangeNotifier {
   int get skilllevel => _skillLevel;
   String get nativeLanguage => _nativeLanguage;
   bool get acceptedGdpr => _acceptedGdpr;
+  List<String> get friends => List.unmodifiable(_friends);
 
   Map<String, int> get completedLevels {
     try {
@@ -59,6 +61,28 @@ class ProfileProvider with ChangeNotifier {
 
   ProfileProvider() {
     loadPreferences();
+  }
+
+  void setFriends(List<String> friendList) {
+    _friends = List.from(friendList);
+    notifyListeners();
+    savePreferences();
+  }
+
+  void addFriend(String friend) {
+    if (!_friends.contains(friend)) {
+      _friends.add(friend);
+      notifyListeners();
+      savePreferences();
+    }
+  }
+
+  void removeFriend(String friend) {
+    if (_friends.contains(friend)) {
+      _friends.remove(friend);
+      notifyListeners();
+      savePreferences();
+    }
   }
 
   void setWinStreak(int streak) {
@@ -154,6 +178,7 @@ class ProfileProvider with ChangeNotifier {
     await prefs.setString('eloMap', jsonEncode(_eloMap));
     await prefs.setString('nativeLanguage', _nativeLanguage);
     await prefs.setBool('acceptedGdpr', _acceptedGdpr);
+    await prefs.setStringList('friends', _friends);
   }
 
   Future<void> loadPreferences() async {
@@ -167,6 +192,7 @@ class ProfileProvider with ChangeNotifier {
     _completedLevelsJson = prefs.getString('language_levels') ?? "{}";
     _nativeLanguage = prefs.getString('nativeLanguage') ?? "";
     _acceptedGdpr = prefs.getBool('acceptedGdpr') ?? false;
+    _friends = prefs.getStringList('friends') ?? [];
 
     // Load elo map
     String? eloJson = prefs.getString('eloMap');
@@ -202,6 +228,11 @@ class ProfileProvider with ChangeNotifier {
       List<String> languages = ["english", "german", "dutch", "spanish"];
       for (String lang in languages) {
         _eloMap.putIfAbsent(lang, () => 0);
+      }
+
+      if (profileData.containsKey('friends') &&
+          profileData['friends'] is List) {
+        _friends = List<String>.from(profileData['friends']);
       }
 
       notifyListeners();

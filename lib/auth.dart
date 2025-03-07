@@ -264,6 +264,12 @@ class _LoginScreenState extends State<LoginScreen> {
             profileProvider.setAcceptedGdpr(profileData['acceptedGdpr']);
           }
 
+          if (profileData.containsKey('friends') &&
+              profileData['friends'] is List) {
+            List<String> friendList = List<String>.from(profileData['friends']);
+            profileProvider.setFriends(friendList);
+          }
+
           await profileProvider.savePreferences();
           levelProvider.loadLevelsAfterStart();
           widget.setAuthenticated(true);
@@ -281,6 +287,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 eloMap: profileProvider.getEloMap(),
                 skillLevel: profileProvider.skilllevel,
                 acceptedGdpr: profileProvider.acceptedGdpr,
+                friends: profileProvider.friends,
                 completedLevels: profileProvider.completedLevelsJson,
                 nativeLanguage: profileProvider.nativeLanguage,
               ).then((success) {

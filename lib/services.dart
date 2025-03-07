@@ -58,6 +58,7 @@ Future<bool> updateProfile({
   int? skillLevel,
   String? nativeLanguage,
   bool? acceptedGdpr,
+  List<String>? friends,
 }) async {
   final Uri apiUrl = Uri.parse('http://34.159.152.1:3000/updateProfile');
 
@@ -73,6 +74,7 @@ Future<bool> updateProfile({
   if (skillLevel != null) body['skillLevel'] = skillLevel;
   if (nativeLanguage != null) body['nativeLanguage'] = nativeLanguage;
   if (acceptedGdpr != null) body['acceptedGdpr'] = acceptedGdpr;
+  if (friends != null) body['friends'] = friends;
 
   try {
     final response = await http.post(

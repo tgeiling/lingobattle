@@ -17,6 +17,7 @@ import 'auth.dart';
 import 'level.dart';
 import 'settings.dart';
 import 'gameappbar.dart';
+import 'user.dart';
 
 void main() {
   runApp(
@@ -329,7 +330,7 @@ class _MyHomePageState extends State<MyHomePage>
               )),
               Center(child: LevelSelectionScreen()),
               Center(
-                child: Text("Comming Soon"),
+                child: UserPage(),
               ),
               SettingsPage(
                 setAuthenticated: _setAuthenticated,

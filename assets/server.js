@@ -49,6 +49,7 @@ const UserSchema = new mongoose.Schema({
   nativeLanguage: { type: String, default: "" },
   acceptedGdpr: { type: Boolean, default: false },
 
+  friends: { type: [String], default: [] },
 
   createdAt: { type: Date, default: Date.now },
 });
@@ -211,6 +212,7 @@ app.post('/updateProfile', authenticateToken, async (req, res) => {
     if (req.body.completedLevels !== undefined) user.completedLevels = req.body.completedLevels;
     if (req.body.nativeLanguage !== undefined) user.nativeLanguage = req.body.nativeLanguage;
     if (req.body.acceptedGdpr !== undefined) user.acceptedGdpr = req.body.acceptedGdpr;
+    if (req.body.friends !== undefined) user.friends = req.body.friends;
 
     await user.save();
     res.status(200).json({ message: 'Profile updated successfully' });
@@ -240,6 +242,7 @@ app.get('/profile', authenticateToken, async (req, res) => {
       skillLevel: user.skillLevel,
       nativeLanguage: user.nativeLanguage,
       acceptedGdpr: user.acceptedGdpr,
+      friends: user.friends,
     });
   } catch (error) {
     console.error("Fetching profile error:", error);
@@ -288,6 +291,105 @@ function authenticateToken(req, res, next) {
   }
 }
 
+app.get("/friends/search", async (req, res) => {
+  const { query } = req.query;
+
+  if (!query || query.trim() === "") {
+      return res.status(400).json({ message: "Search query is required." });
+  }
+
+  try {
+      // Case-insensitive search using regex
+      const users = await User.find({ username: { $regex: query, $options: "i" } })
+          .limit(10) // Limit to 10 results
+          .select("username");
+
+      return res.status(200).json({ users });
+  } catch (error) {
+      console.error("Error searching for friends:", error);
+      return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+app.get("/friends/list", async (req, res) => {
+  const { username } = req.query;
+
+  if (!username) {
+      return res.status(400).json({ message: "Username is required." });
+  }
+
+  try {
+      const user = await User.findOne({ username }).select("friends");
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      return res.status(200).json({ friends: user.friends });
+  } catch (error) {
+      console.error("Error fetching friends:", error);
+      return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// ✅ Add a friend
+app.post("/friends/add", async (req, res) => {
+  const { username, friendUsername } = req.body;
+
+  if (!username || !friendUsername) {
+      return res.status(400).json({ message: "Both usernames are required." });
+  }
+
+  if (username === friendUsername) {
+      return res.status(400).json({ message: "You cannot add yourself as a friend." });
+  }
+
+  try {
+      const user = await User.findOne({ username });
+      const friend = await User.findOne({ username: friendUsername });
+
+      if (!user || !friend) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      if (user.friends.includes(friendUsername)) {
+          return res.status(400).json({ message: "Already friends." });
+      }
+
+      user.friends.push(friendUsername);
+      await user.save();
+
+      return res.status(200).json({ message: "Friend added successfully.", friends: user.friends });
+  } catch (error) {
+      console.error("Error adding friend:", error);
+      return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
+// ✅ Remove a friend
+app.post("/friends/remove", async (req, res) => {
+  const { username, friendUsername } = req.body;
+
+  if (!username || !friendUsername) {
+      return res.status(400).json({ message: "Both usernames are required." });
+  }
+
+  try {
+      const user = await User.findOne({ username });
+
+      if (!user || !user.friends.includes(friendUsername)) {
+          return res.status(404).json({ message: "Friend not found in your list." });
+      }
+
+      user.friends = user.friends.filter(f => f !== friendUsername);
+      await user.save();
+
+      return res.status(200).json({ message: "Friend removed successfully.", friends: user.friends });
+  } catch (error) {
+      console.error("Error removing friend:", error);
+      return res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
   const { username } = req.params;
 
@@ -325,13 +427,26 @@ app.get('/leaderboard', async (req, res) => {
 
       let userRank = null;
       if (username) {
-          const user = await User.findOne({ username }).select(`elo`);
-          if (user && user.elo && user.elo[language] !== undefined) {
-              userRank = await User.countDocuments({
-                  [`elo.${language}`]: { $gt: user.elo[language] } 
-              }) + 1;
-          }
-      }
+        const user = await User.findOne({ username }).select(`elo`);
+        console.log("Fetched User:", user);
+    
+        // Use .get() since elo is a Map in MongoDB
+        const userElo = user.elo.get(language);  
+    
+        if (typeof userElo === "number") {
+            console.log(`User's ELO for ${language}:`, userElo);
+    
+            userRank = await User.countDocuments({
+                [`elo.${language}`]: { $gt: userElo }
+            }) + 1;
+    
+            console.log(`Calculated user rank:`, userRank);
+        } else {
+            console.error(`ELO for ${username} in ${language} is missing or invalid.`);
+            userRank = null;
+        }
+    }
+    
 
       res.status(200).json({ leaderboard: topPlayers, userRank });
   } catch (error) {
