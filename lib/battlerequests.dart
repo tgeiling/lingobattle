@@ -23,38 +23,13 @@ class BattleRequestsButton extends StatefulWidget {
 class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   List<String> battleRequests = [];
   bool isLoading = true;
+  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
+    _initializeSocket();
   }
-
-  Future<void> _fetchBattleRequests() async {
-    final Uri url = Uri.parse(
-        "http://34.159.152.1:3000/battle/requests/${widget.username}");
-
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          battleRequests = List<String>.from(data["battleRequests"] ?? []);
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-        });
-      }
-    } catch (error) {
-      print("Error fetching battle requests: $error");
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  late IO.Socket socket;
 
   void _initializeSocket() {
     socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
@@ -65,7 +40,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
     socket.connect();
 
-    // Listen for WebSocket events
     socket.onConnect((_) {
       print('Connected to WebSocket server');
     });
@@ -73,6 +47,30 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     socket.onDisconnect((_) {
       print('Disconnected from WebSocket server');
     });
+  }
+
+  Future<void> _fetchBattleRequests() async {
+    setState(() => isLoading = true);
+    final Uri url = Uri.parse(
+        "http://34.159.152.1:3000/battle/requests/${widget.username}");
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await Future.delayed(
+            const Duration(milliseconds: 300)); // Smooth UI update
+        setState(() {
+          battleRequests = List<String>.from(data["battleRequests"] ?? []);
+          isLoading = false;
+        });
+      } else {
+        setState(() => isLoading = false);
+      }
+    } catch (error) {
+      print("Error fetching battle requests: $error");
+      setState(() => isLoading = false);
+    }
   }
 
   Future<void> _acceptBattleRequest(String opponentUsername) async {
@@ -96,7 +94,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
         ),
       ),
     );
-    _fetchBattleRequests();
+    await _fetchBattleRequests();
   }
 
   Future<void> _rejectBattleRequest(String opponentUsername) async {
@@ -107,11 +105,14 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       body: jsonEncode(
           {"username": widget.username, "opponentUsername": opponentUsername}),
     );
-    _fetchBattleRequests();
+    await _fetchBattleRequests();
   }
 
-  void _showBattleRequestsDialog() {
-    _fetchBattleRequests();
+  void _showBattleRequestsDialog() async {
+    await _fetchBattleRequests(); // Ensure data is updated before showing dialog
+    if (!mounted)
+      return; // Prevent UI errors if the widget is no longer in context
+
     showDialog(
       context: context,
       builder: (context) {
@@ -153,10 +154,15 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                             ? const Center(child: CircularProgressIndicator())
                             : battleRequests.isEmpty
                                 ? const Center(
-                                    child: Text(
-                                    "No battle requests found.",
-                                    style: TextStyle(fontSize: 16),
-                                  ))
+                                    child: Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 20),
+                                      child: Text(
+                                        "No battle requests found.",
+                                        style: TextStyle(fontSize: 16),
+                                      ),
+                                    ),
+                                  )
                                 : SizedBox(
                                     height: 250,
                                     child: SingleChildScrollView(
@@ -179,7 +185,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                               trailing: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  // Accept Battle Request ✔
                                                   NeumorphicButton(
                                                     style: NeumorphicStyle(
                                                       color: Colors.green,
@@ -191,8 +196,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                                     padding:
                                                         const EdgeInsets.all(
                                                             10),
-                                                    onPressed: () {
-                                                      _acceptBattleRequest(
+                                                    onPressed: () async {
+                                                      await _acceptBattleRequest(
                                                           request);
                                                       setStateDialog(() =>
                                                           battleRequests
@@ -203,7 +208,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                                         color: Colors.white),
                                                   ),
                                                   const SizedBox(width: 10),
-                                                  // Reject Battle Request ❌
                                                   NeumorphicButton(
                                                     style: NeumorphicStyle(
                                                       color: Colors.redAccent,
@@ -215,8 +219,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                                     padding:
                                                         const EdgeInsets.all(
                                                             10),
-                                                    onPressed: () {
-                                                      _rejectBattleRequest(
+                                                    onPressed: () async {
+                                                      await _rejectBattleRequest(
                                                           request);
                                                       setStateDialog(() =>
                                                           battleRequests
@@ -235,7 +239,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                     ),
                                   ),
                         const SizedBox(height: 10),
-                        // Close Button
                         NeumorphicButton(
                           onPressed: () => Navigator.pop(context),
                           style: NeumorphicStyle(
