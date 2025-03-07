@@ -326,7 +326,7 @@ class _FriendsButtonState extends State<FriendsButton> {
     final String language =
         profileProvider.nativeLanguage; // Preferred language
 
-    /* if (username.isEmpty) {
+    if (username.isEmpty) {
       _showErrorDialog("You need to be logged in to start a battle.");
       return;
     }
@@ -338,7 +338,141 @@ class _FriendsButtonState extends State<FriendsButton> {
       'language': language,
     });
 
-    _showMessageDialog("Battle request sent to $friendUsername!"); */
+    _showMessageDialog("Battle request sent to $friendUsername!");
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.transparent,
+          child: FractionallySizedBox(
+            widthFactor: 0.8,
+            child: Neumorphic(
+              style: NeumorphicStyle(
+                depth: 8,
+                color: Colors.grey[200], // Light background
+                boxShape:
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(20)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.error, color: Colors.red, size: 50),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Error",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 20),
+                    NeumorphicButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: NeumorphicStyle(
+                        depth: 4,
+                        color: Colors.redAccent,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12)),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      child: const Text(
+                        "OK",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMessageDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.transparent,
+          child: FractionallySizedBox(
+            widthFactor: 0.8,
+            child: Neumorphic(
+              style: NeumorphicStyle(
+                depth: 8,
+                color: Colors.grey[200], // Light background
+                boxShape:
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(20)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info, color: Colors.blueAccent, size: 50),
+                    const SizedBox(height: 10),
+                    Text(
+                      "Message",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blueAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.black87),
+                    ),
+                    const SizedBox(height: 20),
+                    NeumorphicButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: NeumorphicStyle(
+                        depth: 4,
+                        color: Colors.blueAccent,
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12)),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      child: const Text(
+                        "OK",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showSearchDialog() {
