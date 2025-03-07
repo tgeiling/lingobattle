@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import 'provider.dart';
+import 'battlerequests.dart';
 
 class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
@@ -35,6 +36,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
               color: Colors.blueAccent,
               context: context,
             ),
+            BattleRequestsButton(username: profile.username),
 
             // 🔹 Right side (🔥 Streak next to 👑 ELO)
             Row(

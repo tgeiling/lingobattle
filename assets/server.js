@@ -50,6 +50,8 @@ const UserSchema = new mongoose.Schema({
   acceptedGdpr: { type: Boolean, default: false },
 
   friends: { type: [String], default: [] },
+  friendRequests: { type: [String], default: [] },
+  battleRequests: { type: [String], default: [] },
 
   createdAt: { type: Date, default: Date.now },
 });
@@ -390,6 +392,104 @@ app.post("/friends/remove", async (req, res) => {
   }
 });
 
+app.post('/battle/request', async (req, res) => {
+  try {
+      const { senderUsername, receiverUsername } = req.body;
+
+      if (!senderUsername || !receiverUsername) {
+          return res.status(400).json({ message: "Both usernames are required." });
+      }
+
+      if (senderUsername === receiverUsername) {
+          return res.status(400).json({ message: "You cannot challenge yourself." });
+      }
+
+      // Find the receiver in the database
+      const receiver = await User.findOne({ username: receiverUsername });
+      if (!receiver) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      // Check if a request already exists
+      if (receiver.battleRequests.includes(senderUsername)) {
+          return res.status(400).json({ message: "Battle request already sent." });
+      }
+
+      // Add sender to the receiver's battleRequests list
+      receiver.battleRequests.push(senderUsername);
+      await receiver.save();
+
+      res.status(200).json({ message: "Battle request sent successfully." });
+  } catch (error) {
+      console.error("Error sending battle request:", error);
+      res.status(500).json({ message: "Server error." });
+  }
+});
+
+app.post('/battle/accept', async (req, res) => {
+  try {
+      const { username, opponentUsername } = req.body;
+
+      if (!username || !opponentUsername) {
+          return res.status(400).json({ message: "Both usernames are required." });
+      }
+
+      const user = await User.findOne({ username });
+      const opponent = await User.findOne({ username: opponentUsername });
+
+      if (!user || !opponent) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      // Check if the battle request exists
+      if (!user.battleRequests.includes(opponentUsername)) {
+          return res.status(400).json({ message: "No battle request found from this user." });
+      }
+
+      // Remove the battle request from the list
+      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+      await user.save();
+
+      // Create a battle instance
+      res.status(200).json({
+          message: "Battle request accepted.",
+          battleDetails: {
+              player1: username,
+              player2: opponentUsername
+          }
+      });
+
+  } catch (error) {
+      console.error("Error accepting battle request:", error);
+      res.status(500).json({ message: "Server error." });
+  }
+});
+
+app.post('/battle/reject', async (req, res) => {
+  try {
+      const { username, opponentUsername } = req.body;
+
+      if (!username || !opponentUsername) {
+          return res.status(400).json({ message: "Both usernames are required." });
+      }
+
+      const user = await User.findOne({ username });
+
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+      await user.save();
+
+      res.status(200).json({ message: "Battle request rejected." });
+  } catch (error) {
+      console.error("Error rejecting battle request:", error);
+      res.status(500).json({ message: "Server error." });
+  }
+});
+
+
 app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
   const { username } = req.params;
 
@@ -687,7 +787,12 @@ const matchPlayers = async () => {
   }
 };
 
-
+function getPlayerSocket(username) {
+  const socketEntry = Object.values(io.sockets.sockets).find(
+      (socket) => socket.username === username
+  );
+  return socketEntry ? socketEntry.id : null;
+}
 
 // Handle WebSocket connections
 io.on('connection', (socket) => {
@@ -776,32 +881,6 @@ io.on('connection', (socket) => {
         console.error(`[DATABASE ERROR] Failed to fetch user: ${error}`);
         socket.emit('joinQueueError', { message: 'Server error. Please try again later.' });
     }
-  });
-
-  socket.on('friendBattleRequest', async ({ player1, player2, language }) => {
-    const player1Socket = getPlayerSocket(player1);
-    const player2Socket = getPlayerSocket(player2);
-
-    if (!player2Socket) {
-      io.to(player1Socket).emit('battleRequestFailed', { message: 'Friend is offline.' });
-      return;
-    }
-
-    io.to(player2Socket).emit('battleRequestReceived', { player1 });
-
-    console.log(`[BATTLE REQUEST] ${player1} invited ${player2} for a match.`);
-  });
-
-  // Handle battle acceptance
-  socket.on('acceptBattleRequest', async ({ opponent }) => {
-    const player1 = getPlayerByUsername(socket.username);
-    const player2 = getPlayerByUsername(opponent);
-
-    if (!player1 || !player2) {
-      return;
-    }
-
-    matchFriends(player1, player2, player1.language);
   });
 
 

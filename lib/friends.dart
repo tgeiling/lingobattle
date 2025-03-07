@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:convert';
 
 import 'elements.dart';
@@ -24,40 +23,11 @@ class _FriendsButtonState extends State<FriendsButton> {
   List<String> searchResults = [];
   bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
-  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
-    _initializeSocket();
     _fetchFriends();
-  }
-
-  void _initializeSocket() {
-    socket = IO.io(
-      'http://34.159.152.1:3000', // Your backend server
-      IO.OptionBuilder()
-          .setTransports(['websocket']) // Use WebSocket
-          .disableAutoConnect() // Disable auto-connect
-          .build(),
-    );
-
-    // Connect manually
-    socket.connect();
-
-    // Listen for connection
-    socket.onConnect((_) {
-      print("Connected to WebSocket server");
-    });
-
-    socket.onDisconnect((_) {
-      print("Disconnected from WebSocket server");
-    });
-
-    // Listen for friend battle requests
-    socket.on('battleRequestReceived', (data) {
-      _showBattleRequestDialog(data['player1']);
-    });
   }
 
   Future<void> _fetchFriends() async {
@@ -128,32 +98,6 @@ class _FriendsButtonState extends State<FriendsButton> {
     } catch (error) {
       print("Error searching users: $error");
     }
-  }
-
-  void _showBattleRequestDialog(String opponentUsername) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text("Battle Request"),
-          content: Text("$opponentUsername has invited you to a battle!"),
-          actions: [
-            TextButton(
-              onPressed: () {
-                socket.emit(
-                    'acceptBattleRequest', {'opponent': opponentUsername});
-                Navigator.pop(context);
-              },
-              child: const Text("Accept"),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Decline"),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _showFriendsDialog() {
@@ -325,26 +269,31 @@ class _FriendsButtonState extends State<FriendsButton> {
     );
   }
 
-  void _inviteFriendToBattle(String friendUsername) {
+  Future<void> _inviteFriendToBattle(String friendUsername) async {
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
     final String username = profileProvider.username;
-    final String language =
-        profileProvider.nativeLanguage; // Preferred language
 
     if (username.isEmpty) {
       _showErrorDialog("You need to be logged in to start a battle.");
       return;
     }
 
-    // Emit a battle request to the server
-    socket.emit('friendBattleRequest', {
-      'player1': username,
-      'player2': friendUsername,
-      'language': language,
-    });
+    final Uri url = Uri.parse("http://34.159.152.1:3000/battle/request");
+    final response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(
+          {"senderUsername": username, "receiverUsername": friendUsername}),
+    );
 
-    _showMessageDialog("Battle request sent to $friendUsername!");
+    if (response.statusCode == 200) {
+      _showMessageDialog("Battle request sent to $friendUsername!");
+    } else {
+      final errorData = jsonDecode(response.body);
+      _showErrorDialog(
+          errorData['message'] ?? "Failed to send battle request.");
+    }
   }
 
   void _showErrorDialog(String message) {

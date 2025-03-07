@@ -2240,32 +2240,33 @@ class MultiplayerResultScreen extends StatelessWidget {
   }
 }
 
-void initializeSocket(BuildContext context, IO.Socket socket, String language,
-    VoidCallback onBackToMainMenu) {
+void initializeSocket(
+  BuildContext context,
+  IO.Socket socket,
+  String language,
+  VoidCallback onBackToMainMenu,
+  List<String>? friendUsernames,
+) {
   socket.onConnect((_) {
     print('Connected to the server');
-    socket.emit('joinQueue', {
-      'username': Provider.of<ProfileProvider>(context, listen: false).username,
-      'language': language,
-    });
+
+    // If friends are provided, emit a friend match request
+    if (friendUsernames != null && friendUsernames.isNotEmpty) {
+      socket.emit('joinFriendMatch', {
+        'username':
+            Provider.of<ProfileProvider>(context, listen: false).username,
+        'language': language,
+        'friends': friendUsernames, // Send the list of friends
+      });
+    } else {
+      // Otherwise, join the normal queue
+      socket.emit('joinQueue', {
+        'username':
+            Provider.of<ProfileProvider>(context, listen: false).username,
+        'language': language,
+      });
+    }
   });
-
-  /* socket.on('matchFound', (data) {
-    print('Match found: $data');
-    // Navigate to searching screen if desired
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SearchingOpponentScreen(
-          socket: socket,
-          username: data['username'],
-          language: data['language'],
-          onBackToMainMenu: onBackToMainMenu,
-        ),
-      ),
-    );
-  }); */
-
   socket.on('battleStart', (data) {
     List<MultiplayerQuestion> questions = (data['questions'] as List)
         .map((q) => MultiplayerQuestion.fromJson(q))
@@ -2345,6 +2346,7 @@ class SearchingOpponentScreen extends StatefulWidget {
   final String username;
   final String language;
   final VoidCallback onBackToMainMenu;
+  final List<String>? friendUsernames;
 
   const SearchingOpponentScreen({
     Key? key,
@@ -2352,6 +2354,7 @@ class SearchingOpponentScreen extends StatefulWidget {
     required this.username,
     required this.language,
     required this.onBackToMainMenu,
+    this.friendUsernames,
   }) : super(key: key);
 
   @override
@@ -2368,6 +2371,7 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
       widget.socket,
       widget.language,
       widget.onBackToMainMenu,
+      widget.friendUsernames,
     );
   }
 
