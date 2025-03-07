@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
-import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'dart:convert';
-
+import 'socket.dart';
 import 'game.dart';
 
 class BattleRequestsButton extends StatefulWidget {
@@ -23,71 +20,60 @@ class BattleRequestsButton extends StatefulWidget {
 class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   List<String> battleRequests = [];
   bool isLoading = true;
-  late IO.Socket socket;
 
   @override
   void initState() {
     super.initState();
-    _initializeSocket();
+    _fetchBattleRequests();
+
+    // ✅ Listen for real-time updates
+    SocketService()
+        .socket
+        .on('battleRequestReceived', _onBattleRequestReceived);
   }
 
-  void _initializeSocket() {
-    socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
-      'transports': ['websocket'],
-    });
+  @override
+  void dispose() {
+    SocketService()
+        .socket
+        .off('battleRequestReceived', _onBattleRequestReceived);
+    super.dispose();
+  }
 
-    if (socket.connected) return;
-
-    socket.connect();
-
-    socket.onConnect((_) {
-      print('Connected to WebSocket server');
-    });
-
-    socket.onDisconnect((_) {
-      print('Disconnected from WebSocket server');
+  void _onBattleRequestReceived(data) {
+    final String sender = data['sender'];
+    setState(() {
+      if (!battleRequests.contains(sender)) {
+        battleRequests.add(sender);
+      }
     });
   }
 
   Future<void> _fetchBattleRequests() async {
     setState(() => isLoading = true);
-    final Uri url = Uri.parse(
-        "http://34.159.152.1:3000/battle/requests/${widget.username}");
 
-    try {
-      final response = await http.get(url);
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await Future.delayed(
-            const Duration(milliseconds: 300)); // Smooth UI update
-        setState(() {
-          battleRequests = List<String>.from(data["battleRequests"] ?? []);
-          isLoading = false;
-        });
-      } else {
-        setState(() => isLoading = false);
-      }
-    } catch (error) {
-      print("Error fetching battle requests: $error");
-      setState(() => isLoading = false);
-    }
+    SocketService()
+        .socket
+        .emit('getBattleRequests', {'username': widget.username});
+
+    SocketService().socket.once('battleRequests', (data) {
+      if (!mounted) return;
+      setState(() {
+        battleRequests = List<String>.from(data["battleRequests"] ?? []);
+        isLoading = false;
+      });
+    });
   }
 
   Future<void> _acceptBattleRequest(String opponentUsername) async {
-    final Uri url = Uri.parse("http://34.159.152.1:3000/battle/accept");
-    await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(
-          {"username": widget.username, "opponentUsername": opponentUsername}),
-    );
-    _initializeSocket();
+    SocketService().acceptBattleRequest(widget.username, opponentUsername);
     await Future.delayed(const Duration(seconds: 5));
+
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SearchingOpponentScreen(
-          socket: socket,
           username: widget.username,
           language: "german",
           onBackToMainMenu: widget.onBackToMainMenu,
@@ -95,24 +81,17 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
         ),
       ),
     );
-    await _fetchBattleRequests();
+    _fetchBattleRequests();
   }
 
   Future<void> _rejectBattleRequest(String opponentUsername) async {
-    final Uri url = Uri.parse("http://34.159.152.1:3000/battle/reject");
-    await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(
-          {"username": widget.username, "opponentUsername": opponentUsername}),
-    );
-    await _fetchBattleRequests();
+    SocketService().rejectBattleRequest(widget.username, opponentUsername);
+    _fetchBattleRequests();
   }
 
   void _showBattleRequestsDialog() async {
-    await _fetchBattleRequests(); // Ensure data is updated before showing dialog
-    if (!mounted)
-      return; // Prevent UI errors if the widget is no longer in context
+    await _fetchBattleRequests();
+    if (!mounted) return;
 
     showDialog(
       context: context,
@@ -142,13 +121,10 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
+                        const Text(
                           "Battle Requests",
                           style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
                         isLoading
@@ -158,10 +134,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                     child: Padding(
                                       padding:
                                           EdgeInsets.symmetric(vertical: 20),
-                                      child: Text(
-                                        "No battle requests found.",
-                                        style: TextStyle(fontSize: 16),
-                                      ),
+                                      child: Text("No battle requests found.",
+                                          style: TextStyle(fontSize: 16)),
                                     ),
                                   )
                                 : SizedBox(
@@ -178,8 +152,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                               color: Colors.white,
                                               boxShape:
                                                   NeumorphicBoxShape.roundRect(
-                                                BorderRadius.circular(12),
-                                              ),
+                                                      BorderRadius.circular(
+                                                          12)),
                                             ),
                                             child: ListTile(
                                               title: Text(request),
@@ -250,11 +224,9 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
-                          child: const Text(
-                            "Close",
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
+                          child: const Text("Close",
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -271,13 +243,14 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   @override
   Widget build(BuildContext context) {
     return NeumorphicButton(
-        onPressed: _showBattleRequestsDialog,
-        style: NeumorphicStyle(
-          depth: 4,
-          color: Colors.blueAccent,
-          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-        child: Icon(Icons.mail));
+      onPressed: _showBattleRequestsDialog,
+      style: NeumorphicStyle(
+        depth: 4,
+        color: Colors.blueAccent,
+        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: const Icon(Icons.mail),
+    );
   }
 }

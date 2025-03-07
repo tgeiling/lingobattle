@@ -416,104 +416,6 @@ app.get('/battle/requests/:username', async (req, res) => {
 });
 
 
-app.post('/battle/request', async (req, res) => {
-  try {
-      const { senderUsername, receiverUsername } = req.body;
-
-      if (!senderUsername || !receiverUsername) {
-          return res.status(400).json({ message: "Both usernames are required." });
-      }
-
-      if (senderUsername === receiverUsername) {
-          return res.status(400).json({ message: "You cannot challenge yourself." });
-      }
-
-      // Find the receiver in the database
-      const receiver = await User.findOne({ username: receiverUsername });
-      if (!receiver) {
-          return res.status(404).json({ message: "User not found." });
-      }
-
-      // Check if a request already exists
-      if (receiver.battleRequests.includes(senderUsername)) {
-          return res.status(400).json({ message: "Battle request already sent." });
-      }
-
-      // Add sender to the receiver's battleRequests list
-      receiver.battleRequests.push(senderUsername);
-      await receiver.save();
-
-      res.status(200).json({ message: "Battle request sent successfully." });
-  } catch (error) {
-      console.error("Error sending battle request:", error);
-      res.status(500).json({ message: "Server error." });
-  }
-});
-
-app.post('/battle/accept', async (req, res) => {
-  try {
-      const { username, opponentUsername } = req.body;
-
-      if (!username || !opponentUsername) {
-          return res.status(400).json({ message: "Both usernames are required." });
-      }
-
-      const user = await User.findOne({ username });
-      const opponent = await User.findOne({ username: opponentUsername });
-
-      if (!user || !opponent) {
-          return res.status(404).json({ message: "User not found." });
-      }
-
-      // Check if the battle request exists
-      if (!user.battleRequests.includes(opponentUsername)) {
-          return res.status(400).json({ message: "No battle request found from this user." });
-      }
-
-      // Remove the battle request from the list
-      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
-      await user.save();
-
-      // Create a battle instance
-      res.status(200).json({
-          message: "Battle request accepted.",
-          battleDetails: {
-              player1: username,
-              player2: opponentUsername
-          }
-      });
-
-  } catch (error) {
-      console.error("Error accepting battle request:", error);
-      res.status(500).json({ message: "Server error." });
-  }
-});
-
-app.post('/battle/reject', async (req, res) => {
-  try {
-      const { username, opponentUsername } = req.body;
-
-      if (!username || !opponentUsername) {
-          return res.status(400).json({ message: "Both usernames are required." });
-      }
-
-      const user = await User.findOne({ username });
-
-      if (!user) {
-          return res.status(404).json({ message: "User not found." });
-      }
-
-      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
-      await user.save();
-
-      res.status(200).json({ message: "Battle request rejected." });
-  } catch (error) {
-      console.error("Error rejecting battle request:", error);
-      res.status(500).json({ message: "Server error." });
-  }
-});
-
-
 app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
   const { username } = req.params;
 
@@ -841,14 +743,6 @@ io.on('connection', (socket) => {
         if (!player1 || !player2) {
             console.log(`[ERROR] User or friend not found.`);
             socket.emit('friendMatchError', { message: 'Friend match failed. User not found.' });
-            return;
-        }
-
-        // ✅ Ensure the friend is connected to the WebSocket server
-        const player2SocketId = getPlayerSocket(player2.username);
-        if (!player2SocketId) {
-            console.log(`[ERROR] Friend ${friend} is offline.`);
-            socket.emit('friendMatchError', { message: 'Friend is offline.' });
             return;
         }
 
@@ -1285,7 +1179,131 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('battleRequest', async (data) => {
+    const { senderUsername, receiverUsername } = data;
 
+    console.log(`[BATTLE REQUEST] ${senderUsername} -> ${receiverUsername}`);
+
+    try {
+        if (!senderUsername || !receiverUsername) {
+            socket.emit('battleRequestError', { message: "Both usernames are required." });
+            return;
+        }
+
+        if (senderUsername === receiverUsername) {
+            socket.emit('battleRequestError', { message: "You cannot challenge yourself." });
+            return;
+        }
+
+        const receiver = await User.findOne({ username: receiverUsername });
+        if (!receiver) {
+            socket.emit('battleRequestError', { message: "User not found." });
+            return;
+        }
+
+        if (receiver.battleRequests.includes(senderUsername)) {
+            socket.emit('battleRequestError', { message: "Battle request already sent." });
+            return;
+        }
+
+        receiver.battleRequests.push(senderUsername);
+        await receiver.save();
+
+        // Notify the receiver if they are online
+        const receiverSocketId = getPlayerSocket(receiverUsername);
+        if (receiverSocketId) {
+            io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername });
+        }
+
+        console.log(`[BATTLE REQUEST SENT] ${senderUsername} -> ${receiverUsername}`);
+    } catch (error) {
+        console.error("Error sending battle request:", error);
+        socket.emit('battleRequestError', { message: "Server error. Please try again later." });
+    }
+  });
+
+  socket.on('battleAccept', async (data) => {
+    const { username, opponentUsername } = data;
+
+    console.log(`[BATTLE ACCEPT] ${username} accepted battle with ${opponentUsername}`);
+
+    try {
+        if (!username || !opponentUsername) {
+            socket.emit('battleAcceptError', { message: "Both usernames are required." });
+            return;
+        }
+
+        const user = await User.findOne({ username });
+        const opponent = await User.findOne({ username: opponentUsername });
+
+        if (!user || !opponent) {
+            socket.emit('battleAcceptError', { message: "User not found." });
+            return;
+        }
+
+        if (!user.battleRequests.includes(opponentUsername)) {
+            socket.emit('battleAcceptError', { message: "No battle request found from this user." });
+            return;
+        }
+
+        user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+        opponent.battleRequests = opponent.battleRequests.filter(req => req !== username);
+        await user.save();
+        await opponent.save();
+
+        const battleId = `${username}-${opponentUsername}-${Date.now()}`;
+        console.log(`[BATTLE START] ${username} vs ${opponentUsername} (Match ID: ${battleId})`);
+
+        const userSocketId = getPlayerSocket(username);
+        const opponentSocketId = getPlayerSocket(opponentUsername);
+
+        const battleData = {
+            matchId: battleId,
+            player1: username,
+            player2: opponentUsername,
+        };
+
+        if (userSocketId) io.to(userSocketId).emit('battleStart', battleData);
+        if (opponentSocketId) io.to(opponentSocketId).emit('battleStart', battleData);
+
+    } catch (error) {
+        console.error("Error accepting battle request:", error);
+        socket.emit('battleAcceptError', { message: "Server error. Please try again later." });
+    }
+  });
+
+  socket.on('battleReject', async (data) => {
+    const { username, opponentUsername } = data;
+
+    console.log(`[BATTLE REJECT] ${username} rejected battle with ${opponentUsername}`);
+
+    try {
+        if (!username || !opponentUsername) {
+            socket.emit('battleRejectError', { message: "Both usernames are required." });
+            return;
+        }
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            socket.emit('battleRejectError', { message: "User not found." });
+            return;
+        }
+
+        user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+        await user.save();
+
+        // Notify the opponent that the request was rejected
+        const opponentSocketId = getPlayerSocket(opponentUsername);
+        if (opponentSocketId) {
+            io.to(opponentSocketId).emit('battleRequestRejected', { sender: username });
+        }
+
+        console.log(`[BATTLE REQUEST REJECTED] ${username} -> ${opponentUsername}`);
+    } catch (error) {
+        console.error("Error rejecting battle request:", error);
+        socket.emit('battleRejectError', { message: "Server error. Please try again later." });
+    }
+  });
 
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:lingobattle/socket.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -977,7 +978,6 @@ class _GameScreenState extends State<GameScreen> {
 }
 
 class MultiplayerGameScreen extends StatefulWidget {
-  final IO.Socket socket;
   final String username;
   final String opponentUsername;
   final String matchId;
@@ -987,7 +987,6 @@ class MultiplayerGameScreen extends StatefulWidget {
 
   const MultiplayerGameScreen({
     Key? key,
-    required this.socket,
     required this.username,
     required this.opponentUsername,
     required this.matchId,
@@ -1034,8 +1033,10 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
     _focusNode = FocusNode();
 
-    widget.socket.on('progressUpdate', _onProgressUpdate);
-    widget.socket.on('battleEnded', _onBattleEnded);
+    //widget.socket.on('progressUpdate', _onProgressUpdate);
+    //widget.socket.on('battleEnded', _onBattleEnded);
+    SocketService().activateProgressUpdate(_onProgressUpdate);
+    SocketService().activateBattleEnded(_onBattleEnded);
   }
 
   void _initializeWordHandling() {
@@ -1067,14 +1068,18 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
 
     _timer.cancel();
     _focusNode.dispose();
-    widget.socket.off('connect');
+    /* widget.socket.off('connect');
     widget.socket.off('disconnect');
     widget.socket.off('battleStart');
     widget.socket.off('matchFound');
     widget.socket.off('progressUpdate');
     widget.socket.off('battleEnded');
 
-    widget.socket.disconnect();
+    widget.socket.disconnect(); */
+
+    SocketService().removeAllListeners();
+    SocketService().disconnectSocket();
+
     _textInputController.dispose();
     super.dispose();
   }
@@ -1213,13 +1218,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
           questionResults.where((result) => result == "correct").length;
       _triggerResultAnimation(isCorrect);
 
-      // Emit the answer progress to the server
-      widget.socket.emit('submitAnswer', {
-        'matchId': widget.matchId,
-        'username': widget.username,
-        'questionIndex': currentQuestionIndex,
-        'status': questionResults[currentQuestionIndex],
-      });
+      SocketService().submitAnswer(widget.matchId, widget.username,
+          currentQuestionIndex, questionResults[currentQuestionIndex]);
 
       // Reset for the next question or end the game
       if (currentQuestionIndex < questions.length - 1) {
@@ -1257,13 +1257,20 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
   }
 
   void _sendResultsToServer() {
-    widget.socket.emit('submitResults', {
+    /* widget.socket.emit('submitResults', {
       'matchId': widget.matchId,
       'username': widget.username,
       'correctAnswers': correctAnswers,
       'language': widget.language,
       'progress': questionResults,
-    });
+    }); */
+    SocketService().submitResults(
+      widget.matchId,
+      widget.username,
+      correctAnswers,
+      widget.language,
+      questionResults,
+    );
   }
 
   final AudioPlayer _audioPlayer = AudioPlayer();
@@ -1894,10 +1901,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
               ),
               TextButton(
                 onPressed: () {
-                  widget.socket.emit('playerLeft', {
+                  /* widget.socket.emit('playerLeft', {
                     'matchId': widget.matchId,
                     'username': widget.username,
-                  });
+                  }); */
+
+                  SocketService()
+                      .emitPlayerLeft(widget.matchId, widget.username);
 
                   // Navigate to the match result screen with a loss
                   Navigator.pushReplacement(
@@ -2242,16 +2252,16 @@ class MultiplayerResultScreen extends StatelessWidget {
 
 void initializeSocket(
   BuildContext context,
-  IO.Socket socket,
   String language,
   VoidCallback onBackToMainMenu,
   String? friendUsername,
 ) {
-  socket.onConnect((_) {
+  /* socket.onConnect((_) {
     print('Connected to the server');
 
     // If friends are provided, emit a friend match request
     if (friendUsername != null && friendUsername.isNotEmpty) {
+      print("joined Friend Match");
       socket.emit('joinFriendMatch', {
         'username':
             Provider.of<ProfileProvider>(context, listen: false).username,
@@ -2259,15 +2269,27 @@ void initializeSocket(
         'friend': friendUsername,
       });
     } else {
-      // Otherwise, join the normal queue
+      print("joined Queue");
       socket.emit('joinQueue', {
         'username':
             Provider.of<ProfileProvider>(context, listen: false).username,
         'language': language,
       });
     }
-  });
-  socket.on('battleStart', (data) {
+  }); */
+
+  if (friendUsername != null && friendUsername.isNotEmpty) {
+    SocketService().joinFriendMatch(
+        Provider.of<ProfileProvider>(context, listen: false).username,
+        language,
+        friendUsername);
+  } else {
+    SocketService().joinQueue(
+        Provider.of<ProfileProvider>(context, listen: false).username,
+        language);
+  }
+
+  SocketService().socket.on('battleStart', (data) {
     List<MultiplayerQuestion> questions = (data['questions'] as List)
         .map((q) => MultiplayerQuestion.fromJson(q))
         .toList();
@@ -2289,7 +2311,6 @@ void initializeSocket(
                   opponentUsername: data['opponentUsername'],
                   matchId: data['matchId'],
                   language: data['language'],
-                  socket: socket,
                   questions: questions, // Pass the questions here
                   onBackToMainMenu: onBackToMainMenu,
                 ),
@@ -2301,12 +2322,12 @@ void initializeSocket(
     );
   });
 
-  socket.onDisconnect((_) {
+  SocketService().socket.onDisconnect((_) {
     print('Disconnected from the server');
   });
 
-  if (!socket.connected) {
-    socket.connect();
+  if (!SocketService().socket.connected) {
+    SocketService().socket.connect();
   }
 }
 
@@ -2342,7 +2363,6 @@ class BattleScreen extends StatelessWidget {
 }
 
 class SearchingOpponentScreen extends StatefulWidget {
-  final IO.Socket socket;
   final String username;
   final String language;
   final VoidCallback onBackToMainMenu;
@@ -2350,7 +2370,6 @@ class SearchingOpponentScreen extends StatefulWidget {
 
   const SearchingOpponentScreen({
     Key? key,
-    required this.socket,
     required this.username,
     required this.language,
     required this.onBackToMainMenu,
@@ -2368,7 +2387,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
     super.initState();
     initializeSocket(
       context,
-      widget.socket,
       widget.language,
       widget.onBackToMainMenu,
       widget.friendUsername,
@@ -2425,7 +2443,7 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                widget.socket.emit('leaveQueue');
+                SocketService().socket.emit('leaveQueue');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[700],

@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
@@ -276,33 +275,10 @@ class _FriendsButtonState extends State<FriendsButton> {
     );
   }
 
-  late IO.Socket socket;
-
-  void _initializeSocket() {
-    socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
-      'transports': ['websocket'],
-    });
-
-    if (socket.connected) return;
-
-    socket.connect();
-
-    // Listen for WebSocket events
-    socket.onConnect((_) {
-      print('Connected to WebSocket server');
-    });
-
-    socket.onDisconnect((_) {
-      print('Disconnected from WebSocket server');
-    });
-  }
-
   Future<void> _inviteFriendToBattle(String friendUsername) async {
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
     final String username = profileProvider.username;
-
-    _initializeSocket();
 
     if (username.isEmpty) {
       _showErrorDialog("You need to be logged in to start a battle.");
@@ -323,7 +299,6 @@ class _FriendsButtonState extends State<FriendsButton> {
         context,
         MaterialPageRoute(
           builder: (context) => SearchingOpponentScreen(
-            socket: socket,
             username: username,
             language: "german",
             onBackToMainMenu: widget.onBackToMainMenu,

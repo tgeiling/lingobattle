@@ -16,32 +16,39 @@ class UserPage extends StatelessWidget {
     final profileProvider = Provider.of<ProfileProvider>(context);
     final String username = profileProvider.username;
 
-    return Column(
-      children: [
-        if (username.isNotEmpty)
-          FriendsButton(
-            username: username,
-            onBackToMainMenu: onBackToMainMenu,
-          )
-        else
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min, // Prevents infinite height
-              children: [
-                const Icon(Icons.warning, color: Colors.red, size: 50),
-                const SizedBox(height: 10),
-                const Text(
-                  "You need to set a username to add friends.",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (username.isNotEmpty)
+              FriendsButton(
+                username: username,
+                onBackToMainMenu: onBackToMainMenu,
+              )
+            else
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.warning, color: Colors.red, size: 50),
+                  const SizedBox(height: 16), // More spacing
+                  const Text(
+                    "You need to set a username to add friends.",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            const SizedBox(height: 30), // Increased spacing
+            const Text(
+              "More coming soon",
+              style: TextStyle(fontSize: 16),
             ),
-          ),
-        const SizedBox(height: 10),
-        const Text("Coming soon"),
-      ],
+          ],
+        ),
+      ),
     );
   }
 }

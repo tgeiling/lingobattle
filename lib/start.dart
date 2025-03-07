@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:provider/provider.dart';
 
 import 'auth.dart';
@@ -10,6 +9,7 @@ import 'provider.dart';
 import 'matchhistory.dart';
 import 'leaderboard.dart';
 import 'ranks.dart';
+import 'socket.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -37,7 +37,6 @@ class _StartPageState extends State<StartPage> {
     {'language': 'dutch', 'path': 'assets/flags/dutch.png'},
   ];
   late PageController _pageController;
-  late IO.Socket socket;
   int currentIndex = 0;
 
   @override
@@ -47,31 +46,19 @@ class _StartPageState extends State<StartPage> {
     _initializeSocket();
   }
 
+  void _initializeSocket() {
+    final socketService = SocketService(); // ✅ Ensure the socket is ready
+
+    if (!socketService.isConnected) {
+      socketService.socket.connect();
+      print("Socket connected on app start.");
+    }
+  }
+
   @override
   void dispose() {
     _pageController.dispose();
-    socket.dispose();
     super.dispose();
-  }
-
-  // Initialize WebSocket connection
-  void _initializeSocket() {
-    socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
-      'transports': ['websocket'],
-    });
-
-    if (socket.connected) return;
-
-    socket.connect();
-
-    // Listen for WebSocket events
-    socket.onConnect((_) {
-      print('Connected to WebSocket server');
-    });
-
-    socket.onDisconnect((_) {
-      print('Disconnected from WebSocket server');
-    });
   }
 
   void nextFlag() {
@@ -122,11 +109,9 @@ class _StartPageState extends State<StartPage> {
       return;
     }
 
-    _initializeSocket();
-
     // Listen for matchmaking errors
-    socket.off('joinQueueError'); // Prevent multiple listeners
-    socket.on('joinQueueError', (data) {
+    SocketService().socket.off('joinQueueError'); // Prevent multiple listeners
+    SocketService().socket.on('joinQueueError', (data) {
       if (data is Map<String, dynamic> && data.containsKey('message')) {
         _showErrorDialog(data['message']);
       }
@@ -136,7 +121,6 @@ class _StartPageState extends State<StartPage> {
       context,
       MaterialPageRoute(
         builder: (context) => SearchingOpponentScreen(
-          socket: socket,
           username: username,
           language: selectedLanguage!,
           onBackToMainMenu: widget.onBackToMainMenu,
@@ -145,10 +129,12 @@ class _StartPageState extends State<StartPage> {
     );
 
     // Emit join battle event
-    socket.emit('joinQueue', {
+    /* socket.emit('joinQueue', {
       'username': username,
       'language': selectedLanguage,
-    });
+    }); */
+
+    //SocketService().joinQueue(username, selectedLanguage!);
   }
 
   void _showErrorDialog(String message) {
