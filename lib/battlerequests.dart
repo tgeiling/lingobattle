@@ -82,7 +82,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
           {"username": widget.username, "opponentUsername": opponentUsername}),
     );
     _initializeSocket();
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(seconds: 5));
     Navigator.push(
       context,
       MaterialPageRoute(
