@@ -2245,18 +2245,18 @@ void initializeSocket(
   IO.Socket socket,
   String language,
   VoidCallback onBackToMainMenu,
-  List<String>? friendUsernames,
+  String? friendUsername,
 ) {
   socket.onConnect((_) {
     print('Connected to the server');
 
     // If friends are provided, emit a friend match request
-    if (friendUsernames != null && friendUsernames.isNotEmpty) {
+    if (friendUsername != null && friendUsername.isNotEmpty) {
       socket.emit('joinFriendMatch', {
         'username':
             Provider.of<ProfileProvider>(context, listen: false).username,
         'language': language,
-        'friends': friendUsernames, // Send the list of friends
+        'friends': friendUsername, // Send the list of friends
       });
     } else {
       // Otherwise, join the normal queue
@@ -2346,7 +2346,7 @@ class SearchingOpponentScreen extends StatefulWidget {
   final String username;
   final String language;
   final VoidCallback onBackToMainMenu;
-  final List<String>? friendUsernames;
+  final String? friendUsername;
 
   const SearchingOpponentScreen({
     Key? key,
@@ -2354,7 +2354,7 @@ class SearchingOpponentScreen extends StatefulWidget {
     required this.username,
     required this.language,
     required this.onBackToMainMenu,
-    this.friendUsernames,
+    this.friendUsername,
   }) : super(key: key);
 
   @override
@@ -2371,7 +2371,7 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
       widget.socket,
       widget.language,
       widget.onBackToMainMenu,
-      widget.friendUsernames,
+      widget.friendUsername,
     );
   }
 

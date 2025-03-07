@@ -392,6 +392,30 @@ app.post("/friends/remove", async (req, res) => {
   }
 });
 
+app.get('/battle/requests/:username', async (req, res) => {
+  try {
+      const { username } = req.params;
+
+      if (!username) {
+          return res.status(400).json({ message: "Username is required." });
+      }
+
+      // Find user in database
+      const user = await User.findOne({ username }).select("battleRequests");
+
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      // Return the list of battle requests
+      res.status(200).json({ battleRequests: user.battleRequests || [] });
+  } catch (error) {
+      console.error("Error fetching battle requests:", error);
+      res.status(500).json({ message: "Server error." });
+  }
+});
+
+
 app.post('/battle/request', async (req, res) => {
   try {
       const { senderUsername, receiverUsername } = req.body;
@@ -799,6 +823,53 @@ io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
 
   const matchmakingAttempts = new Map();
+
+  socket.on('joinFriendMatch', async (data) => {
+    const { username, language, friends } = data;
+    
+    console.log(`[FRIEND MATCH REQUEST] ${username} wants to play with ${friends} in ${language}`);
+
+    try {
+        // ✅ Fetch the requesting player's details
+        const player1 = await User.findOne({ username }).lean();
+        if (!player1) {
+            console.log(`[ERROR] User ${username} not found.`);
+            socket.emit('friendMatchError', { message: 'Your profile was not found. Please log in again.' });
+            return;
+        }
+
+        // ✅ Ensure the requested friend exists
+        const player2 = await User.findOne({ username: friends }).lean();
+        if (!player2) {
+            console.log(`[ERROR] Friend ${friends} not found.`);
+            socket.emit('friendMatchError', { message: 'Friend not found.' });
+            return;
+        }
+
+        // ✅ Ensure the friend is connected to the WebSocket server
+        const player2Socket = getPlayerSocket(player2.username);
+        if (!player2Socket) {
+            console.log(`[ERROR] Friend ${friends} is not online.`);
+            socket.emit('friendMatchError', { message: 'Friend is offline.' });
+            return;
+        }
+
+        // ✅ Remove any previous queue entries for both players
+        matchmakingQueue = matchmakingQueue.filter(p => p.username !== username && p.username !== friends);
+
+        // ✅ Create player objects
+        const player1Data = { socket, username, language, elo: player1.elo || {} };
+        const player2Data = { socket: io.sockets.sockets.get(player2Socket), username: friends, language, elo: player2.elo || {} };
+
+        // ✅ Start a battle between the two friends
+        matchFriends(player1Data, player2Data, language);
+
+    } catch (error) {
+        console.error(`[ERROR] Friend matchmaking failed: ${error}`);
+        socket.emit('friendMatchError', { message: 'Server error. Please try again later.' });
+    }
+  });
+
 
   socket.on('joinQueue', async (data) => {
     const { username, language } = data;

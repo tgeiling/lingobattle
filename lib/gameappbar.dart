@@ -7,6 +7,11 @@ import 'provider.dart';
 import 'battlerequests.dart';
 
 class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final VoidCallback onBackToMainMenu;
+
+  const GameAppBar({Key? key, required this.onBackToMainMenu})
+      : super(key: key);
+
   @override
   Size get preferredSize => const Size.fromHeight(80);
 
@@ -36,7 +41,10 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
               color: Colors.blueAccent,
               context: context,
             ),
-            BattleRequestsButton(username: profile.username),
+            BattleRequestsButton(
+              username: profile.username,
+              onBackToMainMenu: onBackToMainMenu,
+            ),
 
             // 🔹 Right side (🔥 Streak next to 👑 ELO)
             Row(

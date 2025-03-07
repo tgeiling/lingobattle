@@ -1,13 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'dart:convert';
+
+import 'game.dart';
 
 class BattleRequestsButton extends StatefulWidget {
   final String username;
+  final VoidCallback onBackToMainMenu;
 
-  const BattleRequestsButton({Key? key, required this.username})
-      : super(key: key);
+  const BattleRequestsButton({
+    Key? key,
+    required this.username,
+    required this.onBackToMainMenu,
+  }) : super(key: key);
 
   @override
   _BattleRequestsButtonState createState() => _BattleRequestsButtonState();
@@ -20,7 +27,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   @override
   void initState() {
     super.initState();
-    _fetchBattleRequests();
   }
 
   Future<void> _fetchBattleRequests() async {
@@ -48,6 +54,27 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     }
   }
 
+  late IO.Socket socket;
+
+  void _initializeSocket() {
+    socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
+      'transports': ['websocket'],
+    });
+
+    if (socket.connected) return;
+
+    socket.connect();
+
+    // Listen for WebSocket events
+    socket.onConnect((_) {
+      print('Connected to WebSocket server');
+    });
+
+    socket.onDisconnect((_) {
+      print('Disconnected from WebSocket server');
+    });
+  }
+
   Future<void> _acceptBattleRequest(String opponentUsername) async {
     final Uri url = Uri.parse("http://34.159.152.1:3000/battle/accept");
     await http.post(
@@ -55,6 +82,19 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(
           {"username": widget.username, "opponentUsername": opponentUsername}),
+    );
+    _initializeSocket();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SearchingOpponentScreen(
+          socket: socket,
+          username: widget.username,
+          language: "german",
+          onBackToMainMenu: widget.onBackToMainMenu,
+          friendUsername: opponentUsername,
+        ),
+      ),
     );
     _fetchBattleRequests();
   }
@@ -71,6 +111,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   }
 
   void _showBattleRequestsDialog() {
+    _fetchBattleRequests();
     showDialog(
       context: context,
       builder: (context) {

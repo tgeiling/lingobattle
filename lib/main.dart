@@ -309,7 +309,7 @@ class _MyHomePageState extends State<MyHomePage>
     }
 
     return Scaffold(
-      appBar: GameAppBar(),
+      appBar: GameAppBar(onBackToMainMenu: triggerAnimation),
       body: Stack(
         children: [
           PageView(
@@ -330,7 +330,9 @@ class _MyHomePageState extends State<MyHomePage>
               )),
               Center(child: LevelSelectionScreen()),
               Center(
-                child: UserPage(),
+                child: UserPage(
+                  onBackToMainMenu: triggerAnimation,
+                ),
               ),
               SettingsPage(
                 setAuthenticated: _setAuthenticated,

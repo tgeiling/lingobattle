@@ -4,7 +4,12 @@ import 'friends.dart';
 import 'provider.dart';
 
 class UserPage extends StatelessWidget {
-  const UserPage({Key? key}) : super(key: key);
+  final VoidCallback onBackToMainMenu;
+
+  const UserPage({
+    Key? key,
+    required this.onBackToMainMenu,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +19,10 @@ class UserPage extends StatelessWidget {
     return Column(
       children: [
         if (username.isNotEmpty)
-          FriendsButton(username: username)
+          FriendsButton(
+            username: username,
+            onBackToMainMenu: onBackToMainMenu,
+          )
         else
           Padding(
             padding: const EdgeInsets.all(20),
