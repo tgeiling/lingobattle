@@ -172,8 +172,14 @@ class _FriendsButtonState extends State<FriendsButton> {
                 widthFactor: 0.9,
                 child: Neumorphic(
                   style: NeumorphicStyle(
-                    depth: 8,
-                    color: Colors.grey[200], // Light background color
+                    depth: 8, // Keeps the depth effect
+                    color: Colors.grey[200], // Background color
+                    lightSource: LightSource
+                        .bottomRight, // Shift shadow to only bottom-right
+                    shadowDarkColor:
+                        Colors.black.withOpacity(0.2), // Keep subtle shadows
+                    shadowLightColor:
+                        Colors.transparent, // Remove top-left light shadow
                     boxShape:
                         NeumorphicBoxShape.roundRect(BorderRadius.circular(20)),
                   ),
