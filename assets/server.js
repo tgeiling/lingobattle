@@ -471,6 +471,83 @@ let matchmakingQueue = []; // Players waiting for a match
 // Timeout period for matchmaking (in milliseconds)
 const MATCH_TIMEOUT = 301000; // 1 minute
 
+const matchFriends = async (player1, player2, language) => {
+  if (!player1 || !player2) {
+    console.log("[ERROR] Invalid players for friend match.");
+    return;
+  }
+
+  if (player1.username === player2.username) {
+    console.log(`[ERROR] Player ${player1.username} tried to match with themselves.`);
+    return;
+  }
+
+  const battleId = `${player1.socket.id}-${player2.socket.id}`;
+
+  // Determine difficulty level based on highest ELO
+  let difficultyLevel = 1;
+  const highestElo = Math.max(player1.elo[language], player2.elo[language]);
+  if (highestElo >= 400) difficultyLevel = 2;
+  if (highestElo >= 800) difficultyLevel = 3;
+  if (highestElo >= 1200) difficultyLevel = 4;
+
+  function getDifficultyDistribution(baseDifficulty) {
+    const random = Math.random();
+    if (random < 0.02) return { main: baseDifficulty, mainCount: 5, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 2 : 0 };
+    if (random < 0.30) return { main: baseDifficulty, mainCount: 3, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 4 : 2 };
+    if (random < 0.50) return { main: baseDifficulty, mainCount: 4, extra: baseDifficulty + 1, extraCount: baseDifficulty === 4 ? 3 : 1 };
+    return { main: baseDifficulty, mainCount: 5 };
+  }
+
+  const { main, mainCount, extra, extraCount } = getDifficultyDistribution(difficultyLevel);
+
+  let questions = await Question.aggregate([{ $match: { language: language, difficulty: main } }, { $sample: { size: mainCount } }]);
+
+  if (extra) {
+    let extraQuestions = await Question.aggregate([{ $match: { language: language, difficulty: extra } }, { $sample: { size: extraCount } }]);
+    questions = [...questions, ...extraQuestions];
+  }
+
+  questions = questions.sort(() => Math.random() - 0.5);
+
+  activeBattles[battleId] = {
+    players: [
+      { id: player1.socket.id, username: player1.username, elo: player1.elo[language] },
+      { id: player2.socket.id, username: player2.username, elo: player2.elo[language] },
+    ],
+    status: 'active',
+    questions: questions.map(q => ({
+      question: q.question,
+      answers: q.answers,
+      type: q.type,
+    })),
+    language: language,
+  };
+
+  io.to(player1.socket.id).emit('battleStart', {
+    username: player1.username,
+    matchId: battleId,
+    opponentUsername: player2.username,
+    language: language,
+    elo: player1.elo[language],
+    opponentElo: player2.elo[language],
+    questions,
+  });
+
+  io.to(player2.socket.id).emit('battleStart', {
+    username: player2.username,
+    matchId: battleId,
+    opponentUsername: player1.username,
+    language: language,
+    elo: player2.elo[language],
+    opponentElo: player1.elo[language],
+    questions,
+  });
+
+  console.log(`[FRIEND BATTLE STARTED] ${player1.username} vs ${player2.username}`);
+};
+
+
 const matchPlayers = async () => {
   while (matchmakingQueue.length >= 2) {
     const player1 = matchmakingQueue.shift();
@@ -701,7 +778,31 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('friendBattleRequest', async ({ player1, player2, language }) => {
+    const player1Socket = getPlayerSocket(player1);
+    const player2Socket = getPlayerSocket(player2);
 
+    if (!player2Socket) {
+      io.to(player1Socket).emit('battleRequestFailed', { message: 'Friend is offline.' });
+      return;
+    }
+
+    io.to(player2Socket).emit('battleRequestReceived', { player1 });
+
+    console.log(`[BATTLE REQUEST] ${player1} invited ${player2} for a match.`);
+  });
+
+  // Handle battle acceptance
+  socket.on('acceptBattleRequest', async ({ opponent }) => {
+    const player1 = getPlayerByUsername(socket.username);
+    const player2 = getPlayerByUsername(opponent);
+
+    if (!player1 || !player2) {
+      return;
+    }
+
+    matchFriends(player1, player2, player1.language);
+  });
 
 
   socket.on('playerLeft', async (data) => {
