@@ -288,8 +288,7 @@ class _FriendsButtonState extends State<FriendsButton> {
 
     try {
       final response = await http.post(
-        Uri.parse(
-            'http://34.159.152.1:3000/sendBattleRequest'), // Update with your server IP
+        Uri.parse('http://34.159.152.1:3000/sendBattleRequest'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'senderUsername': username,
