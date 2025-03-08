@@ -1305,6 +1305,24 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('getBattleRequests', async (data) => {
+    const { username } = data;
+
+    try {
+        const user = await User.findOne({ username });
+        if (!user) {
+            socket.emit('battleRequestsError', { message: "User not found." });
+            return;
+        }
+
+        socket.emit('battleRequests', { battleRequests: user.battleRequests });
+    } catch (error) {
+        console.error("Error fetching battle requests:", error);
+        socket.emit('battleRequestsError', { message: "Server error. Please try again later." });
+    }
+  });
+
+
   // Leave matchmaking queue
   socket.on('leaveQueue', () => {
     matchmakingQueue = matchmakingQueue.filter((player) => player.socket.id !== socket.id);

@@ -51,17 +51,22 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
   Future<void> _fetchBattleRequests() async {
     setState(() => isLoading = true);
-
     SocketService()
         .socket
         .emit('getBattleRequests', {'username': widget.username});
 
     SocketService().socket.once('battleRequests', (data) {
       if (!mounted) return;
+      print("Battle Requests Received: $data"); // Debugging
       setState(() {
         battleRequests = List<String>.from(data["battleRequests"] ?? []);
         isLoading = false;
       });
+    });
+
+    // Also log if there's an error
+    SocketService().socket.once('battleRequestsError', (data) {
+      print("Error fetching battle requests: ${data['message']}");
     });
   }
 
