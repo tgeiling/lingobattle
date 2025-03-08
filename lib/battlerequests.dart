@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'socket.dart';
-import 'game.dart';
 
 class BattleRequestsButton extends StatefulWidget {
   final String username;
@@ -21,6 +20,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   List<String> battleRequests = [];
   bool isLoading = false;
   String? errorMessage;
+  bool isDialogOpen = false;
 
   @override
   void initState() {
@@ -34,7 +34,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     SocketService()
         .socket
         .on('battleRequestRejected', _onBattleRequestRejected);
-    SocketService().socket.on('battleRequestError', _onBattleRequestError);
+    SocketService().socket.on('battleRequestsError', _onBattleRequestError);
   }
 
   @override
@@ -45,7 +45,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     SocketService()
         .socket
         .off('battleRequestRejected', _onBattleRequestRejected);
-    SocketService().socket.off('battleRequestError', _onBattleRequestError);
+    SocketService().socket.off('battleRequestsError', _onBattleRequestError);
     super.dispose();
   }
 
@@ -53,6 +53,10 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     final String sender = data['sender'];
     if (!battleRequests.contains(sender)) {
       setState(() => battleRequests.add(sender));
+    }
+
+    if (isDialogOpen) {
+      _showBattleRequestsDialog();
     }
   }
 
@@ -80,6 +84,10 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
         battleRequests = List<String>.from(data["battleRequests"] ?? []);
         isLoading = false;
       });
+
+      if (isDialogOpen) {
+        _showBattleRequestsDialog();
+      }
     });
 
     SocketService().socket.once('battleRequestsError', (data) {
@@ -92,6 +100,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   }
 
   void _showBattleRequestsDialog() {
+    setState(() => isDialogOpen = true);
+
     showDialog(
       context: context,
       builder: (context) {
@@ -106,25 +116,49 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                       children: battleRequests.map((request) {
                         return ListTile(
                           title: Text(request),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.check, color: Colors.green),
-                            onPressed: () {
-                              SocketService().acceptBattleRequest(
-                                  widget.username, request);
-                              setState(() => battleRequests.remove(request));
-                            },
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.check,
+                                    color: Colors.green),
+                                onPressed: () => _acceptBattleRequest(request),
+                              ),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.close, color: Colors.red),
+                                onPressed: () => _rejectBattleRequest(request),
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
                     ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close")),
+              onPressed: () {
+                setState(() => isDialogOpen = false);
+                Navigator.pop(context);
+              },
+              child: const Text("Close"),
+            ),
           ],
         );
       },
     );
+  }
+
+  Future<void> _acceptBattleRequest(String opponentUsername) async {
+    SocketService().acceptBattleRequest(widget.username, opponentUsername);
+    await Future.delayed(const Duration(seconds: 2));
+
+    setState(() => battleRequests.remove(opponentUsername));
+    if (!isDialogOpen) _fetchBattleRequests();
+  }
+
+  Future<void> _rejectBattleRequest(String opponentUsername) async {
+    SocketService().rejectBattleRequest(widget.username, opponentUsername);
+    setState(() => battleRequests.remove(opponentUsername));
   }
 
   @override
