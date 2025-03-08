@@ -21,13 +21,14 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   bool isLoading = false;
   String? errorMessage;
   bool isDialogOpen = false;
+  bool isFetching = false;
 
   @override
   void initState() {
     super.initState();
     _fetchBattleRequests();
 
-    // ✅ Listen only **once** per event type
+    // ✅ Listen for real-time battle request events
     SocketService()
         .socket
         .on('battleRequestReceived', _onBattleRequestReceived);
@@ -54,10 +55,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     if (!battleRequests.contains(sender)) {
       setState(() => battleRequests.add(sender));
     }
-
-    if (isDialogOpen) {
-      _showBattleRequestsDialog();
-    }
   }
 
   void _onBattleRequestRejected(data) {
@@ -72,8 +69,11 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     );
   }
 
+  /// ✅ Fetch battle requests **every 10 seconds** for real-time updates
   Future<void> _fetchBattleRequests() async {
-    setState(() => isLoading = true);
+    if (isFetching) return; // Prevent multiple calls
+    setState(() => isFetching = true);
+
     SocketService()
         .socket
         .emit('getBattleRequests', {'username': widget.username});
@@ -82,7 +82,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       if (!mounted) return;
       setState(() {
         battleRequests = List<String>.from(data["battleRequests"] ?? []);
-        isLoading = false;
+        isFetching = false;
       });
 
       if (isDialogOpen) {
@@ -94,9 +94,12 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       if (!mounted) return;
       setState(() {
         errorMessage = data['message'];
-        isLoading = false;
+        isFetching = false;
       });
     });
+
+    // 🔄 Automatically refresh battle requests every 10 seconds
+    Future.delayed(const Duration(seconds: 10), _fetchBattleRequests);
   }
 
   void _showBattleRequestsDialog() {
@@ -107,7 +110,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       builder: (context) {
         return AlertDialog(
           title: const Text("Battle Requests"),
-          content: isLoading
+          content: isFetching
               ? const Center(child: CircularProgressIndicator())
               : battleRequests.isEmpty
                   ? const Text("No battle requests found.")
