@@ -19,7 +19,8 @@ class BattleRequestsButton extends StatefulWidget {
 
 class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   List<String> battleRequests = [];
-  bool isLoading = true;
+  bool isLoading = false;
+  String? errorMessage;
 
   @override
   void initState() {
@@ -30,6 +31,10 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     SocketService()
         .socket
         .on('battleRequestReceived', _onBattleRequestReceived);
+    SocketService()
+        .socket
+        .on('battleRequestRejected', _onBattleRequestRejected);
+    SocketService().socket.on('battleRequestError', _onBattleRequestError);
   }
 
   @override
@@ -37,9 +42,14 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     SocketService()
         .socket
         .off('battleRequestReceived', _onBattleRequestReceived);
+    SocketService()
+        .socket
+        .off('battleRequestRejected', _onBattleRequestRejected);
+    SocketService().socket.off('battleRequestError', _onBattleRequestError);
     super.dispose();
   }
 
+  /// ✅ Called when a new battle request is received
   void _onBattleRequestReceived(data) {
     final String sender = data['sender'];
     setState(() {
@@ -49,6 +59,26 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     });
   }
 
+  /// ✅ Called when a battle request is rejected
+  void _onBattleRequestRejected(data) {
+    final String sender = data['sender'];
+    setState(() {
+      battleRequests.remove(sender);
+    });
+  }
+
+  /// ✅ Handle error messages
+  void _onBattleRequestError(data) {
+    setState(() {
+      errorMessage = data['message'];
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(errorMessage!)),
+    );
+  }
+
+  /// ✅ Fetch the battle requests from the server
   Future<void> _fetchBattleRequests([Function? setStateDialog]) async {
     if (setStateDialog != null) {
       setStateDialog(() => isLoading = true);
@@ -65,7 +95,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
       final List<String> requests =
           List<String>.from(data["battleRequests"] ?? []);
-      print("Battle Requests Received: $requests");
+      print("🔍 Battle Requests Received: $requests");
 
       if (setStateDialog != null) {
         setStateDialog(() {
@@ -90,6 +120,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     });
   }
 
+  /// ✅ Accept a battle request
   Future<void> _acceptBattleRequest(String opponentUsername) async {
     SocketService().acceptBattleRequest(widget.username, opponentUsername);
     await Future.delayed(const Duration(seconds: 5));
@@ -109,18 +140,19 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     _fetchBattleRequests();
   }
 
+  /// ✅ Reject a battle request
   Future<void> _rejectBattleRequest(String opponentUsername) async {
     SocketService().rejectBattleRequest(widget.username, opponentUsername);
     _fetchBattleRequests();
   }
 
-  void _showBattleRequestsDialog() async {
+  /// ✅ Show the battle requests dialog
+  void _showBattleRequestsDialog() {
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
-            // 🔹 Fetch battle requests and update the UI inside the dialog
             _fetchBattleRequests(setStateDialog);
 
             return Dialog(
@@ -152,8 +184,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
-
-                        // 🔄 Use `setStateDialog` to update UI inside the dialog
                         isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : battleRequests.isEmpty
@@ -240,7 +270,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                       ),
                                     ),
                                   ),
-
                         const SizedBox(height: 10),
                         NeumorphicButton(
                           onPressed: () => Navigator.pop(context),
@@ -272,11 +301,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   Widget build(BuildContext context) {
     return NeumorphicButton(
       onPressed: _showBattleRequestsDialog,
-      style: NeumorphicStyle(
-        depth: 4,
-        color: Colors.blueAccent,
-        boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
-      ),
+      style: NeumorphicStyle(depth: 4, color: Colors.blueAccent),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       child: const Icon(Icons.mail),
     );
