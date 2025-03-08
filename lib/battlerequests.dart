@@ -49,24 +49,44 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     });
   }
 
-  Future<void> _fetchBattleRequests() async {
-    setState(() => isLoading = true);
+  Future<void> _fetchBattleRequests([Function? setStateDialog]) async {
+    if (setStateDialog != null) {
+      setStateDialog(() => isLoading = true);
+    } else {
+      setState(() => isLoading = true);
+    }
+
     SocketService()
         .socket
         .emit('getBattleRequests', {'username': widget.username});
 
     SocketService().socket.once('battleRequests', (data) {
       if (!mounted) return;
-      print("Battle Requests Received: $data"); // Debugging
-      setState(() {
-        battleRequests = List<String>.from(data["battleRequests"] ?? []);
-        isLoading = false;
-      });
+
+      final List<String> requests =
+          List<String>.from(data["battleRequests"] ?? []);
+      print("Battle Requests Received: $requests");
+
+      if (setStateDialog != null) {
+        setStateDialog(() {
+          battleRequests = requests;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          battleRequests = requests;
+          isLoading = false;
+        });
+      }
     });
 
-    // Also log if there's an error
     SocketService().socket.once('battleRequestsError', (data) {
       print("Error fetching battle requests: ${data['message']}");
+      if (setStateDialog != null) {
+        setStateDialog(() => isLoading = false);
+      } else {
+        setState(() => isLoading = false);
+      }
     });
   }
 
@@ -95,14 +115,14 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   }
 
   void _showBattleRequestsDialog() async {
-    await _fetchBattleRequests();
-    if (!mounted) return;
-
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
+            // 🔹 Fetch battle requests and update the UI inside the dialog
+            _fetchBattleRequests(setStateDialog);
+
             return Dialog(
               insetPadding: const EdgeInsets.symmetric(horizontal: 20),
               shape: RoundedRectangleBorder(
@@ -132,6 +152,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                               fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 10),
+
+                        // 🔄 Use `setStateDialog` to update UI inside the dialog
                         isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : battleRequests.isEmpty
@@ -157,8 +179,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                               color: Colors.white,
                                               boxShape:
                                                   NeumorphicBoxShape.roundRect(
-                                                      BorderRadius.circular(
-                                                          12)),
+                                                BorderRadius.circular(12),
+                                              ),
                                             ),
                                             child: ListTile(
                                               title: Text(request),
@@ -218,6 +240,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                       ),
                                     ),
                                   ),
+
                         const SizedBox(height: 10),
                         NeumorphicButton(
                           onPressed: () => Navigator.pop(context),
