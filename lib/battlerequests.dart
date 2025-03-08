@@ -134,10 +134,9 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     );
   }
 
-  /// ✅ Accept a battle request via HTTP and open SearchingOpponentScreen
   Future<void> _acceptBattleRequest(String opponentUsername) async {
     final response = await http.post(
-      Uri.parse('http://your-server-ip:3000/acceptBattleRequest'),
+      Uri.parse('http://34.159.152.1:3000/acceptBattleRequest'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': widget.username,
@@ -148,7 +147,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     if (response.statusCode == 200) {
       setState(() => battleRequests.remove(opponentUsername));
 
-      // ✅ Navigate to SearchingOpponentScreen after accepting request
       Navigator.push(
         context,
         MaterialPageRoute(

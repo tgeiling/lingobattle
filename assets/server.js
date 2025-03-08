@@ -539,6 +539,33 @@ app.get('/getBattleRequests/:username', async (req, res) => {
   }
 });
 
+app.post('/acceptBattleRequest', async (req, res) => {
+  const { username, opponentUsername } = req.body;
+
+  try {
+      const user = await User.findOne({ username });
+      const opponent = await User.findOne({ username: opponentUsername });
+
+      if (!user || !opponent) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      if (!user.battleRequests.includes(opponentUsername)) {
+          return res.status(400).json({ message: "No battle request found from this user." });
+      }
+
+      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+      await user.save();
+
+      console.log(`[BATTLE ACCEPTED] ${username} vs ${opponentUsername}`);
+      res.status(200).json({ message: "Battle accepted successfully." });
+
+  } catch (error) {
+      console.error("Error accepting battle request:", error);
+      res.status(500).json({ message: "Server error. Please try again later." });
+  }
+});
+
 
 // Socket.IO server setup
 const server = http.createServer(app);
