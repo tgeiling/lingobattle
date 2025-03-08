@@ -68,7 +68,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
     final response = await http.get(
       Uri.parse(
-          'http://your-server-ip:3000/getBattleRequests/${widget.username}'),
+          'http://34.159.152.1:3000/getBattleRequests/${widget.username}'),
     );
 
     if (response.statusCode == 200) {
