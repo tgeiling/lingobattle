@@ -482,7 +482,62 @@ app.get('/leaderboard', async (req, res) => {
   }
 });
 
+// Send a battle request
+app.post('/sendBattleRequest', async (req, res) => {
+  const { senderUsername, receiverUsername } = req.body;
 
+  if (!senderUsername || !receiverUsername) {
+      return res.status(400).json({ message: "Both usernames are required." });
+  }
+
+  if (senderUsername === receiverUsername) {
+      return res.status(400).json({ message: "You cannot challenge yourself." });
+  }
+
+  try {
+      const receiver = await User.findOne({ username: receiverUsername });
+      if (!receiver) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      if (receiver.battleRequests.includes(senderUsername)) {
+          return res.status(400).json({ message: "Battle request already sent." });
+      }
+
+      receiver.battleRequests.push(senderUsername);
+      await receiver.save();
+
+      // Notify the receiver via WebSocket
+      const receiverSocketId = getPlayerSocket(receiverUsername);
+      if (receiverSocketId) {
+          io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername });
+      }
+
+      console.log(`[BATTLE REQUEST SENT] ${senderUsername} -> ${receiverUsername}`);
+      res.status(200).json({ message: "Battle request sent successfully." });
+
+  } catch (error) {
+      console.error("Error sending battle request:", error);
+      res.status(500).json({ message: "Server error. Please try again later." });
+  }
+});
+
+// Fetch battle requests (via HTTP)
+app.get('/getBattleRequests/:username', async (req, res) => {
+  const { username } = req.params;
+
+  try {
+      const user = await User.findOne({ username });
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      res.json({ battleRequests: user.battleRequests });
+  } catch (error) {
+      console.error("Error fetching battle requests:", error);
+      res.status(500).json({ message: "Server error. Please try again later." });
+  }
+});
 
 
 // Socket.IO server setup
@@ -1181,11 +1236,7 @@ io.on('connection', (socket) => {
 
 
 
-
-
-  
-
-  socket.on('battleAccept', async (data) => {
+/*   socket.on('battleAccept', async (data) => {
     const { username, opponentUsername } = data;
 
     console.log(`[BATTLE ACCEPT] ${username} accepted battle with ${opponentUsername}`);
@@ -1332,7 +1383,7 @@ socket.on('getBattleRequests', async (data) => {
         socket.emit('battleRequestsError', { message: "Server error. Please try again later." });
     }
 });
-
+ */
 
 
   // Leave matchmaking queue

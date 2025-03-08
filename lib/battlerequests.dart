@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'socket.dart';
+import 'game.dart';
 
 class BattleRequestsButton extends StatefulWidget {
   final String username;
@@ -21,21 +24,19 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
   bool isLoading = false;
   String? errorMessage;
   bool isDialogOpen = false;
-  bool isFetching = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchBattleRequests();
+    _fetchBattleRequests(); // Fetch requests via HTTP
 
-    // ✅ Listen for real-time battle request events
+    // ✅ Listen for real-time WebSocket updates
     SocketService()
         .socket
         .on('battleRequestReceived', _onBattleRequestReceived);
     SocketService()
         .socket
         .on('battleRequestRejected', _onBattleRequestRejected);
-    SocketService().socket.on('battleRequestsError', _onBattleRequestError);
   }
 
   @override
@@ -46,7 +47,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     SocketService()
         .socket
         .off('battleRequestRejected', _onBattleRequestRejected);
-    SocketService().socket.off('battleRequestsError', _onBattleRequestError);
     super.dispose();
   }
 
@@ -62,44 +62,27 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     setState(() => battleRequests.remove(sender));
   }
 
-  void _onBattleRequestError(data) {
-    setState(() => errorMessage = data['message']);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(errorMessage!)),
-    );
-  }
-
-  /// ✅ Fetch battle requests **every 10 seconds** for real-time updates
+  /// ✅ Fetch battle requests using HTTP
   Future<void> _fetchBattleRequests() async {
-    if (isFetching) return; // Prevent multiple calls
-    setState(() => isFetching = true);
+    setState(() => isLoading = true);
 
-    SocketService()
-        .socket
-        .emit('getBattleRequests', {'username': widget.username});
+    final response = await http.get(
+      Uri.parse(
+          'http://your-server-ip:3000/getBattleRequests/${widget.username}'),
+    );
 
-    SocketService().socket.once('battleRequests', (data) {
-      if (!mounted) return;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
       setState(() {
         battleRequests = List<String>.from(data["battleRequests"] ?? []);
-        isFetching = false;
+        isLoading = false;
       });
-
-      if (isDialogOpen) {
-        _showBattleRequestsDialog();
-      }
-    });
-
-    SocketService().socket.once('battleRequestsError', (data) {
-      if (!mounted) return;
+    } else {
       setState(() {
-        errorMessage = data['message'];
-        isFetching = false;
+        errorMessage = "Failed to fetch battle requests.";
+        isLoading = false;
       });
-    });
-
-    // 🔄 Automatically refresh battle requests every 10 seconds
-    Future.delayed(const Duration(seconds: 10), _fetchBattleRequests);
+    }
   }
 
   void _showBattleRequestsDialog() {
@@ -110,7 +93,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       builder: (context) {
         return AlertDialog(
           title: const Text("Battle Requests"),
-          content: isFetching
+          content: isLoading
               ? const Center(child: CircularProgressIndicator())
               : battleRequests.isEmpty
                   ? const Text("No battle requests found.")
@@ -151,17 +134,74 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     );
   }
 
+  /// ✅ Accept a battle request via HTTP and open SearchingOpponentScreen
   Future<void> _acceptBattleRequest(String opponentUsername) async {
-    SocketService().acceptBattleRequest(widget.username, opponentUsername);
-    await Future.delayed(const Duration(seconds: 2));
+    final response = await http.post(
+      Uri.parse('http://your-server-ip:3000/acceptBattleRequest'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': widget.username,
+        'opponentUsername': opponentUsername,
+      }),
+    );
 
-    setState(() => battleRequests.remove(opponentUsername));
-    if (!isDialogOpen) _fetchBattleRequests();
+    if (response.statusCode == 200) {
+      setState(() => battleRequests.remove(opponentUsername));
+
+      // ✅ Navigate to SearchingOpponentScreen after accepting request
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SearchingOpponentScreen(
+            username: widget.username,
+            language: "german",
+            onBackToMainMenu: widget.onBackToMainMenu,
+            friendUsername: opponentUsername,
+          ),
+        ),
+      );
+    } else {
+      final responseData = jsonDecode(response.body);
+      _showErrorDialog(
+          responseData['message'] ?? "Failed to accept battle request.");
+    }
   }
 
   Future<void> _rejectBattleRequest(String opponentUsername) async {
-    SocketService().rejectBattleRequest(widget.username, opponentUsername);
-    setState(() => battleRequests.remove(opponentUsername));
+    final response = await http.post(
+      Uri.parse('http://34.159.152.1:3000/rejectBattleRequest'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': widget.username,
+        'opponentUsername': opponentUsername,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() => battleRequests.remove(opponentUsername));
+    } else {
+      final responseData = jsonDecode(response.body);
+      _showErrorDialog(
+          responseData['message'] ?? "Failed to reject battle request.");
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Error"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

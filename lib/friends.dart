@@ -286,23 +286,40 @@ class _FriendsButtonState extends State<FriendsButton> {
       return;
     }
 
-    // Emit battle request using WebSocket
-    SocketService().sendBattleRequest(username, friendUsername);
+    try {
+      final response = await http.post(
+        Uri.parse(
+            'http://34.159.152.1:3000/sendBattleRequest'), // Update with your server IP
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'senderUsername': username,
+          'receiverUsername': friendUsername,
+        }),
+      );
 
-    _showMessageDialog("Battle request sent to $friendUsername!");
+      final responseData = jsonDecode(response.body);
 
-    // Navigate to SearchingOpponentScreen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SearchingOpponentScreen(
-          username: username,
-          language: "german",
-          onBackToMainMenu: widget.onBackToMainMenu,
-          friendUsername: friendUsername,
-        ),
-      ),
-    );
+      if (response.statusCode == 200) {
+        _showMessageDialog("Battle request sent to $friendUsername!");
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchingOpponentScreen(
+              username: username,
+              language: "german",
+              onBackToMainMenu: widget.onBackToMainMenu,
+              friendUsername: friendUsername,
+            ),
+          ),
+        );
+      } else {
+        _showErrorDialog(
+            responseData['message'] ?? "Failed to send battle request.");
+      }
+    } catch (e) {
+      _showErrorDialog("Error sending battle request: $e");
+    }
   }
 
   void _showErrorDialog(String message) {
