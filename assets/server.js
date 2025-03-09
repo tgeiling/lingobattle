@@ -489,46 +489,46 @@ app.post('/sendBattleRequest', async (req, res) => {
   console.log(`🔹 Received battle request from ${senderUsername} to ${receiverUsername}`);
 
   if (!senderUsername || !receiverUsername) {
-      console.log("❌ Error: Both usernames are required.");
+      console.log("Error: Both usernames are required.");
       return res.status(400).json({ message: "Both usernames are required." });
   }
 
   if (senderUsername === receiverUsername) {
-      console.log("❌ Error: User cannot challenge themselves.");
+      console.log("Error: User cannot challenge themselves.");
       return res.status(400).json({ message: "You cannot challenge yourself." });
   }
 
   try {
-      console.log(`🔍 Searching for receiver: ${receiverUsername}`);
+      console.log(`Searching for receiver: ${receiverUsername}`);
       const receiver = await User.findOne({ username: receiverUsername });
 
       if (!receiver) {
-          console.log(`❌ Error: Receiver ${receiverUsername} not found.`);
+          console.log(`Error: Receiver ${receiverUsername} not found.`);
           return res.status(404).json({ message: "User not found." });
       }
 
       if (receiver.battleRequests.includes(senderUsername)) {
-          console.log(`⚠️ Warning: Battle request from ${senderUsername} to ${receiverUsername} already exists.`);
+          console.log(`Warning: Battle request from ${senderUsername} to ${receiverUsername} already exists.`);
           return res.status(400).json({ message: "Battle request already sent." });
       }
 
       receiver.battleRequests.push(senderUsername);
       await receiver.save();
-      console.log(`✅ Battle request added successfully: ${senderUsername} -> ${receiverUsername}`);
+      console.log(`Battle request added successfully: ${senderUsername} -> ${receiverUsername}`);
 
       // Notify the receiver via WebSocket
       const receiverSocketId = getPlayerSocket(receiverUsername);
       if (receiverSocketId) {
-          console.log(`📡 Sending WebSocket event to ${receiverUsername} (Socket ID: ${receiverSocketId})`);
+          console.log(`Sending WebSocket event to ${receiverUsername} (Socket ID: ${receiverSocketId})`);
           io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername });
       } else {
-          console.log(`⚠️ Warning: ${receiverUsername} is not online.`);
+          console.log(`Warning: ${receiverUsername} is not online.`);
       }
 
       res.status(200).json({ message: "Battle request sent successfully." });
 
   } catch (error) {
-      console.error("❌ Error sending battle request:", error);
+      console.error("Error sending battle request:", error);
       res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
@@ -542,15 +542,15 @@ app.get('/getBattleRequests/:username', async (req, res) => {
       const user = await User.findOne({ username });
 
       if (!user) {
-          console.log(`❌ Error: User ${username} not found.`);
+          console.log(`Error: User ${username} not found.`);
           return res.status(404).json({ message: "User not found." });
       }
 
-      console.log(`✅ Battle requests found for ${username}: ${user.battleRequests}`);
+      console.log(`Battle requests found for ${username}: ${user.battleRequests}`);
       res.json({ battleRequests: user.battleRequests });
 
   } catch (error) {
-      console.error("❌ Error fetching battle requests:", error);
+      console.error("Error fetching battle requests:", error);
       res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
@@ -561,32 +561,32 @@ app.post('/acceptBattleRequest', async (req, res) => {
   console.log(`🔹 ${username} is accepting battle request from ${opponentUsername}`);
 
   try {
-      console.log(`🔍 Searching for ${username} and ${opponentUsername}`);
+      console.log(`Searching for ${username} and ${opponentUsername}`);
       const user = await User.findOne({ username });
       const opponent = await User.findOne({ username: opponentUsername });
 
       if (!user) {
-          console.log(`❌ Error: User ${username} not found.`);
+          console.log(`Error: User ${username} not found.`);
           return res.status(404).json({ message: "User not found." });
       }
       if (!opponent) {
-          console.log(`❌ Error: Opponent ${opponentUsername} not found.`);
+          console.log(`Error: Opponent ${opponentUsername} not found.`);
           return res.status(404).json({ message: "Opponent not found." });
       }
 
       if (!user.battleRequests.includes(opponentUsername)) {
-          console.log(`⚠️ Warning: No battle request from ${opponentUsername} to ${username} found.`);
+          console.log(`Warning: No battle request from ${opponentUsername} to ${username} found.`);
           return res.status(400).json({ message: "No battle request found from this user." });
       }
 
       user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
       await user.save();
 
-      console.log(`✅ Battle accepted: ${username} vs ${opponentUsername}`);
+      console.log(`Battle accepted: ${username} vs ${opponentUsername}`);
       res.status(200).json({ message: "Battle accepted successfully." });
 
   } catch (error) {
-      console.error("❌ Error accepting battle request:", error);
+      console.error("Error accepting battle request:", error);
       res.status(500).json({ message: "Server error. Please try again later." });
   }
 });

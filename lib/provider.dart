@@ -275,7 +275,7 @@ class LevelNotifier with ChangeNotifier {
     // Load saved levels data from SharedPreferences
     String savedData = prefs.getString('language_levels') ?? "";
 
-    if (savedData != null && savedData != "{}") {
+    if (savedData != null && savedData != "{}" && savedData != "") {
       try {
         // Check if the JSON is double-encoded (string inside string)
         if (savedData.startsWith('"') && savedData.endsWith('"')) {
