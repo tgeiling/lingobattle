@@ -108,6 +108,7 @@ class _FriendsButtonState extends State<FriendsButton> {
   }
 
   void _showFriendsDialog() {
+    _fetchFriends();
     showDialog(
       context: context,
       builder: (context) {
@@ -743,10 +744,21 @@ class _FriendsButtonState extends State<FriendsButton> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double buttonPadding = screenWidth * 0.02; // Adaptive padding
+    final double fontSize = screenWidth * 0.035; // Adaptive font size
+
     return PressableButton(
       onPressed: _showFriendsDialog,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: const Text("Friends"),
+      padding: EdgeInsets.symmetric(
+          horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
+      child: Text(
+        "Friends",
+        style: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }
