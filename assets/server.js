@@ -601,6 +601,8 @@ const io = new Server(server, { cors: { origin: '*' } });
 // Active battles storage (in-memory)
 let activeBattles = {};
 let matchmakingQueue = []; // Players waiting for a match
+const matchmakingAttempts = new Map();
+const friendMatchQueue = new Map();
 
 // Timeout period for matchmaking (in milliseconds)
 const MATCH_TIMEOUT = 301000; // 1 minute
@@ -618,9 +620,20 @@ const matchFriends = async (player1, player2, language) => {
 
   const battleId = `${player1.socket.id}-${player2.socket.id}`;
 
-  // Determine difficulty level based on highest ELO
+  // Debugging logs
+  console.log("Player 1 Data:", player1);
+  console.log("Player 2 Data:", player2);
+
+  // Ensure ELO exists before accessing it
+  console.log("Player 1 ELO:", player1.elo?.[language]);
+  console.log("Player 2 ELO:", player2.elo?.[language]);
+
+  const highestElo = Math.max(
+    player1.elo?.[language] ?? 0,  
+    player2.elo?.[language] ?? 0
+  );
+
   let difficultyLevel = 1;
-  const highestElo = Math.max(player1.elo[language], player2.elo[language]);
   if (highestElo >= 400) difficultyLevel = 2;
   if (highestElo >= 800) difficultyLevel = 3;
   if (highestElo >= 1200) difficultyLevel = 4;
@@ -644,12 +657,12 @@ const matchFriends = async (player1, player2, language) => {
 
   questions = questions.sort(() => Math.random() - 0.5);
 
-  console.log("Start Friend Match between:" + player1.username + " and " + player1.username);
+  console.log("Start Friend Match between:" + player1.username + " and " + player2.username);
 
   activeBattles[battleId] = {
     players: [
-      { id: player1.socket.id, username: player1.username, elo: player1.elo[language] },
-      { id: player2.socket.id, username: player2.username, elo: player2.elo[language] },
+      { id: player1.socket.id, username: player1.username, elo: player1.elo?.[language] ?? 0 },
+      { id: player2.socket.id, username: player2.username, elo: player2.elo?.[language] ?? 0 },
     ],
     status: 'active',
     questions: questions.map(q => ({
@@ -665,8 +678,8 @@ const matchFriends = async (player1, player2, language) => {
     matchId: battleId,
     opponentUsername: player2.username,
     language: language,
-    elo: player1.elo[language],
-    opponentElo: player2.elo[language],
+    elo: player1.elo?.[language] ?? 0,
+    opponentElo: player2.elo?.[language] ?? 0,
     questions,
   });
 
@@ -675,8 +688,8 @@ const matchFriends = async (player1, player2, language) => {
     matchId: battleId,
     opponentUsername: player1.username,
     language: language,
-    elo: player2.elo[language],
-    opponentElo: player1.elo[language],
+    elo: player2.elo?.[language] ?? 0,
+    opponentElo: player1.elo?.[language] ?? 0,
     questions,
   });
 
@@ -834,50 +847,62 @@ function getPlayerSocket(username) {
 io.on('connection', (socket) => {
   console.log(`[CONNECTED] User connected: ${socket.id}`);
 
-  const matchmakingAttempts = new Map();
-
-  const friendMatchQueue = {};
-
   socket.on('joinFriendMatch', async (data) => {
-    const { username, language, friend } = data; // friend is a single string now
-
-    console.log(`[FRIEND MATCH REQUEST] ${username} wants to play with ${friend} in ${language}`);
-
-    try {
-        // ✅ Fetch both players from the database
-        const player1 = await User.findOne({ username }).lean();
-        const player2 = await User.findOne({ username: friend }).lean();
-
-        if (!player1 || !player2) {
-            console.log(`[ERROR] User or friend not found.`);
-            socket.emit('friendMatchError', { message: 'Friend match failed. User not found.' });
-            return;
-        }
-
-        // ✅ Store the player in the queue
-        friendMatchQueue[username] = { socket, username, language, elo: player1.elo || {}, friend };
-
-        // ✅ Check if the friend has also joined
-        if (friendMatchQueue[friend] && friendMatchQueue[friend].friend === username) {
-            console.log(`[MATCH FOUND] ${username} and ${friend} matched!`);
-
-            const player1Data = friendMatchQueue[username];
-            const player2Data = friendMatchQueue[friend];
-
-            // ✅ Start the match
-            matchFriends(player1Data, player2Data, language);
-
-            // ✅ Remove both players from the queue
-            delete friendMatchQueue[username];
-            delete friendMatchQueue[friend];
-        } else {
-            console.log(`[WAITING] ${username} is waiting for ${friend} to join.`);
-        }
-    } catch (error) {
-        console.error(`[ERROR] Friend matchmaking failed: ${error}`);
-        socket.emit('friendMatchError', { message: 'Server error. Please try again later.' });
-    }
+      let { username, language,  friend } = data;
+  
+      // Normalize usernames to avoid mismatches
+      username = username.trim().toLowerCase();
+      friend = friend.trim().toLowerCase();
+  
+      console.log(`[FRIEND MATCH REQUEST] ${username} wants to play with ${friend}`);
+      console.log(`[QUEUE CHECK BEFORE] Current queue:`, [...friendMatchQueue.keys()]);
+  
+      try {
+          if (!username || !friend || username === friend) {
+              console.log(`[ERROR] Invalid username or friend.`);
+              socket.emit('friendMatchError', { message: 'Invalid usernames. Please check your profile.' });
+              return;
+          }
+  
+          // Fetch both players from the database
+          const player1 = await User.findOne({ username }).lean();
+          const player2 = await User.findOne({ username: friend }).lean();
+  
+          if (!player1 || !player2) {
+              console.log(`[ERROR] User or friend not found.`);
+              socket.emit('friendMatchError', { message: 'Friend match failed. User not found.' });
+              return;
+          }
+  
+          if (friendMatchQueue.has(friend) && friendMatchQueue.get(friend).friend === username) {
+              console.log(`[MATCH FOUND] ${username} and ${friend} matched!`);
+  
+              const player1Data = friendMatchQueue.get(friend);
+              const player2Data = { socket, username, friend };
+  
+              matchFriends(player1Data, player2Data, language);
+  
+              friendMatchQueue.delete(friend);
+              friendMatchQueue.delete(username);
+              console.log(`[QUEUE AFTER MATCH]`, [...friendMatchQueue.keys()]);
+          } else {
+              if (!friendMatchQueue.has(username)) {
+                  console.log(`[WAITING] ${username} added to queue for ${friend}`);
+                  friendMatchQueue.set(username, { socket, username, friend });
+  
+                  console.log(`[QUEUE UPDATED] Current queue:`, [...friendMatchQueue.keys()]);
+              } else {
+                  console.log(`[ALREADY IN QUEUE] ${username} is already waiting.`);
+              }
+          }
+  
+      } catch (error) {
+          console.error(`[ERROR] Friend matchmaking failed: ${error}`);
+          socket.emit('friendMatchError', { message: 'Server error. Please try again later.' });
+      }
   });
+  
+
 
 
 
@@ -885,7 +910,7 @@ io.on('connection', (socket) => {
     const { username, language } = data;
     const now = Date.now();
 
-    // ✅ 1️⃣ Rate limit: Allow max 3 matchmaking requests per minute per user
+    //Rate limit: Allow max 3 matchmaking requests per minute per user
     if (!matchmakingAttempts.has(username)) {
         matchmakingAttempts.set(username, []);
     }
@@ -902,7 +927,7 @@ io.on('connection', (socket) => {
 
     matchmakingAttempts.set(username, filteredTimestamps);
 
-    // ✅ 2️⃣ Validate username (empty check)
+    //Validate username (empty check)
     if (!username || username.trim().length === 0) {
         console.log(`[ERROR] Empty username attempted matchmaking.`);
         socket.emit('joinQueueError', { message: 'Invalid username. Please set a username in your profile.' });
@@ -910,7 +935,7 @@ io.on('connection', (socket) => {
     }
 
     try {
-        // ✅ 3️⃣ Fetch user from the database and ensure they exist
+        //Fetch user from the database and ensure they exist
         const user = await User.findOne({ username }).lean(); // `.lean()` makes it a plain object
 
         if (!user) {
@@ -922,7 +947,7 @@ io.on('connection', (socket) => {
         console.log(`[CHECK] Language received: ${language}`);
         console.log(`[CHECK] User's ELO before transformation:`, user.elo);
 
-        // ✅ 4️⃣ Ensure ELO is a plain object & enforce required values
+        //Ensure ELO is a plain object & enforce required values
         const userElo = user.elo instanceof Map ? Object.fromEntries(user.elo) : user.elo;
 
         if (!userElo || !userElo.hasOwnProperty(language)) {
@@ -933,10 +958,10 @@ io.on('connection', (socket) => {
 
         console.log(`[JOIN QUEUE] Username: ${username}, Language: ${language}, ELO: ${userElo[language]}, Socket ID: ${socket.id}`);
 
-        // ✅ 5️⃣ Remove any existing queue entry for this player before adding them
+        //Remove any existing queue entry for this player before adding them
         matchmakingQueue = matchmakingQueue.filter((p) => p.username !== username);
 
-        // ✅ 6️⃣ Create a player object with correct ELO
+        //Create a player object with correct ELO
         const player = {
             socket,
             username,
@@ -952,11 +977,11 @@ io.on('connection', (socket) => {
             }, MATCH_TIMEOUT),
         };
 
-        // ✅ 7️⃣ Add the player to the matchmaking queue
+        //Add the player to the matchmaking queue
         matchmakingQueue.push(player);
         console.log(`[QUEUE STATUS] Current queue length: ${matchmakingQueue.length}`);
 
-        // ✅ 8️⃣ Attempt to match players
+        //Attempt to match players
         matchPlayers();
     } catch (error) {
         console.error(`[DATABASE ERROR] Failed to fetch user: ${error}`);

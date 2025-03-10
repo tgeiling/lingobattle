@@ -276,7 +276,151 @@ class _FriendsButtonState extends State<FriendsButton> {
     );
   }
 
+  void _showLanguageSelectionDialog(String friendUsername) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          backgroundColor: Colors.transparent,
+          child: FractionallySizedBox(
+            widthFactor: 0.8,
+            child: Neumorphic(
+              style: NeumorphicStyle(
+                depth: 8,
+                color: Colors.grey[200],
+                boxShape:
+                    NeumorphicBoxShape.roundRect(BorderRadius.circular(20)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      "Select a Language",
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    _languageButton("German", "assets/flags/german.png",
+                        "german", friendUsername),
+                    _languageButton("Dutch", "assets/flags/dutch.png", "dutch",
+                        friendUsername),
+                    _languageButton("English", "assets/flags/english.png",
+                        "english", friendUsername),
+                    _languageButton("Spanish", "assets/flags/spanish.png",
+                        "spanish", friendUsername),
+                    const SizedBox(height: 10),
+                    NeumorphicButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: NeumorphicStyle(
+                        depth: 4,
+                        color: Colors.grey[300],
+                        boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(12)),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _languageButton(String language, String flagPath, String languageCode,
+      String friendUsername) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: NeumorphicButton(
+        onPressed: () {
+          Navigator.pop(context);
+          _sendBattleRequest(friendUsername, languageCode);
+        },
+        style: NeumorphicStyle(
+          depth: 4,
+          color: Colors.white,
+          boxShape: NeumorphicBoxShape.roundRect(BorderRadius.circular(12)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Image.asset(flagPath, width: 40, height: 30),
+            const SizedBox(width: 15),
+            Text(language,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _inviteFriendToBattle(String friendUsername) async {
+    _showLanguageSelectionDialog(friendUsername);
+  }
+
+  Future<void> _sendBattleRequest(
+      String friendUsername, String language) async {
+    final profileProvider =
+        Provider.of<ProfileProvider>(context, listen: false);
+    final String username = profileProvider.username;
+
+    if (username.isEmpty) {
+      _showErrorDialog("You need to be logged in to start a battle.");
+      return;
+    }
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://34.159.152.1:3000/sendBattleRequest'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'senderUsername': username,
+          'receiverUsername': friendUsername,
+          'language': language
+        }),
+      );
+
+      final responseData = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        _showMessageDialog(
+            "Battle request sent to $friendUsername in $language!");
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SearchingOpponentScreen(
+              username: username,
+              language: language,
+              onBackToMainMenu: widget.onBackToMainMenu,
+              friendUsername: friendUsername,
+            ),
+          ),
+        );
+      } else {
+        _showErrorDialog(
+            responseData['message'] ?? "Failed to send battle request.");
+      }
+    } catch (e) {
+      _showErrorDialog("Error sending battle request: $e");
+    }
+  }
+
+  /* Future<void> _inviteFriendToBattle(String friendUsername) async {
     final profileProvider =
         Provider.of<ProfileProvider>(context, listen: false);
     final String username = profileProvider.username;
@@ -319,7 +463,7 @@ class _FriendsButtonState extends State<FriendsButton> {
     } catch (e) {
       _showErrorDialog("Error sending battle request: $e");
     }
-  }
+  } */
 
   void _showErrorDialog(String message) {
     showDialog(

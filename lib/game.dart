@@ -2318,28 +2318,6 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
     VoidCallback onBackToMainMenu,
     String? friendUsername,
   ) {
-    /* socket.onConnect((_) {
-    print('Connected to the server');
-
-    // If friends are provided, emit a friend match request
-    if (friendUsername != null && friendUsername.isNotEmpty) {
-      print("joined Friend Match");
-      socket.emit('joinFriendMatch', {
-        'username':
-            Provider.of<ProfileProvider>(context, listen: false).username,
-        'language': language,
-        'friend': friendUsername,
-      });
-    } else {
-      print("joined Queue");
-      socket.emit('joinQueue', {
-        'username':
-            Provider.of<ProfileProvider>(context, listen: false).username,
-        'language': language,
-      });
-    }
-  }); */
-
     if (friendUsername != null && friendUsername.isNotEmpty) {
       SocketService().joinFriendMatch(
           Provider.of<ProfileProvider>(context, listen: false).username,
