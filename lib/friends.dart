@@ -37,25 +37,38 @@ class _FriendsButtonState extends State<FriendsButton> {
     _fetchFriends();
   }
 
-  Future<void> _fetchFriends() async {
+  bool _isDialogOpen = false; // Track dialog state
+
+  Future<void> _fetchFriends({Function? setStateDialog}) async {
     final Uri url = Uri.parse(
         "http://34.159.152.1:3000/friends/list?username=${widget.username}");
 
     try {
       final response = await http.get(url);
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        setState(() {
-          friends = List<String>.from(data["friends"]);
-          isLoading = false;
-        });
+        final newFriends = List<String>.from(data["friends"]);
+
+        if (setStateDialog != null && _isDialogOpen) {
+          setStateDialog(() {
+            friends = newFriends;
+            isLoading = false;
+          });
+        } else if (mounted) {
+          setState(() {
+            friends = newFriends;
+            isLoading = false;
+          });
+        }
       }
     } catch (error) {
       print("Error fetching friends: $error");
-      setState(() {
-        isLoading = false;
-      });
+
+      if (setStateDialog != null && _isDialogOpen) {
+        setStateDialog(() => isLoading = false);
+      } else if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -108,12 +121,16 @@ class _FriendsButtonState extends State<FriendsButton> {
   }
 
   void _showFriendsDialog() {
-    _fetchFriends();
+    _isDialogOpen = true; // Mark dialog as open
+
     showDialog(
       context: context,
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
+            _fetchFriends(
+                setStateDialog: setStateDialog); // Fetch inside dialog
+
             return Dialog(
               insetPadding: const EdgeInsets.symmetric(horizontal: 20),
               shape: RoundedRectangleBorder(
@@ -124,24 +141,21 @@ class _FriendsButtonState extends State<FriendsButton> {
                 widthFactor: 0.9,
                 child: Neumorphic(
                   style: NeumorphicStyle(
-                    depth: 8, // Keeps the depth effect
-                    color: Colors.grey[200], // Background color
-                    lightSource: LightSource
-                        .bottomRight, // Shift shadow to only bottom-right
-                    shadowDarkColor:
-                        Colors.black.withOpacity(0.2), // Keep subtle shadows
-                    shadowLightColor:
-                        Colors.transparent, // Remove top-left light shadow
-                    boxShape:
-                        NeumorphicBoxShape.roundRect(BorderRadius.circular(20)),
+                    depth: 8,
+                    color: Colors.grey[200],
+                    lightSource: LightSource.bottomRight,
+                    shadowDarkColor: Colors.black.withOpacity(0.2),
+                    shadowLightColor: Colors.transparent,
+                    boxShape: NeumorphicBoxShape.roundRect(
+                      BorderRadius.circular(20),
+                    ),
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Title
-                        Text(
+                        const Text(
                           "Your Friends",
                           style: TextStyle(
                             fontSize: 20,
@@ -151,80 +165,87 @@ class _FriendsButtonState extends State<FriendsButton> {
                         ),
                         const SizedBox(height: 10),
 
-                        // Scrollable Friends List
-                        friends.isEmpty
-                            ? const Text("No friends yet. Add some!")
-                            : SizedBox(
-                                height: 250, // Set max height for scrolling
-                                child: SingleChildScrollView(
-                                  child: Column(
-                                    children: friends.map((friend) {
-                                      return Neumorphic(
-                                        margin: const EdgeInsets.symmetric(
-                                            vertical: 6),
-                                        padding: const EdgeInsets.all(12),
-                                        style: NeumorphicStyle(
-                                          depth: 4,
-                                          color: Colors.white,
-                                          boxShape:
-                                              NeumorphicBoxShape.roundRect(
-                                            BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                        child: ListTile(
-                                          title: Text(friend),
-                                          trailing: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              // Battle Invite Button
-                                              NeumorphicButton(
-                                                style: NeumorphicStyle(
-                                                  color: Colors.blueAccent,
-                                                  depth: 5,
-                                                  boxShape: NeumorphicBoxShape
-                                                      .circle(),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.all(10),
-                                                onPressed: () {
-                                                  _inviteFriendToBattle(friend);
-                                                },
-                                                child: const Icon(
-                                                    Icons.sports_rounded,
-                                                    color: Colors.white),
+                        // Friends List or Loading Indicator
+                        isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : friends.isEmpty
+                                ? const Text("No friends yet. Add some!")
+                                : SizedBox(
+                                    height: 250,
+                                    child: SingleChildScrollView(
+                                      child: Column(
+                                        children: friends.map((friend) {
+                                          return Neumorphic(
+                                            margin: const EdgeInsets.symmetric(
+                                                vertical: 6),
+                                            padding: const EdgeInsets.all(12),
+                                            style: NeumorphicStyle(
+                                              depth: 4,
+                                              color: Colors.white,
+                                              boxShape:
+                                                  NeumorphicBoxShape.roundRect(
+                                                BorderRadius.circular(12),
                                               ),
-                                              const SizedBox(width: 10),
+                                            ),
+                                            child: ListTile(
+                                              title: Text(friend),
+                                              trailing: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  // Battle Invite Button
+                                                  NeumorphicButton(
+                                                    style: NeumorphicStyle(
+                                                      color: Colors.blueAccent,
+                                                      depth: 5,
+                                                      boxShape:
+                                                          NeumorphicBoxShape
+                                                              .circle(),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    onPressed: () {
+                                                      _inviteFriendToBattle(
+                                                          friend);
+                                                    },
+                                                    child: const Icon(
+                                                        Icons.sports_esports,
+                                                        color: Colors.white),
+                                                  ),
+                                                  const SizedBox(width: 10),
 
-                                              // Remove Friend Button
-                                              NeumorphicButton(
-                                                style: NeumorphicStyle(
-                                                  color: Colors.redAccent,
-                                                  depth: 5,
-                                                  boxShape: NeumorphicBoxShape
-                                                      .circle(),
-                                                ),
-                                                padding:
-                                                    const EdgeInsets.all(10),
-                                                onPressed: () {
-                                                  _removeFriend(friend);
-                                                  setStateDialog(() =>
-                                                      friends.remove(friend));
-                                                },
-                                                child: const Icon(
-                                                    Icons.remove_circle,
-                                                    color: Colors.white),
+                                                  // Remove Friend Button
+                                                  NeumorphicButton(
+                                                    style: NeumorphicStyle(
+                                                      color: Colors.redAccent,
+                                                      depth: 5,
+                                                      boxShape:
+                                                          NeumorphicBoxShape
+                                                              .circle(),
+                                                    ),
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    onPressed: () {
+                                                      _removeFriend(friend);
+                                                      setStateDialog(() =>
+                                                          friends
+                                                              .remove(friend));
+                                                    },
+                                                    child: const Icon(
+                                                        Icons.remove_circle,
+                                                        color: Colors.white),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                            ),
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
                         const SizedBox(height: 10),
 
-                        // Add Friend Button
                         NeumorphicButton(
                           onPressed: () {
                             Navigator.pop(context);
@@ -246,11 +267,15 @@ class _FriendsButtonState extends State<FriendsButton> {
                                 color: Colors.white),
                           ),
                         ),
+
                         const SizedBox(height: 10),
 
                         // Close Button
                         NeumorphicButton(
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            _isDialogOpen = false; // Mark dialog as closed
+                            Navigator.pop(context);
+                          },
                           style: NeumorphicStyle(
                             depth: 4,
                             color: Colors.grey[300],
@@ -274,7 +299,9 @@ class _FriendsButtonState extends State<FriendsButton> {
           },
         );
       },
-    );
+    ).then((_) {
+      _isDialogOpen = false; // Ensure cleanup when dialog closes
+    });
   }
 
   void _showLanguageSelectionDialog(String friendUsername) {
@@ -611,124 +638,140 @@ class _FriendsButtonState extends State<FriendsButton> {
           builder: (context, setStateDialog) {
             return LayoutBuilder(
               builder: (context, constraints) {
+                double keyboardHeight = MediaQuery.of(context)
+                    .viewInsets
+                    .bottom; // Detect keyboard height
+                double availableHeight =
+                    MediaQuery.of(context).size.height - keyboardHeight;
+
                 return Dialog(
                   insetPadding: const EdgeInsets.symmetric(horizontal: 20),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                   backgroundColor: Colors.transparent,
-                  child: FractionallySizedBox(
-                    widthFactor: 0.9,
-                    heightFactor: 0.7, // Adaptive height
-                    child: Neumorphic(
-                      style: NeumorphicStyle(
-                        depth: 8, // Keeps the depth effect
-                        color: Colors.grey[200], // Background color
-                        lightSource: LightSource
-                            .bottomRight, // Shift shadow to only bottom-right
-                        shadowDarkColor: Colors.black
-                            .withOpacity(0.2), // Keep subtle shadows
-                        shadowLightColor:
-                            Colors.transparent, // Remove top-left light shadow
-                        boxShape: NeumorphicBoxShape.roundRect(
-                            BorderRadius.circular(20)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // Search Input Field
-                            Neumorphic(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 12),
-                              style: NeumorphicStyle(
-                                depth: -4,
-                                color: Colors.white,
-                                boxShape: NeumorphicBoxShape.roundRect(
-                                    BorderRadius.circular(12)),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  labelText: "Search for users",
-                                  prefixIcon: Icon(Icons.search),
-                                  border: InputBorder.none,
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxHeight: availableHeight *
+                          0.85, // ✅ Dynamic height based on keyboard visibility
+                    ),
+                    child: SingleChildScrollView(
+                      child: Neumorphic(
+                        style: NeumorphicStyle(
+                          depth: 8,
+                          color: Colors.grey[200],
+                          lightSource: LightSource.bottomRight,
+                          shadowDarkColor: Colors.black.withOpacity(0.2),
+                          shadowLightColor: Colors.transparent,
+                          boxShape: NeumorphicBoxShape.roundRect(
+                            BorderRadius.circular(20),
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // 🔹 Search Input Field
+                              Neumorphic(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                style: NeumorphicStyle(
+                                  depth: -4,
+                                  color: Colors.white,
+                                  boxShape: NeumorphicBoxShape.roundRect(
+                                      BorderRadius.circular(12)),
                                 ),
-                                onChanged: (query) async {
-                                  await _searchUsers(query, setStateDialog);
-                                },
+                                child: TextField(
+                                  controller: _searchController,
+                                  decoration: const InputDecoration(
+                                    labelText: "Search for users",
+                                    prefixIcon: Icon(Icons.search),
+                                    border: InputBorder.none,
+                                  ),
+                                  onChanged: (query) async {
+                                    await _searchUsers(query, setStateDialog);
+                                  },
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
+                              const SizedBox(height: 10),
 
-                            // Scrollable User List
-                            Expanded(
-                              child: searchResults.isNotEmpty
-                                  ? SingleChildScrollView(
-                                      child: Column(
-                                        children: searchResults.map((user) {
-                                          return Neumorphic(
-                                            margin: const EdgeInsets.symmetric(
-                                                vertical: 6),
-                                            padding: const EdgeInsets.all(12),
-                                            style: NeumorphicStyle(
-                                              depth: 4,
-                                              color: Colors.white,
-                                              boxShape:
-                                                  NeumorphicBoxShape.roundRect(
-                                                BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                            child: ListTile(
-                                              title: Text(user),
-                                              trailing: NeumorphicButton(
-                                                style: NeumorphicStyle(
-                                                  color: Colors.green,
-                                                  depth: 5,
-                                                  boxShape: NeumorphicBoxShape
-                                                      .circle(),
+                              // 🔹 Search Results (Now Fully Scrollable)
+                              Flexible(
+                                child: SizedBox(
+                                  height: availableHeight *
+                                      0.5, // ✅ Adjust height dynamically
+                                  child: searchResults.isNotEmpty
+                                      ? ListView.builder(
+                                          shrinkWrap: true,
+                                          itemCount: searchResults.length,
+                                          itemBuilder: (context, index) {
+                                            final user = searchResults[index];
+                                            return Neumorphic(
+                                              margin:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 6),
+                                              padding: const EdgeInsets.all(12),
+                                              style: NeumorphicStyle(
+                                                depth: 4,
+                                                color: Colors.white,
+                                                boxShape: NeumorphicBoxShape
+                                                    .roundRect(
+                                                  BorderRadius.circular(12),
                                                 ),
-                                                padding:
-                                                    const EdgeInsets.all(10),
-                                                onPressed: () {
-                                                  _addFriend(user);
-                                                  setStateDialog(() =>
-                                                      searchResults
-                                                          .remove(user));
-                                                  _fetchFriends();
-                                                },
-                                                child: const Icon(
-                                                    Icons.person_add,
-                                                    color: Colors.white),
                                               ),
-                                            ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    )
-                                  : const Center(child: Text("No results.")),
-                            ),
-                            const SizedBox(height: 10),
+                                              child: ListTile(
+                                                title: Text(user),
+                                                trailing: NeumorphicButton(
+                                                  style: NeumorphicStyle(
+                                                    color: Colors.green,
+                                                    depth: 5,
+                                                    boxShape: NeumorphicBoxShape
+                                                        .circle(),
+                                                  ),
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  onPressed: () {
+                                                    _addFriend(user);
+                                                    setStateDialog(() =>
+                                                        searchResults
+                                                            .remove(user));
+                                                    _fetchFriends();
+                                                  },
+                                                  child: const Icon(
+                                                      Icons.person_add,
+                                                      color: Colors.white),
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : const Center(
+                                          child: Text("No results.")),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
 
-                            // Close Button
-                            NeumorphicButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: NeumorphicStyle(
-                                depth: 4,
-                                color: Colors.grey[300],
-                                boxShape: NeumorphicBoxShape.roundRect(
-                                    BorderRadius.circular(12)),
+                              // 🔹 Close Button
+                              NeumorphicButton(
+                                onPressed: () => Navigator.pop(context),
+                                style: NeumorphicStyle(
+                                  depth: 4,
+                                  color: Colors.grey[300],
+                                  boxShape: NeumorphicBoxShape.roundRect(
+                                      BorderRadius.circular(12)),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                                child: const Text(
+                                  "Close",
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 24, vertical: 12),
-                              child: const Text(
-                                "Close",
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),
