@@ -51,7 +51,10 @@ const UserSchema = new mongoose.Schema({
 
   friends: { type: [String], default: [] },
   friendRequests: { type: [String], default: [] },
-  battleRequests: { type: [String], default: [] },
+  battleRequests: {
+    type: [{ username: String, language: String }],
+    default: [],
+  },
 
   createdAt: { type: Date, default: Date.now },
 });
@@ -483,14 +486,13 @@ app.get('/leaderboard', async (req, res) => {
 });
 
 // Send a battle request
-// Send a battle request
 app.post('/sendBattleRequest', async (req, res) => {
-  const { senderUsername, receiverUsername } = req.body;
-  console.log(`🔹 Received battle request from ${senderUsername} to ${receiverUsername}`);
+  const { senderUsername, receiverUsername, language } = req.body;
+  console.log(`🔹 Received battle request from ${senderUsername} to ${receiverUsername} in ${language}`);
 
-  if (!senderUsername || !receiverUsername) {
-      console.log("Error: Both usernames are required.");
-      return res.status(400).json({ message: "Both usernames are required." });
+  if (!senderUsername || !receiverUsername || !language) {
+      console.log("Error: Both usernames and language are required.");
+      return res.status(400).json({ message: "Usernames and language are required." });
   }
 
   if (senderUsername === receiverUsername) {
@@ -507,20 +509,21 @@ app.post('/sendBattleRequest', async (req, res) => {
           return res.status(404).json({ message: "User not found." });
       }
 
-      if (receiver.battleRequests.includes(senderUsername)) {
-          console.log(`Warning: Battle request from ${senderUsername} to ${receiverUsername} already exists.`);
-          return res.status(400).json({ message: "Battle request already sent." });
+      // Prevent duplicate requests for the same language
+      if (receiver.battleRequests.some(req => req.username === senderUsername && req.language === language)) {
+          console.log(`Warning: Battle request from ${senderUsername} to ${receiverUsername} in ${language} already exists.`);
+          return res.status(400).json({ message: "Battle request already sent for this language." });
       }
 
-      receiver.battleRequests.push(senderUsername);
+      receiver.battleRequests.push({ username: senderUsername, language });
       await receiver.save();
-      console.log(`Battle request added successfully: ${senderUsername} -> ${receiverUsername}`);
+      console.log(`Battle request added successfully: ${senderUsername} -> ${receiverUsername} in ${language}`);
 
-      // Notify the receiver via WebSocket
+      // Notify receiver via WebSocket
       const receiverSocketId = getPlayerSocket(receiverUsername);
       if (receiverSocketId) {
           console.log(`Sending WebSocket event to ${receiverUsername} (Socket ID: ${receiverSocketId})`);
-          io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername });
+          io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername, language });
       } else {
           console.log(`Warning: ${receiverUsername} is not online.`);
       }
@@ -532,6 +535,7 @@ app.post('/sendBattleRequest', async (req, res) => {
       res.status(500).json({ message: "Server error. Please try again later." });
   }
 });
+
 
 // Fetch battle requests (via HTTP)
 app.get('/getBattleRequests/:username', async (req, res) => {
@@ -546,7 +550,7 @@ app.get('/getBattleRequests/:username', async (req, res) => {
           return res.status(404).json({ message: "User not found." });
       }
 
-      console.log(`Battle requests found for ${username}: ${user.battleRequests}`);
+      console.log(`Battle requests found for ${username}:`, user.battleRequests);
       res.json({ battleRequests: user.battleRequests });
 
   } catch (error) {
@@ -555,10 +559,11 @@ app.get('/getBattleRequests/:username', async (req, res) => {
   }
 });
 
+
 // Accept a battle request
 app.post('/acceptBattleRequest', async (req, res) => {
-  const { username, opponentUsername } = req.body;
-  console.log(`🔹 ${username} is accepting battle request from ${opponentUsername}`);
+  const { username, opponentUsername, language } = req.body;
+  console.log(`🔹 ${username} is accepting battle request from ${opponentUsername} in ${language}`);
 
   try {
       console.log(`Searching for ${username} and ${opponentUsername}`);
@@ -574,15 +579,17 @@ app.post('/acceptBattleRequest', async (req, res) => {
           return res.status(404).json({ message: "Opponent not found." });
       }
 
-      if (!user.battleRequests.includes(opponentUsername)) {
-          console.log(`Warning: No battle request from ${opponentUsername} to ${username} found.`);
-          return res.status(400).json({ message: "No battle request found from this user." });
+      // Check if the request exists for this language
+      const requestIndex = user.battleRequests.findIndex(req => req.username === opponentUsername && req.language === language);
+      if (requestIndex === -1) {
+          console.log(`Warning: No battle request from ${opponentUsername} to ${username} in ${language} found.`);
+          return res.status(400).json({ message: "No battle request found for this user and language." });
       }
 
-      user.battleRequests = user.battleRequests.filter(req => req !== opponentUsername);
+      user.battleRequests.splice(requestIndex, 1);
       await user.save();
 
-      console.log(`Battle accepted: ${username} vs ${opponentUsername}`);
+      console.log(`Battle accepted: ${username} vs ${opponentUsername} in ${language}`);
       res.status(200).json({ message: "Battle accepted successfully." });
 
   } catch (error) {

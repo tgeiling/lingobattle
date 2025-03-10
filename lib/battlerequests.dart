@@ -19,11 +19,18 @@ class BattleRequestsButton extends StatefulWidget {
 }
 
 class _BattleRequestsButtonState extends State<BattleRequestsButton> {
-  List<String> battleRequests = [];
+  List<Map<String, String>> battleRequests = [];
   bool isLoading = false;
   String? errorMessage;
   bool isDialogOpen = false;
   bool hasFetched = false;
+
+  final Map<String, String> languageFlags = {
+    "german": "assets/flags/german.png",
+    "dutch": "assets/flags/dutch.png",
+    "english": "assets/flags/english.png",
+    "spanish": "assets/flags/spanish.png",
+  };
 
   @override
   void initState() {
@@ -52,9 +59,13 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
         setStateDialog(() {
-          battleRequests = List<String>.from(data["battleRequests"] ?? []);
+          battleRequests = List<Map<String, String>>.from(data["battleRequests"]
+                  ?.map((req) => {
+                        "username": req["username"],
+                        "language": req["language"]
+                      }) ??
+              []);
           isLoading = false;
           hasFetched = true;
         });
@@ -118,7 +129,6 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                           ),
                         ),
                         const SizedBox(height: 10),
-
                         if (isLoading)
                           const Center(child: CircularProgressIndicator())
                         else if (battleRequests.isEmpty)
@@ -135,6 +145,11 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                             child: SingleChildScrollView(
                               child: Column(
                                 children: battleRequests.map((request) {
+                                  final String username = request["username"]!;
+                                  final String language = request["language"]!;
+                                  final String? flag =
+                                      languageFlags[language.toLowerCase()];
+
                                   return Neumorphic(
                                     margin:
                                         const EdgeInsets.symmetric(vertical: 6),
@@ -147,8 +162,12 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                       ),
                                     ),
                                     child: ListTile(
+                                      leading: flag != null
+                                          ? Image.asset(flag,
+                                              width: 30, height: 30)
+                                          : const Icon(Icons.flag),
                                       title: Text(
-                                        request,
+                                        "$username - $language",
                                         style: const TextStyle(fontSize: 16),
                                       ),
                                       trailing: Row(
@@ -163,8 +182,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                             ),
                                             padding: const EdgeInsets.all(10),
                                             onPressed: () =>
-                                                _acceptBattleRequest(
-                                                    request, setStateDialog),
+                                                _acceptBattleRequest(username,
+                                                    language, setStateDialog),
                                             child: const Icon(Icons.check,
                                                 color: Colors.white),
                                           ),
@@ -179,7 +198,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                             padding: const EdgeInsets.all(10),
                                             onPressed: () =>
                                                 _rejectBattleRequest(
-                                                    request, setStateDialog),
+                                                    username, setStateDialog),
                                             child: const Icon(Icons.close,
                                                 color: Colors.white),
                                           ),
@@ -191,10 +210,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                               ),
                             ),
                           ),
-
                         const SizedBox(height: 10),
-
-                        // Refresh Button
                         NeumorphicButton(
                           onPressed: () {
                             setStateDialog(() => hasFetched = false);
@@ -216,10 +232,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                 color: Colors.white),
                           ),
                         ),
-
                         const SizedBox(height: 10),
-
-                        // Close Button
                         NeumorphicButton(
                           onPressed: () => Navigator.pop(context),
                           style: NeumorphicStyle(
@@ -248,40 +261,36 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
     );
   }
 
-  /// Accept a battle request and update UI
   Future<void> _acceptBattleRequest(
-      String opponentUsername, Function setStateDialog) async {
+      String opponentUsername, String language, Function setStateDialog) async {
     final response = await http.post(
       Uri.parse('http://34.159.152.1:3000/acceptBattleRequest'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': widget.username,
         'opponentUsername': opponentUsername,
+        'language': language,
       }),
     );
 
     if (response.statusCode == 200) {
-      setStateDialog(() => battleRequests.remove(opponentUsername));
+      setStateDialog(() => battleRequests
+          .removeWhere((req) => req["username"] == opponentUsername));
 
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => SearchingOpponentScreen(
             username: widget.username,
-            language: "german",
+            language: language,
             onBackToMainMenu: widget.onBackToMainMenu,
             friendUsername: opponentUsername,
           ),
         ),
       );
-    } else {
-      final responseData = jsonDecode(response.body);
-      _showErrorDialog(
-          responseData['message'] ?? "Failed to accept battle request.");
     }
   }
 
-  /// Reject a battle request and update UI
   Future<void> _rejectBattleRequest(
       String opponentUsername, Function setStateDialog) async {
     final response = await http.post(
