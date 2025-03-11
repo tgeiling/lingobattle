@@ -311,6 +311,30 @@ class LeaderboardLanguageSelector extends StatelessWidget {
         value: currentLanguage,
         isExpanded: true,
         items: languagesWithFlags.entries.map((entry) {
+          String language = entry.key.toLowerCase();
+          String translatedLanguage;
+
+          switch (language) {
+            case "german":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_german;
+              break;
+            case "english":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_english;
+              break;
+            case "spanish":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_spanish;
+              break;
+            case "dutch":
+              translatedLanguage = AppLocalizations.of(context)!.language_dutch;
+              break;
+            default:
+              translatedLanguage =
+                  language; // Fallback in case of unexpected value
+          }
+
           return DropdownMenuItem<String>(
             value: entry.key,
             child: Row(
@@ -322,7 +346,7 @@ class LeaderboardLanguageSelector extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
                 const SizedBox(width: 8),
-                Text(entry.key), // Language name
+                Text(translatedLanguage), // Language name
               ],
             ),
           );

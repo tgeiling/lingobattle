@@ -1,5 +1,9 @@
 {
   "locale": "de_DE",
+  "language_german": "Deutsch",
+  "language_english": "Englisch",
+  "language_spanish": "Spanisch",
+  "language_dutch": "Niederländisch",
   "menu1": "Spiel",
   "menu2": "Lernen",
   "menu3": "Profil",

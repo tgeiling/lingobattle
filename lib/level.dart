@@ -1,19 +1,9 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
-import 'package:lingobattle/elements.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:stroke_text/stroke_text.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'provider.dart';
-import 'start.dart';
-import 'services.dart';
-import 'auth.dart';
 import 'game.dart';
 
 bool isModalOpen = false;
@@ -257,6 +247,30 @@ class LanguageSelector extends StatelessWidget {
         value: selectedLanguage,
         isExpanded: true, // Ensures dropdown takes full width
         items: languagesWithFlags.entries.map((entry) {
+          String language = entry.key.toLowerCase();
+          String translatedLanguage;
+
+          switch (language) {
+            case "german":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_german;
+              break;
+            case "english":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_english;
+              break;
+            case "spanish":
+              translatedLanguage =
+                  AppLocalizations.of(context)!.language_spanish;
+              break;
+            case "dutch":
+              translatedLanguage = AppLocalizations.of(context)!.language_dutch;
+              break;
+            default:
+              translatedLanguage =
+                  language; // Fallback in case of unexpected value
+          }
+
           return DropdownMenuItem<String>(
             value: entry.key,
             child: Row(
@@ -268,7 +282,7 @@ class LanguageSelector extends StatelessWidget {
                   fit: BoxFit.cover,
                 ),
                 const SizedBox(width: 8), // Spacing between flag and text
-                Text(entry.key), // Language name
+                Text(translatedLanguage), // Language name
               ],
             ),
           );

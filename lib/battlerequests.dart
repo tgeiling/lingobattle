@@ -147,7 +147,35 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                               child: Column(
                                 children: battleRequests.map((request) {
                                   final String username = request["username"]!;
-                                  final String language = request["language"]!;
+                                  final String language =
+                                      request["language"]!.toLowerCase();
+                                  String translatedLanguage;
+
+                                  switch (language) {
+                                    case "german":
+                                      translatedLanguage =
+                                          AppLocalizations.of(context)!
+                                              .language_german;
+                                      break;
+                                    case "english":
+                                      translatedLanguage =
+                                          AppLocalizations.of(context)!
+                                              .language_english;
+                                      break;
+                                    case "spanish":
+                                      translatedLanguage =
+                                          AppLocalizations.of(context)!
+                                              .language_spanish;
+                                      break;
+                                    case "dutch":
+                                      translatedLanguage =
+                                          AppLocalizations.of(context)!
+                                              .language_dutch;
+                                      break;
+                                    default:
+                                      translatedLanguage =
+                                          language; // Fallback in case of unexpected value
+                                  }
                                   final String? flag =
                                       languageFlags[language.toLowerCase()];
 
@@ -168,7 +196,7 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                                               width: 30, height: 30)
                                           : const Icon(Icons.flag),
                                       title: Text(
-                                        "$username - $language",
+                                        "$username - $translatedLanguage",
                                         style: const TextStyle(fontSize: 16),
                                       ),
                                       trailing: Row(

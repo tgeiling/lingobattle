@@ -204,6 +204,30 @@ class ChangeLanguagePage extends StatelessWidget {
                 itemCount: languages.length,
                 itemBuilder: (context, index) {
                   final language = languages[index];
+                  final languageText = language['var']!;
+                  String translatedLanguage;
+
+                  switch (languageText) {
+                    case "german":
+                      translatedLanguage =
+                          AppLocalizations.of(context)!.language_german;
+                      break;
+                    case "english":
+                      translatedLanguage =
+                          AppLocalizations.of(context)!.language_english;
+                      break;
+                    case "spanish":
+                      translatedLanguage =
+                          AppLocalizations.of(context)!.language_spanish;
+                      break;
+                    case "dutch":
+                      translatedLanguage =
+                          AppLocalizations.of(context)!.language_dutch;
+                      break;
+                    default:
+                      translatedLanguage =
+                          languageText; // Fallback in case of unexpected value
+                  }
                   return GestureDetector(
                     onTap: () {
                       final profileProvider =
@@ -248,7 +272,7 @@ class ChangeLanguagePage extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            language['name']!,
+                            translatedLanguage,
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold),
                           ),

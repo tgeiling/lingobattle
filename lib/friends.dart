@@ -334,14 +334,14 @@ class _FriendsButtonState extends State<FriendsButton> {
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
-                    _languageButton("German", "assets/flags/german.png",
-                        "german", friendUsername),
-                    _languageButton("Dutch", "assets/flags/dutch.png", "dutch",
-                        friendUsername),
-                    _languageButton("English", "assets/flags/english.png",
-                        "english", friendUsername),
-                    _languageButton("Spanish", "assets/flags/spanish.png",
-                        "spanish", friendUsername),
+                    _languageButton(
+                        "assets/flags/german.png", "german", friendUsername),
+                    _languageButton(
+                        "assets/flags/dutch.png", "dutch", friendUsername),
+                    _languageButton(
+                        "assets/flags/english.png", "english", friendUsername),
+                    _languageButton(
+                        "assets/flags/spanish.png", "spanish", friendUsername),
                     const SizedBox(height: 10),
                     NeumorphicButton(
                       onPressed: () => Navigator.pop(context),
@@ -369,8 +369,27 @@ class _FriendsButtonState extends State<FriendsButton> {
     );
   }
 
-  Widget _languageButton(String language, String flagPath, String languageCode,
-      String friendUsername) {
+  Widget _languageButton(
+      String flagPath, String languageCode, String friendUsername) {
+    String translatedLanguage;
+
+    switch (languageCode) {
+      case "german":
+        translatedLanguage = AppLocalizations.of(context)!.language_german;
+        break;
+      case "english":
+        translatedLanguage = AppLocalizations.of(context)!.language_english;
+        break;
+      case "spanish":
+        translatedLanguage = AppLocalizations.of(context)!.language_spanish;
+        break;
+      case "dutch":
+        translatedLanguage = AppLocalizations.of(context)!.language_dutch;
+        break;
+      default:
+        translatedLanguage = languageCode;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: NeumorphicButton(
@@ -389,7 +408,7 @@ class _FriendsButtonState extends State<FriendsButton> {
           children: [
             Image.asset(flagPath, width: 40, height: 30),
             const SizedBox(width: 15),
-            Text(language,
+            Text(translatedLanguage,
                 style:
                     const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           ],
