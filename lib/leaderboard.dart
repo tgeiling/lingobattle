@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   final String username;
@@ -38,7 +39,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final String? token = await storage.read(key: 'authToken');
 
     if (token == null) {
-      _showErrorDialog('No authentication token found. Please log in again.');
+      _showErrorDialog(AppLocalizations.of(context)!.no_auth_token);
       return;
     }
 
@@ -77,15 +78,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           isLoading = false;
           isFetchingMore = false;
         });
-        _showErrorDialog(
-            'Failed to fetch leaderboard. Error: ${response.reasonPhrase}');
+        _showErrorDialog(AppLocalizations.of(context)!
+            .leaderboard_fetch_failed(response.reasonPhrase!));
       }
     } catch (e) {
       setState(() {
         isLoading = false;
         isFetchingMore = false;
       });
-      _showErrorDialog('Error fetching leaderboard: $e');
+      _showErrorDialog(
+          AppLocalizations.of(context)!.leaderboard_fetch_error(e));
     }
   }
 
@@ -124,12 +126,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: Text(AppLocalizations.of(context)!.error),
           content: Text(message),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         );
@@ -142,7 +144,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Leaderboard',
+          AppLocalizations.of(context)!.leaderboard,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         actions: [
@@ -150,7 +152,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             TextButton(
               onPressed: _jumpToUserRank,
               child: Text(
-                "Jump to My Rank (#$userRank)",
+                AppLocalizations.of(context)!.jump_to_my_rank(widget.username),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -180,7 +182,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 : leaderboard.isEmpty
                     ? Center(
                         child: Text(
-                        'No leaderboard data available.',
+                        AppLocalizations.of(context)!.no_leaderboard_data,
                         style: Theme.of(context).textTheme.bodyLarge,
                       ))
                     : ListView.builder(

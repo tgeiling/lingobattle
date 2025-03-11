@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'auth.dart';
 import 'elements.dart';
@@ -142,17 +143,18 @@ class _StartPageState extends State<StartPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: Text(AppLocalizations.of(context)!.error),
           content: Text(message),
           actions: [
             ElevatedButton(
               onPressed: () {
-                if (message != "Please login in the profile first.") {
+                if (message !=
+                    AppLocalizations.of(context)!.pleaseLoginInProfileFirst) {
                   Navigator.of(context).pop();
                 }
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         );
@@ -259,7 +261,7 @@ class _StartPageState extends State<StartPage> {
                             vertical: 12, horizontal: 18),
                         child: Center(
                           child: Text(
-                            "Start Battle",
+                            AppLocalizations.of(context)!.startBattle,
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ),
@@ -270,7 +272,7 @@ class _StartPageState extends State<StartPage> {
                             vertical: 12, horizontal: 18),
                         child: Center(
                           child: Text(
-                            "Login",
+                            AppLocalizations.of(context)!.login,
                             style: Theme.of(context).textTheme.labelLarge,
                           ),
                         ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'game.dart';
 
 class BattleRequestsButton extends StatefulWidget {
@@ -64,13 +66,15 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
         });
       } else {
         setStateDialog(() {
-          errorMessage = "Failed to fetch battle requests.";
+          errorMessage =
+              AppLocalizations.of(context)!.failed_to_fetch_battle_requests;
           isLoading = false;
         });
       }
     } catch (e) {
       setStateDialog(() {
-        errorMessage = "Error fetching battle requests: $e";
+        errorMessage =
+            AppLocalizations.of(context)!.error_fetching_battle_requests(e);
         print("Error fetching battle requests: $e");
         isLoading = false;
       });
@@ -117,8 +121,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          "Battle Requests",
+                        Text(
+                          AppLocalizations.of(context)!.battle_requests,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -129,10 +133,10 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                         if (isLoading)
                           const Center(child: CircularProgressIndicator())
                         else if (battleRequests.isEmpty)
-                          const Padding(
+                          Padding(
                             padding: EdgeInsets.symmetric(vertical: 20),
                             child: Text(
-                              "No battle requests found.",
+                              AppLocalizations.of(context)!.no_battle_requests,
                               style: TextStyle(fontSize: 16),
                             ),
                           )
@@ -224,8 +228,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
-                          child: const Text(
-                            "Refresh",
+                          child: Text(
+                            AppLocalizations.of(context)!.refresh,
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -243,8 +247,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
-                          child: const Text(
-                            "Close",
+                          child: Text(
+                            AppLocalizations.of(context)!.close,
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold),
                           ),
@@ -290,8 +294,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       );
     } else {
       final responseData = jsonDecode(response.body);
-      _showErrorDialog(
-          responseData['message'] ?? "Failed to accept battle request.");
+      _showErrorDialog(responseData['message'] ??
+          AppLocalizations.of(context)!.failed_accept_battle_request);
     }
   }
 
@@ -311,8 +315,8 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       setStateDialog(() => battleRequests.remove(opponentUsername));
     } else {
       final responseData = jsonDecode(response.body);
-      _showErrorDialog(
-          responseData['message'] ?? "Failed to reject battle request.");
+      _showErrorDialog(responseData['message'] ??
+          AppLocalizations.of(context)!.failed_reject_battle_request);
     }
   }
 
@@ -321,12 +325,12 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Error"),
+          title: Text(AppLocalizations.of(context)!.error),
           content: Text(message),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         );

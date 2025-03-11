@@ -5,6 +5,7 @@ import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'elements.dart';
 import 'game.dart';
@@ -155,8 +156,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          "Your Friends",
+                        Text(
+                          AppLocalizations.of(context)!.friends,
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -169,7 +170,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                         isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : friends.isEmpty
-                                ? const Text("No friends yet. Add some!")
+                                ? Text(AppLocalizations.of(context)!
+                                    .no_friends_yet)
                                 : SizedBox(
                                     height: 250,
                                     child: SingleChildScrollView(
@@ -259,8 +261,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
-                          child: const Text(
-                            "Add Friends",
+                          child: Text(
+                            AppLocalizations.of(context)!.add_friends,
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -284,8 +286,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                           ),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 24, vertical: 12),
-                          child: const Text(
-                            "Close",
+                          child: Text(
+                            AppLocalizations.of(context)!.close,
                             style: TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold),
                           ),
@@ -326,8 +328,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      "Select a Language",
+                    Text(
+                      AppLocalizations.of(context)!.select_language,
                       style:
                           TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
@@ -351,8 +353,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                       ),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
-                      child: const Text(
-                        "Cancel",
+                      child: Text(
+                        AppLocalizations.of(context)!.cancel,
                         style: TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
@@ -407,7 +409,7 @@ class _FriendsButtonState extends State<FriendsButton> {
     final String username = profileProvider.username;
 
     if (username.isEmpty) {
-      _showErrorDialog("You need to be logged in to start a battle.");
+      _showErrorDialog(AppLocalizations.of(context)!.login_required_battle);
       return;
     }
 
@@ -425,8 +427,8 @@ class _FriendsButtonState extends State<FriendsButton> {
       final responseData = jsonDecode(response.body);
 
       if (response.statusCode == 200) {
-        _showMessageDialog(
-            "Battle request sent to $friendUsername in $language!");
+        _showMessageDialog(AppLocalizations.of(context)!
+            .battle_request_sent(friendUsername, language));
 
         Navigator.push(
           context,
@@ -440,11 +442,12 @@ class _FriendsButtonState extends State<FriendsButton> {
           ),
         );
       } else {
-        _showErrorDialog(
-            responseData['message'] ?? "Failed to send battle request.");
+        _showErrorDialog(responseData['message'] ??
+            AppLocalizations.of(context)!.failed_send_battle_request);
       }
     } catch (e) {
-      _showErrorDialog("Error sending battle request: $e");
+      _showErrorDialog(
+          AppLocalizations.of(context)!.error_sending_battle_request(e));
     }
   }
 
@@ -518,7 +521,7 @@ class _FriendsButtonState extends State<FriendsButton> {
                     Icon(Icons.error, color: Colors.red, size: 50),
                     const SizedBox(height: 10),
                     Text(
-                      "Error",
+                      AppLocalizations.of(context)!.error,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -585,7 +588,7 @@ class _FriendsButtonState extends State<FriendsButton> {
                     Icon(Icons.info, color: Colors.blueAccent, size: 50),
                     const SizedBox(height: 10),
                     Text(
-                      "Message",
+                      AppLocalizations.of(context)!.message,
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -609,8 +612,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                       ),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 12),
-                      child: const Text(
-                        "OK",
+                      child: Text(
+                        AppLocalizations.of(context)!.ok,
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -684,8 +687,9 @@ class _FriendsButtonState extends State<FriendsButton> {
                                 ),
                                 child: TextField(
                                   controller: _searchController,
-                                  decoration: const InputDecoration(
-                                    labelText: "Search for users",
+                                  decoration: InputDecoration(
+                                    labelText: AppLocalizations.of(context)!
+                                        .search_for_users,
                                     prefixIcon: Icon(Icons.search),
                                     border: InputBorder.none,
                                   ),
@@ -746,8 +750,10 @@ class _FriendsButtonState extends State<FriendsButton> {
                                             );
                                           },
                                         )
-                                      : const Center(
-                                          child: Text("No results.")),
+                                      : Center(
+                                          child: Text(
+                                              AppLocalizations.of(context)!
+                                                  .no_results)),
                                 ),
                               ),
                               const SizedBox(height: 10),
@@ -763,8 +769,8 @@ class _FriendsButtonState extends State<FriendsButton> {
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 12),
-                                child: const Text(
-                                  "Close",
+                                child: Text(
+                                  AppLocalizations.of(context)!.close,
                                   style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),
@@ -796,7 +802,7 @@ class _FriendsButtonState extends State<FriendsButton> {
       padding: EdgeInsets.symmetric(
           horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
       child: Text(
-        "Friends",
+        AppLocalizations.of(context)!.friends,
         style: TextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.bold,

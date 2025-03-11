@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'provider.dart';
 
 class Ranks extends StatelessWidget {
@@ -15,7 +16,7 @@ class Ranks extends StatelessWidget {
       builder: (context, profile, child) {
         int elo = profile.getElo(currentLanguage);
         String imagePath = _getEloImage(elo);
-        String rankText = _getRank(elo);
+        String rankText = _getRank(elo, context);
 
         return GestureDetector(
           onTap: () => _showEloDialog(context, profile),
@@ -61,7 +62,7 @@ class Ranks extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("ELO Progression"),
+          title: Text(AppLocalizations.of(context)!.elo_progression),
           content: SizedBox(
             height: 350,
             width: double.maxFinite,
@@ -69,8 +70,8 @@ class Ranks extends StatelessWidget {
               child: Column(
                 children: [
                   if (nonZeroEloEntries.isNotEmpty) ...[
-                    const Text(
-                      "ELO by Language:",
+                    Text(
+                      AppLocalizations.of(context)!.elo_by_language,
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
@@ -87,7 +88,7 @@ class Ranks extends StatelessWidget {
                   ],
                   ...List.generate(16, (index) {
                     int eloValue = index * 100;
-                    String rank = _getRank(eloValue);
+                    String rank = _getRank(eloValue, context);
                     String imagePath = _getEloImage(eloValue);
 
                     return ListTile(
@@ -96,8 +97,10 @@ class Ranks extends StatelessWidget {
                         width: 40,
                         height: 40,
                       ),
-                      title: Text('$rank - Step ${(index % 4) + 1}'),
-                      subtitle: Text('ELO: $eloValue'),
+                      title: Text(AppLocalizations.of(context)!
+                          .title_rank_step(rank, (index % 4) + 1)),
+                      subtitle: Text(
+                          AppLocalizations.of(context)!.subtitle_elo(eloValue)),
                     );
                   }),
                 ],
@@ -122,10 +125,10 @@ class Ranks extends StatelessWidget {
     return '${ranks[rankIndex]}0$step';
   }
 
-  String _getRank(int elo) {
-    if (elo < 400) return 'Baby';
-    if (elo < 800) return 'Beginner';
-    if (elo < 1200) return 'Novice';
-    return 'Expert';
+  String _getRank(int elo, BuildContext context) {
+    if (elo < 400) return AppLocalizations.of(context)!.ranking_baby;
+    if (elo < 800) return AppLocalizations.of(context)!.ranking_beginner;
+    if (elo < 1200) return AppLocalizations.of(context)!.ranking_novice;
+    return AppLocalizations.of(context)!.ranking_expert;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'friends.dart';
 import 'provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class UserPage extends StatelessWidget {
   final VoidCallback onBackToMainMenu;
@@ -34,16 +35,16 @@ class UserPage extends StatelessWidget {
                 children: [
                   const Icon(Icons.warning, color: Colors.red, size: 50),
                   const SizedBox(height: 16), // More spacing
-                  const Text(
-                    "You need to set a username to add friends.",
+                  Text(
+                    AppLocalizations.of(context)!.setUsernameToAddFriends,
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
             const SizedBox(height: 30), // Increased spacing
-            const Text(
-              "More coming soon",
+            Text(
+              AppLocalizations.of(context)!.moreComingSoon,
               style: TextStyle(fontSize: 16),
             ),
           ],

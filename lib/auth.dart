@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'elements.dart';
 import 'provider.dart';
 import 'services.dart';
 
@@ -347,41 +349,74 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      appBar: AppBar(title: const Text("Login")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Center(
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-                child: Image.asset('assets/logo.png',
-                    width: MediaQuery.of(context).size.width * 0.15),
+            // Logo
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: 8,
+                shape: NeumorphicShape.concave,
+                boxShape: NeumorphicBoxShape.circle(),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Image.asset('assets/logo.png',
+                  width: MediaQuery.of(context).size.width * 0.3),
+            ),
+            const SizedBox(height: 40),
+
+            // Username Field
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: -4,
+                color: Colors.grey[200],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: TextField(
+                controller: _usernameController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Username",
+                ),
+                style: const TextStyle(color: Colors.black),
               ),
             ),
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: "Username"),
-              style: const TextStyle(color: Colors.black),
+            const SizedBox(height: 20),
+
+            // Password Field
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: -4,
+                color: Colors.grey[200],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: TextField(
+                controller: _passwordController,
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  hintText: "Password",
+                ),
+                obscureText: true,
+                style: const TextStyle(color: Colors.black),
+              ),
             ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: "Password"),
-              obscureText: true,
-              style: const TextStyle(color: Colors.black),
-            ),
-            const Spacer(),
-            ElevatedButton(
+            const SizedBox(height: 40),
+
+            // Login Button
+            PressableButton(
               onPressed: _attemptLogin,
-              child: const SizedBox(
-                width: double.infinity,
-                child: Center(
-                    child: Text("Login", style: TextStyle(fontSize: 18))),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: const Text(
+                "Login",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
+            const SizedBox(height: 20),
+
+            // Register Button
+            PressableButton(
               onPressed: () {
                 Navigator.push(
                   context,
@@ -389,10 +424,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       builder: (context) => const RegisterScreen()),
                 );
               },
-              child: const SizedBox(
-                width: double.infinity,
-                child: Center(
-                    child: Text("Register", style: TextStyle(fontSize: 18))),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: const Text(
+                "Register",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
           ],

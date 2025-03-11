@@ -4,12 +4,15 @@ import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
+import 'package:get_it/get_it.dart';
 import 'package:lingobattle/elements.dart';
+import 'package:lingobattle/localization_service.dart';
 import 'package:lingobattle/services.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:get_it/get_it.dart';
 
 import 'provider.dart';
 import 'start.dart';
@@ -19,7 +22,10 @@ import 'settings.dart';
 import 'gameappbar.dart';
 import 'user.dart';
 
+final GetIt getIt = GetIt.instance;
+
 void main() {
+  getIt.registerLazySingleton<LocalizationService>(() => LocalizationService());
   runApp(
     MultiProvider(
       providers: [
@@ -40,6 +46,18 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         primarySwatch: Colors.grey,
       ),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      builder: (context, child) {
+        // Initialize LocalizationService after MaterialApp is built
+        final appLocalizations = AppLocalizations.of(context);
+        if (appLocalizations != null) {
+          GetIt.I<LocalizationService>().initialize(appLocalizations);
+        } else {
+          print("AppLocalizations is null, unable to initialize.");
+        }
+        return child!;
+      },
       home: MyHomePage(),
     );
   }
@@ -112,7 +130,7 @@ class _MyHomePageState extends State<MyHomePage>
       barrierDismissible: false, // Prevent dismissing
       builder: (context) {
         return AlertDialog(
-          title: Text("Select Your Native Language"),
+          title: Text(AppLocalizations.of(context)!.selectYourNativeLanguage),
           content: StatefulBuilder(
             builder: (context, setState) {
               String? selectedLanguage;
@@ -128,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage>
                 children: [
                   DropdownButton<String>(
                     value: selectedLanguage,
-                    hint: Text("Choose a language"),
+                    hint: Text(AppLocalizations.of(context)!.chooseALanguage),
                     isExpanded: true,
                     items: flagAssets.entries.map((entry) {
                       return DropdownMenuItem(
@@ -364,7 +382,7 @@ class _MyHomePageState extends State<MyHomePage>
             style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
           ),
           title: Text(
-            "Game",
+            AppLocalizations.of(context)!.menu1,
             style:
                 TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
           ),
@@ -377,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage>
             style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
           ),
           title: Text(
-            "Learn",
+            AppLocalizations.of(context)!.menu2,
             style:
                 TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
           ),
@@ -390,7 +408,7 @@ class _MyHomePageState extends State<MyHomePage>
             style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
           ),
           title: Text(
-            "Profile",
+            AppLocalizations.of(context)!.menu3,
             style:
                 TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
           ),
@@ -403,7 +421,7 @@ class _MyHomePageState extends State<MyHomePage>
             style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
           ),
           title: Text(
-            "Settings",
+            AppLocalizations.of(context)!.menu4,
             style:
                 TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
           ),

@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import 'elements.dart';
 
 class MatchHistoryScreen extends StatefulWidget {
@@ -69,12 +71,12 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: Text(AppLocalizations.of(context)!.error),
           content: Text(message),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('OK'),
+              child: Text(AppLocalizations.of(context)!.ok),
             ),
           ],
         );
@@ -97,7 +99,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Match Questions",
+                  AppLocalizations.of(context)!.match_questions,
                   style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -126,7 +128,8 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Q${index + 1}: $question",
+                              AppLocalizations.of(context)!
+                                  .question_display(index + 1, questions),
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge!
@@ -136,7 +139,8 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "Answers: $answers",
+                              AppLocalizations.of(context)!
+                                  .answers_display(answers),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -151,7 +155,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Text(
-                    "Close",
+                    AppLocalizations.of(context)!.close,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
@@ -167,11 +171,13 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Match History')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.match_history)),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : matchHistory.isEmpty
-              ? const Center(child: Text('No match history available.'))
+              ? Center(
+                  child: Text(
+                      AppLocalizations.of(context)!.no_match_history_available))
               : ListView.builder(
                   itemCount: matchHistory.length,
                   itemBuilder: (context, index) {
@@ -274,7 +280,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 24, vertical: 12),
                                 child: Text(
-                                  "View Questions",
+                                  AppLocalizations.of(context)!.view_questions,
                                   style: const TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold),

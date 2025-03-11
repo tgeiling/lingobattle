@@ -11364,6 +11364,12 @@
             "spanish": "trabajo",
             "dutch": "wolk"
         },
+        "wolke": {
+            "english": "cloud",
+            "german": "Wolke",
+            "spanish": "nube",
+            "dutch": "wolk"
+        },
         "wolle": {
             "english": "to want",
             "german": "wollen",
@@ -13115,6 +13121,12 @@
             "german": "gekauft",
             "spanish": "compró",
             "dutch": "gekocht"
+        },
+        "box": {
+            "english": "box",
+            "german": "Kiste",
+            "spanish": "caja",
+            "dutch": "doos"
         },
         "brauche": {
             "english": "need",
@@ -20897,6 +20909,12 @@
             "german": "du wolltest",
             "spanish": "quisiste",
             "dutch": "je wilde"
+        },
+        "rabbit": {
+            "english": "rabbit",
+            "german": "Kaninchen",
+            "spanish": "conejo",
+            "dutch": "konijn"
         },
         "rabbits": {
             "english": "rabbits",

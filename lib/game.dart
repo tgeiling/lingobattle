@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'level.dart';
 import 'provider.dart';
@@ -203,7 +204,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _showCompletionDialog(bool isWin) {
-    String resultText = isWin ? "Win" : "Loss";
+    String resultText = isWin
+        ? AppLocalizations.of(context)!.win
+        : AppLocalizations.of(context)!.loss;
     Color resultColor = isWin ? Colors.green : Colors.red;
 
     showDialog(
@@ -219,7 +222,7 @@ class _GameScreenState extends State<GameScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               NeumorphicText(
-                "Question Review",
+                AppLocalizations.of(context)!.question_review,
                 style: NeumorphicStyle(depth: 4, color: Colors.black),
                 textStyle: NeumorphicTextStyle(
                   fontSize: 18,
@@ -260,7 +263,8 @@ class _GameScreenState extends State<GameScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Q${index + 1}: $question",
+                            AppLocalizations.of(context)!
+                                .question_display(index + 1, question),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -272,7 +276,8 @@ class _GameScreenState extends State<GameScreen> {
                                   text: TextSpan(
                                     children: [
                                       TextSpan(
-                                        text: "Answer: ${answers[0]}",
+                                        text: AppLocalizations.of(context)!
+                                            .answer_display(answers[0]),
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.bold,
@@ -293,8 +298,10 @@ class _GameScreenState extends State<GameScreen> {
                                 )
                               : Text(
                                   answers.length > 1
-                                      ? "Answers: ${answers.join(", ")}"
-                                      : "Answer: ${answers[0]}",
+                                      ? AppLocalizations.of(context)!
+                                          .answers_display(answers.join(", "))
+                                      : AppLocalizations.of(context)!
+                                          .answer_display(answers[0]),
                                   style: const TextStyle(fontSize: 14),
                                 ),
                         ],
@@ -312,7 +319,7 @@ class _GameScreenState extends State<GameScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 child: Text(
-                  "Close",
+                  AppLocalizations.of(context)!.close,
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -341,7 +348,7 @@ class _GameScreenState extends State<GameScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 NeumorphicText(
-                  "Question Review",
+                  AppLocalizations.of(context)!.question_review,
                   style: NeumorphicStyle(depth: 4, color: Colors.black),
                   textStyle: NeumorphicTextStyle(
                     fontSize: 18,
@@ -375,7 +382,8 @@ class _GameScreenState extends State<GameScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Q${index + 1}: $question",
+                              AppLocalizations.of(context)!
+                                  .question_display(index + 1, questions),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -387,13 +395,12 @@ class _GameScreenState extends State<GameScreen> {
                                     text: TextSpan(
                                       children: [
                                         TextSpan(
-                                          text:
-                                              "Answer: ${answers[0]}", // Highlight first answer
+                                          text: AppLocalizations.of(context)!
+                                              .answer_display(answers[0]),
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color:
-                                                Colors.blue, // Highlight color
+                                            color: Colors.blue,
                                           ),
                                         ),
                                         if (answers.length > 1)
@@ -410,8 +417,10 @@ class _GameScreenState extends State<GameScreen> {
                                   )
                                 : Text(
                                     answers.length > 1
-                                        ? "Answers: ${answers.join(", ")}"
-                                        : "Answer: ${answers[0]}",
+                                        ? AppLocalizations.of(context)!
+                                            .answers_display(answers.join(", "))
+                                        : AppLocalizations.of(context)!
+                                            .answer_display(answers[0]),
                                     style: const TextStyle(fontSize: 14),
                                   ),
                           ],
@@ -426,7 +435,7 @@ class _GameScreenState extends State<GameScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Text(
-                    "Close",
+                    AppLocalizations.of(context)!.question_review,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
@@ -712,8 +721,8 @@ class _GameScreenState extends State<GameScreen> {
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
-                              const Text(
-                                "Back to Last Word",
+                              Text(
+                                AppLocalizations.of(context)!.back_to_last_word,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -751,8 +760,8 @@ class _GameScreenState extends State<GameScreen> {
                                               .answers
                                               .length -
                                           1
-                                  ? "Next Word"
-                                  : "Submit Answer",
+                                  ? AppLocalizations.of(context)!.next_word
+                                  : AppLocalizations.of(context)!.submit_answer,
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -1103,7 +1112,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     _animationFuture?.ignore();
 
     try {
-      final String message = data['message'] ?? 'The battle has ended.';
+      final String message =
+          data['message'] ?? AppLocalizations.of(context)!.battle_ended;
       final result = data['result'];
       final questions = data['questions'];
 
@@ -1625,8 +1635,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
-                                  const Text(
-                                    "Back to Last Word",
+                                  Text(
+                                    AppLocalizations.of(context)!.battle_ended,
                                     style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
@@ -1664,8 +1674,9 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                                                   .answers
                                                   .length -
                                               1
-                                      ? "Next Word"
-                                      : "Submit Answer",
+                                      ? AppLocalizations.of(context)!.next_word
+                                      : AppLocalizations.of(context)!
+                                          .submit_answer,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
@@ -1891,13 +1902,13 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
     return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text("Leave Game"),
-            content: const Text(
-                "Are you sure you want to leave the game? This will count as a loss."),
+            title: Text(AppLocalizations.of(context)!.leave_game),
+            content:
+                Text(AppLocalizations.of(context)!.leave_game_confirmation),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
-                child: const Text("Cancel"),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
               TextButton(
                 onPressed: () {
@@ -1915,7 +1926,8 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                     MaterialPageRoute(
                       builder: (context) => MultiplayerResultScreen(
                         results: {
-                          'message': 'You left the game.',
+                          'message':
+                              AppLocalizations.of(context)!.you_left_game,
                           'questions': formattedQuestions,
                           'result': 'lossByLeave',
                           'player1': {
@@ -1937,12 +1949,12 @@ class _MultiplayerGameScreenState extends State<MultiplayerGameScreen> {
                     ),
                   );
                 },
-                child: const Text("Leave"),
+                child: Text(AppLocalizations.of(context)!.leave),
               ),
             ],
           ),
         ) ??
-        false; // Return false if the dialog is dismissed
+        false;
   }
 }
 
@@ -2003,7 +2015,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               NeumorphicText(
-                                "Winner: ",
+                                AppLocalizations.of(context)!.winner,
                                 style: NeumorphicStyle(
                                     depth: 6, color: Colors.black),
                                 textStyle: NeumorphicTextStyle(
@@ -2026,9 +2038,9 @@ class MultiplayerResultScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 20),
-                          _buildPlayerColumn(player1, "Player 1"),
+                          _buildPlayerColumn(player1, "Player 1", context),
                           const SizedBox(height: 20),
-                          _buildPlayerColumn(player2, "Player 2"),
+                          _buildPlayerColumn(player2, "Player 2", context),
                         ],
                       ),
                     ),
@@ -2041,7 +2053,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 16),
                       child: Text(
-                        "View Questions",
+                        AppLocalizations.of(context)!.view_questions,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
@@ -2068,7 +2080,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 32, vertical: 16),
                       child: Text(
-                        "Back to Main Menu",
+                        AppLocalizations.of(context)!.back_to_main_menu,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold),
                       ),
@@ -2081,7 +2093,8 @@ class MultiplayerResultScreen extends StatelessWidget {
         ));
   }
 
-  Widget _buildPlayerColumn(Map<String, dynamic> player, String title) {
+  Widget _buildPlayerColumn(
+      Map<String, dynamic> player, String title, BuildContext context) {
     return Column(
       children: [
         NeumorphicText(
@@ -2130,7 +2143,7 @@ class MultiplayerResultScreen extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         NeumorphicText(
-          "Score: ${player['correctAnswers'] ?? 0}",
+          AppLocalizations.of(context)!.score_display(player['correctAnswers']),
           style: NeumorphicStyle(depth: 4, color: Colors.black),
           textStyle: NeumorphicTextStyle(fontSize: 16),
         ),
@@ -2153,7 +2166,7 @@ class MultiplayerResultScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 NeumorphicText(
-                  "Question Review",
+                  AppLocalizations.of(context)!.question_review,
                   style: NeumorphicStyle(depth: 4, color: Colors.black),
                   textStyle: NeumorphicTextStyle(
                     fontSize: 18,
@@ -2185,7 +2198,8 @@ class MultiplayerResultScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Q${index + 1}: $question",
+                              AppLocalizations.of(context)!
+                                  .question_display(index + 1, questions),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -2197,13 +2211,12 @@ class MultiplayerResultScreen extends StatelessWidget {
                                     text: TextSpan(
                                       children: [
                                         TextSpan(
-                                          text:
-                                              "Answer: ${answers[0]}", // Highlight first answer
+                                          text: AppLocalizations.of(context)!
+                                              .answer_display(answers[0]),
                                           style: const TextStyle(
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
-                                            color:
-                                                Colors.blue, // Highlight color
+                                            color: Colors.blue,
                                           ),
                                         ),
                                         if (answers.length > 1)
@@ -2220,8 +2233,10 @@ class MultiplayerResultScreen extends StatelessWidget {
                                   )
                                 : Text(
                                     answers.length > 1
-                                        ? "Answers: ${answers.join(", ")}"
-                                        : "Answer: ${answers[0]}",
+                                        ? AppLocalizations.of(context)!
+                                            .answers_display(answers.join(", "))
+                                        : AppLocalizations.of(context)!
+                                            .answer_display(answers[0]),
                                     style: const TextStyle(fontSize: 14),
                                   ),
                           ],
@@ -2236,7 +2251,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                   child: Text(
-                    "Close",
+                    AppLocalizations.of(context)!.close,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold),
                   ),
@@ -2246,37 +2261,6 @@ class MultiplayerResultScreen extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class BattleScreen extends StatelessWidget {
-  final dynamic battleData;
-
-  const BattleScreen({Key? key, required this.battleData}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Battle - ${battleData['matchId']}"),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("Match ID: ${battleData['matchId']}"),
-            Text("Opponent: ${battleData['opponent']}"),
-            Text("Language: ${battleData['language']}"),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.popUntil(context, (route) => route.isFirst);
-              },
-              child: const Text("Back to Home"),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -2409,7 +2393,7 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'Finding an opponent...',
+                    AppLocalizations.of(context)!.finding_opponent,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 18,
@@ -2436,8 +2420,8 @@ class _SearchingOpponentScreenState extends State<SearchingOpponentScreen> {
                 elevation: 8,
                 shadowColor: Colors.black,
               ),
-              child: const Text(
-                "Cancel",
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
