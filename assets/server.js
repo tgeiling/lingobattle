@@ -336,7 +336,7 @@ app.get("/friends/list", async (req, res) => {
   }
 });
 
-// ✅ Add a friend
+// Add a friend
 app.post("/friends/add", async (req, res) => {
   const { username, friendUsername } = req.body;
 
@@ -370,7 +370,7 @@ app.post("/friends/add", async (req, res) => {
   }
 });
 
-// ✅ Remove a friend
+// Remove a friend
 app.post("/friends/remove", async (req, res) => {
   const { username, friendUsername } = req.body;
 
@@ -437,53 +437,70 @@ app.get('/matchHistory/:username', authenticateToken, async (req, res) => {
 
 app.get('/leaderboard', async (req, res) => {
   try {
-      let { page = 1, limit = 20, username, language } = req.query;
-      page = parseInt(page);
-      limit = parseInt(limit);
+    let { page = 1, limit = 20, username, language } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
 
-      if (!language) {
-          return res.status(400).json({ message: "Language parameter is required." });
-      }
-
-      // Fetch paginated leaderboard, sorting by the selected language's ELO
-      const topPlayers = await User.find({
-          [`elo.${language}`]: { $exists: true } // Ensure the selected language exists in the ELO map
-      })
-      .sort({ [`elo.${language}`]: -1 }) // Sort by ELO for the specific language
-      .skip((page - 1) * limit) // Pagination logic
-      .limit(limit)
-      .select(`username elo winStreak`); // Selecting necessary fields
-
-      let userRank = null;
-      if (username) {
-        const user = await User.findOne({ username }).select(`elo`);
-        console.log("Fetched User:", user);
-    
-        // Use .get() since elo is a Map in MongoDB
-        const userElo = user.elo.get(language);  
-    
-        if (typeof userElo === "number") {
-            console.log(`User's ELO for ${language}:`, userElo);
-    
-            userRank = await User.countDocuments({
-                [`elo.${language}`]: { $gt: userElo }
-            }) + 1;
-    
-            console.log(`Calculated user rank:`, userRank);
-        } else {
-            console.error(`ELO for ${username} in ${language} is missing or invalid.`);
-            userRank = null;
-        }
+    if (!language) {
+      return res.status(400).json({ message: "Language parameter is required." });
     }
-    
 
-      res.status(200).json({ leaderboard: topPlayers, userRank });
+    // Get total count of players with ELO in the selected language
+    const totalCount = await User.countDocuments({ [`elo.${language}`]: { $exists: true } });
+
+    // Fetch paginated leaderboard normally
+    let leaderboard = await User.find({ [`elo.${language}`]: { $exists: true } })
+      .sort({ [`elo.${language}`]: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .select(`username elo winStreak`);
+
+    let userRank = null;
+    let userEntry = null;
+
+    if (username) {
+      const user = await User.findOne({ username }).select(`username elo winStreak`);
+
+      if (user && user.elo && user.elo.get(language) !== undefined) {
+        const userElo = user.elo.get(language);
+
+        // Calculate correct user rank
+        userRank = await User.countDocuments({
+          [`elo.${language}`]: { $gt: userElo }
+        }) + 1;
+
+        userEntry = {
+          username: user.username,
+          elo: user.elo,
+          winStreak: user.winStreak || 0,
+        };
+
+        // If user is already in the leaderboard, do nothing
+        const isUserInLeaderboard = leaderboard.some(player => player.username === username);
+
+        if (!isUserInLeaderboard) {
+          // Determine if the user's rank falls within this page
+          const userPage = Math.ceil(userRank / limit);
+
+          if (userPage === page) {
+            // Insert user at the correct position in the list
+            const insertIndex = (userRank - 1) % limit;
+            leaderboard.splice(insertIndex, 0, userEntry);
+            leaderboard.pop(); // Ensure list does not exceed `limit`
+          }
+        }
+      }
+    }
+
+    // Include `totalCount` in the response
+    res.status(200).json({ leaderboard, userRank, totalCount });
   } catch (error) {
-      console.log("Error fetching leaderboard: " + error);
-      console.error('Error fetching leaderboard:', error);
-      res.status(500).json({ message: 'Failed to fetch leaderboard' });
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ message: 'Failed to fetch leaderboard' });
   }
 });
+
+
 
 // Send a battle request
 app.post('/sendBattleRequest', async (req, res) => {
@@ -1438,7 +1455,7 @@ socket.on('battleRequest', async (data) => {
         receiver.battleRequests.push(senderUsername);
         await receiver.save();
 
-        // ✅ Send battle request **only once** if receiver is online
+        // Send battle request **only once** if receiver is online
         const receiverSocketId = getPlayerSocket(receiverUsername);
         if (receiverSocketId) {
             io.to(receiverSocketId).emit('battleRequestReceived', { sender: senderUsername });
@@ -1451,7 +1468,7 @@ socket.on('battleRequest', async (data) => {
     }
 });
 
-// ✅ Get battle requests
+// Get battle requests
 socket.on('getBattleRequests', async (data) => {
     const { username } = data;
 

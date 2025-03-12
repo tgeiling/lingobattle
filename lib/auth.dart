@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'elements.dart';
 import 'provider.dart';
@@ -321,19 +322,19 @@ class _LoginScreenState extends State<LoginScreen> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
-            title: const Text(
-              "Login Failed",
+            title: Text(
+              AppLocalizations.of(context)!.login_failed,
               style:
                   TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
-            content: const Text(
-              "Invalid credentials. Please try again.",
+            content: Text(
+              AppLocalizations.of(context)!.invalid_credentials,
               style: TextStyle(color: Colors.white),
             ),
             actions: <Widget>[
               TextButton(
-                child:
-                    const Text("Close", style: TextStyle(color: Colors.white)),
+                child: Text(AppLocalizations.of(context)!.close,
+                    style: TextStyle(color: Colors.white)),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },
@@ -359,7 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: NeumorphicStyle(
                 depth: 8,
                 shape: NeumorphicShape.concave,
-                boxShape: NeumorphicBoxShape.circle(),
+                boxShape: NeumorphicBoxShape.rect(),
               ),
               padding: const EdgeInsets.all(16),
               child: Image.asset('assets/logo.png',
@@ -376,9 +377,9 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: TextField(
                 controller: _usernameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
-                  hintText: "Username",
+                  hintText: AppLocalizations.of(context)!.username,
                 ),
                 style: const TextStyle(color: Colors.black),
               ),
@@ -394,9 +395,9 @@ class _LoginScreenState extends State<LoginScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: TextField(
                 controller: _passwordController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
-                  hintText: "Password",
+                  hintText: AppLocalizations.of(context)!.password,
                 ),
                 obscureText: true,
                 style: const TextStyle(color: Colors.black),
@@ -408,8 +409,8 @@ class _LoginScreenState extends State<LoginScreen> {
             PressableButton(
               onPressed: _attemptLogin,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: const Text(
-                "Login",
+              child: Text(
+                AppLocalizations.of(context)!.login,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -425,8 +426,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 );
               },
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              child: const Text(
-                "Register",
+              child: Text(
+                AppLocalizations.of(context)!.register,
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -468,9 +469,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: const Text('GDPR Consent Required'),
-            content: const Text(
-                'To use the multiplayer mode, you must agree to data collection under GDPR. If you do not agree, you can still play solo mode without data collection.'),
+            title: Text(AppLocalizations.of(context)!.gdpr_consent_required),
+            content: Text(AppLocalizations.of(context)!.gdpr_consent_text),
             actions: <Widget>[
               TextButton(
                 onPressed: () {
@@ -478,14 +478,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();
                 },
-                child: const Text('Decline'),
+                child: Text(AppLocalizations.of(context)!.decline),
               ),
               ElevatedButton(
                 onPressed: () {
                   profileProvider.setAcceptedGdpr(true);
                   Navigator.of(context).pop();
                 },
-                child: const Text('Accept'),
+                child: Text(AppLocalizations.of(context)!.accept),
               ),
             ],
           );
@@ -523,7 +523,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Registration Failed'),
+          title: Text(AppLocalizations.of(context)!.registration_failed),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: errors
@@ -547,27 +547,86 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Register')),
+      resizeToAvoidBottomInset: false,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(24.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: 'Username'),
+            // Logo
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: 8,
+                shape: NeumorphicShape.concave,
+                boxShape: NeumorphicBoxShape.rect(),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Image.asset('assets/logo.png',
+                  width: MediaQuery.of(context).size.width * 0.3),
             ),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: 'Password'),
-              obscureText: true,
+            const SizedBox(height: 40),
+
+            // Username Field
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: -4,
+                color: Colors.grey[200],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: AppLocalizations.of(context)!.username,
+                ),
+                style: const TextStyle(color: Colors.black),
+              ),
             ),
             const SizedBox(height: 20),
+
+            // Password Field
+            Neumorphic(
+              style: NeumorphicStyle(
+                depth: -4,
+                color: Colors.grey[200],
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: AppLocalizations.of(context)!.password,
+                ),
+                obscureText: true,
+                style: const TextStyle(color: Colors.black),
+              ),
+            ),
+            const SizedBox(height: 40),
+
+            // Register Button
             _isLoading
                 ? const CircularProgressIndicator()
-                : ElevatedButton(
+                : PressableButton(
                     onPressed: _attemptRegister,
-                    child: const Text('Register'),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 24, vertical: 12),
+                    child: Text(
+                      AppLocalizations.of(context)!.register,
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
                   ),
+            const SizedBox(height: 20),
+
+            // Back to Login Button
+            PressableButton(
+              onPressed: () => Navigator.pop(context),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              child: Text(
+                AppLocalizations.of(context)!.back_to_login,
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
       ),

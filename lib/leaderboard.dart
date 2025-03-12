@@ -16,24 +16,22 @@ class LeaderboardScreen extends StatefulWidget {
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
   List<dynamic> leaderboard = [];
   bool isLoading = true;
-  bool isFetchingMore = false;
-  int page = 1;
+  bool isFetching = false;
+  int currentPage = 1;
+  int totalPages = 1;
   final int limit = 20;
   int? userRank;
-  final ScrollController _scrollController = ScrollController();
-
   String selectedLanguage = "english";
 
   @override
   void initState() {
     super.initState();
     _fetchLeaderboard();
-    _scrollController.addListener(_scrollListener);
   }
 
-  Future<void> _fetchLeaderboard({bool loadMore = false}) async {
-    if (loadMore && isFetchingMore) return;
-    if (loadMore) setState(() => isFetchingMore = true);
+  Future<void> _fetchLeaderboard() async {
+    if (isFetching) return;
+    setState(() => isFetching = true);
 
     const storage = FlutterSecureStorage();
     final String? token = await storage.read(key: 'authToken');
@@ -43,82 +41,51 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       return;
     }
 
-    if (!loadMore) {
-      setState(() {
-        leaderboard.clear();
-        page = 1;
-        isLoading = true;
-      });
-    }
-
     final Uri apiUrl = Uri.parse(
-        'http://34.159.152.1:3000/leaderboard?page=$page&limit=$limit&username=${widget.username}&language=$selectedLanguage');
+        'http://34.159.152.1:3000/leaderboard?page=$currentPage&limit=$limit&username=${widget.username}&language=$selectedLanguage');
 
     try {
-      final response = await http.get(
-        apiUrl,
-        headers: {'Authorization': 'Bearer $token'},
-      );
+      final response =
+          await http.get(apiUrl, headers: {'Authorization': 'Bearer $token'});
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         setState(() {
-          if (loadMore) {
-            leaderboard.addAll(data['leaderboard']);
-            page++;
-          } else {
-            leaderboard = data['leaderboard'];
-          }
+          leaderboard = data['leaderboard'];
           userRank = data['userRank'];
+          totalPages = (data['totalCount'] / limit).ceil();
           isLoading = false;
-          isFetchingMore = false;
         });
       } else {
-        setState(() {
-          isLoading = false;
-          isFetchingMore = false;
-        });
         _showErrorDialog(AppLocalizations.of(context)!
             .leaderboard_fetch_failed(response.reasonPhrase!));
       }
     } catch (e) {
-      setState(() {
-        isLoading = false;
-        isFetchingMore = false;
-      });
       _showErrorDialog(
-          AppLocalizations.of(context)!.leaderboard_fetch_error(e));
+          AppLocalizations.of(context)!.leaderboard_fetch_error(e.toString()));
+    } finally {
+      setState(() => isFetching = false);
     }
   }
 
-  void _scrollListener() {
-    if (_scrollController.position.pixels ==
-            _scrollController.position.maxScrollExtent &&
-        !isFetchingMore) {
-      _fetchLeaderboard(loadMore: true);
-    }
-  }
-
-  void _jumpToUserRank() {
-    if (userRank == null || leaderboard.isEmpty) return;
-
-    final int index = (userRank! - 1) % limit;
-    final int targetPage = ((userRank! - 1) ~/ limit) + 1;
-
-    if (targetPage != page) {
-      page = targetPage;
+  void _nextPage() {
+    if (currentPage < totalPages) {
+      setState(() {
+        currentPage++;
+        isLoading = true;
+      });
       _fetchLeaderboard();
     }
+  }
 
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (index >= 0 && index < leaderboard.length) {
-        _scrollController.animateTo(
-          index * 80.0,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
-    });
+  void _previousPage() {
+    if (currentPage > 1) {
+      setState(() {
+        currentPage--;
+        isLoading = true;
+      });
+      _fetchLeaderboard();
+    }
   }
 
   void _showErrorDialog(String message) {
@@ -129,7 +96,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           title: Text(AppLocalizations.of(context)!.error),
           content: Text(message),
           actions: [
-            ElevatedButton(
+            TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(AppLocalizations.of(context)!.ok),
             ),
@@ -143,20 +110,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          AppLocalizations.of(context)!.leaderboard,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        actions: [
-          if (userRank != null)
-            TextButton(
-              onPressed: _jumpToUserRank,
-              child: Text(
-                AppLocalizations.of(context)!.jump_to_my_rank(widget.username),
-                style: Theme.of(context).textTheme.bodyMedium,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(AppLocalizations.of(context)!.leaderboard),
+            if (userRank != null)
+              TextButton(
+                onPressed: () {}, // No jump-to function needed in pagination
+                style: TextButton.styleFrom(
+                    padding: EdgeInsets.zero, minimumSize: Size(0, 0)),
+                child: Text(AppLocalizations.of(context)!
+                    .jump_to_my_rank(userRank.toString())),
               ),
-            ),
-        ],
+          ],
+        ),
+        toolbarHeight: 80,
       ),
       body: Column(
         children: [
@@ -167,11 +135,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               onLanguageSelected: (String newLanguage) {
                 setState(() {
                   selectedLanguage = newLanguage;
-                  leaderboard.clear();
-                  page = 1;
+                  currentPage = 1;
                   isLoading = true;
                 });
-
                 _fetchLeaderboard();
               },
             ),
@@ -182,83 +148,80 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 : leaderboard.isEmpty
                     ? Center(
                         child: Text(
-                        AppLocalizations.of(context)!.no_leaderboard_data,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ))
+                            AppLocalizations.of(context)!.no_leaderboard_data))
                     : ListView.builder(
-                        controller: _scrollController,
-                        itemCount: leaderboard.length + 1,
+                        itemCount: leaderboard.length,
                         itemBuilder: (context, index) {
-                          if (index < leaderboard.length) {
-                            final player = leaderboard[index];
-                            final rank = index + 1 + (page - 1) * limit;
-                            final username = player['username'];
-                            final elo = player['elo'][selectedLanguage] ?? 0;
-                            final winStreak = player['winStreak'];
+                          final player = leaderboard[index];
+                          final rank = index + 1 + (currentPage - 1) * limit;
+                          final username = player['username'];
+                          final elo = player['elo'][selectedLanguage] ?? 0;
+                          final winStreak = player['winStreak'];
 
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              child: Container(
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.4),
-                                      spreadRadius: 2,
-                                      blurRadius: 6,
-                                      offset: const Offset(2, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '#$rank',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium!
-                                          .copyWith(
-                                            color: Colors.blueGrey,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Text(
-                                      username,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge!
-                                          .copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        _iconLabel(Icons.emoji_events, '$elo'),
-                                        const SizedBox(width: 10),
-                                        _iconLabel(Icons.local_fire_department,
-                                            '$winStreak', Colors.redAccent),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 8),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.4),
+                                    spreadRadius: 2,
+                                    blurRadius: 6,
+                                    offset: const Offset(2, 2),
+                                  ),
+                                ],
                               ),
-                            );
-                          } else {
-                            return isFetchingMore
-                                ? const Center(
-                                    child: Padding(
-                                    padding: EdgeInsets.all(8),
-                                    child: CircularProgressIndicator(),
-                                  ))
-                                : const SizedBox.shrink();
-                          }
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text('#$rank',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium),
+                                  Text(username,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge),
+                                  Row(
+                                    children: [
+                                      _iconLabel(Icons.emoji_events, '$elo'),
+                                      const SizedBox(width: 10),
+                                      _iconLabel(Icons.local_fire_department,
+                                          '$winStreak', Colors.redAccent),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
                         },
                       ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: currentPage > 1 ? _previousPage : null,
+                  child: Text(AppLocalizations.of(context)!.previous),
+                ),
+                Text(
+                  AppLocalizations.of(context)!
+                      .page_of(currentPage, totalPages),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+                ElevatedButton(
+                  onPressed: currentPage < totalPages ? _nextPage : null,
+                  child: Text(AppLocalizations.of(context)!.next),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -270,12 +233,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       children: [
         Icon(icon, color: color, size: 20),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-        ),
+        Text(text,
+            style: Theme.of(context)
+                .textTheme
+                .bodyLarge!
+                .copyWith(fontWeight: FontWeight.bold)),
       ],
     );
   }

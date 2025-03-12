@@ -30,7 +30,7 @@ class SettingsPage extends StatelessWidget {
         children: [
           if (!isLoggedIn())
             _SettingsTile(
-              title: 'Login',
+              title: AppLocalizations.of(context)!.login,
               icon: Icons.login,
               onTap: () {
                 Navigator.push(
@@ -45,7 +45,7 @@ class SettingsPage extends StatelessWidget {
             ),
           if (isLoggedIn())
             _SettingsTile(
-              title: 'Logout',
+              title: AppLocalizations.of(context)!.logout,
               icon: Icons.logout,
               onTap: () {
                 final authService = AuthService();
@@ -54,7 +54,7 @@ class SettingsPage extends StatelessWidget {
               },
             ),
           _SettingsTile(
-            title: 'Change Language',
+            title: AppLocalizations.of(context)!.selectYourNativeLanguage,
             icon: Icons.language,
             onTap: () {
               Navigator.push(
@@ -66,37 +66,46 @@ class SettingsPage extends StatelessWidget {
             },
           ),
           _SettingsTile(
-            title: 'Terms and Conditions',
+            title: AppLocalizations.of(context)!.termsOfService,
             icon: Icons.article,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const TosWidgetPage(),
+                  builder: (context) => const InfoPage(
+                    titleKey: 'termsOfService',
+                    contentKey: 'termsOfServiceText',
+                  ),
                 ),
               );
             },
           ),
           _SettingsTile(
-            title: 'Data Privacy',
+            title: AppLocalizations.of(context)!.dataPrivacyPolicy,
             icon: Icons.privacy_tip,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const DataPrivacyPage(),
+                  builder: (context) => const InfoPage(
+                    titleKey: 'dataPrivacyPolicy',
+                    contentKey: 'dataPrivacyPolicyText',
+                  ),
                 ),
               );
             },
           ),
           _SettingsTile(
-            title: 'Legal Notice (Impressum)',
+            title: AppLocalizations.of(context)!.impressum,
             icon: Icons.privacy_tip,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const ImpressumPage(),
+                  builder: (context) => const InfoPage(
+                    titleKey: 'impressum',
+                    contentKey: 'impressumText',
+                  ),
                 ),
               );
             },
@@ -290,8 +299,12 @@ class ChangeLanguagePage extends StatelessWidget {
   }
 }
 
-class TosWidgetPage extends StatelessWidget {
-  const TosWidgetPage({Key? key}) : super(key: key);
+class InfoPage extends StatelessWidget {
+  final String titleKey;
+  final String contentKey;
+
+  const InfoPage({Key? key, required this.titleKey, required this.contentKey})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -301,76 +314,40 @@ class TosWidgetPage extends StatelessWidget {
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         title: Text(
-          AppLocalizations.of(context)!.termsOfService,
-          style: TextStyle(color: Colors.black),
+          _localizedText(context, titleKey),
+          style: const TextStyle(color: Colors.black),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Text(
-            AppLocalizations.of(context)!.termsOfServiceText,
-            style: TextStyle(fontSize: 16),
+            _localizedText(context, contentKey),
+            style: const TextStyle(fontSize: 16),
           ),
         ),
       ),
     );
   }
-}
 
-class DataPrivacyPage extends StatelessWidget {
-  const DataPrivacyPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: Text(
-          AppLocalizations.of(context)!.dataPrivacyPolicy,
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Text(
-            AppLocalizations.of(context)!.dataPrivacyPolicyText,
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class ImpressumPage extends StatelessWidget {
-  const ImpressumPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
-        title: Text(
-          AppLocalizations.of(context)!.impressum,
-          style: TextStyle(color: Colors.black),
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Text(
-            AppLocalizations.of(context)!.impressumText,
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-      ),
-    );
+  String _localizedText(BuildContext context, String key) {
+    final localizations = AppLocalizations.of(context);
+    switch (key) {
+      case 'termsOfService':
+        return localizations!.termsOfService;
+      case 'termsOfServiceText':
+        return localizations!.termsOfServiceText;
+      case 'dataPrivacyPolicy':
+        return localizations!.dataPrivacyPolicy;
+      case 'dataPrivacyPolicyText':
+        return localizations!.dataPrivacyPolicyText;
+      case 'impressum':
+        return localizations!.impressum;
+      case 'impressumText':
+        return localizations!.impressumText;
+      default:
+        return '';
+    }
   }
 }
 
