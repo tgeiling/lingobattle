@@ -123,7 +123,8 @@ class SocketService with ChangeNotifier {
       'language': language,
       'questions': questions,
     });
-    print('Emitted submitResults for match $matchId by $username');
+    print(
+        'Emitted submitResults for match $matchId by $username and $correctAnswers correct answers');
   }
 
   void emitPlayerLeft(String matchId, String username) {

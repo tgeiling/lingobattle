@@ -48,6 +48,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
 
       if (response.statusCode == 200) {
         setState(() {
+          print(response.body);
           matchHistory = jsonDecode(response.body);
           isLoading = false;
         });
@@ -129,7 +130,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                           children: [
                             Text(
                               AppLocalizations.of(context)!
-                                  .question_display(index + 1, questions),
+                                  .question_display(index + 1, question),
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyLarge!
@@ -245,7 +246,7 @@ class _MatchHistoryScreenState extends State<MatchHistoryScreen> {
                                   ),
                                   const SizedBox(width: 16),
                                   Text(
-                                    ':',
+                                    ': ',
                                     style: TextStyle(
                                       fontSize: 48,
                                       fontWeight: FontWeight.bold,
