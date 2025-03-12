@@ -98,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage>
       if (token != null) {
         profileProvider.syncProfile(token);
       } else {
+        print("main.dart");
         print("No auth token available.");
       }
     });

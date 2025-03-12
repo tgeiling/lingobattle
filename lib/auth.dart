@@ -301,6 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 }
               });
             } else {
+              print("auth.dart");
               print("No auth token available.");
             }
           });

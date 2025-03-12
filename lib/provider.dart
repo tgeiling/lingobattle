@@ -346,6 +346,7 @@ class LevelNotifier with ChangeNotifier {
           }
         });
       } else {
+        print("provider.dart");
         print("No auth token available.");
       }
     });

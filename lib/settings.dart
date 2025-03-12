@@ -256,6 +256,7 @@ class ChangeLanguagePage extends StatelessWidget {
                             }
                           });
                         } else {
+                          print("settings.dart");
                           print("No auth token available.");
                         }
                       });
