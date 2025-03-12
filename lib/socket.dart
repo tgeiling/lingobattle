@@ -1,34 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:provider/provider.dart';
-
-import 'provider.dart';
 
 class SocketService with ChangeNotifier {
   static final SocketService _instance = SocketService._internal();
+
   factory SocketService() => _instance;
 
   late IO.Socket _socket;
   bool _isConnected = false;
-  bool _isInitialized = false; // Prevents multiple initializations
 
-  SocketService._internal();
-
-  void initialize(BuildContext context) {
-    final profileProvider =
-        Provider.of<ProfileProvider>(context, listen: false);
-
-    if (profileProvider.username.isNotEmpty && !_isInitialized) {
-      _isInitialized = true;
-      _initializeSocket();
-    }
+  SocketService._internal() {
+    _initializeSocket();
   }
 
   void _initializeSocket() {
-    print("Initializing socket connection...");
     _socket = IO.io('http://34.159.152.1:3000', <String, dynamic>{
       'transports': ['websocket'],
-      'autoConnect': false,
+      'autoConnect': false, // UUUUUUUUUUUUUUUUUUUUUUUUUKTRA SUS
     });
 
     _socket.onConnect((_) {
@@ -67,18 +55,11 @@ class SocketService with ChangeNotifier {
   IO.Socket get socket => _socket;
   bool get isConnected => _isConnected;
 
-  void disconnectSocket() {
-    if (_isInitialized) {
-      _socket.disconnect();
-      _isConnected = false;
-      _isInitialized = false;
-      print('Socket manually disconnected.');
-      notifyListeners();
-    }
-  }
-
   void joinQueue(String username, String language) {
-    _socket.emit('joinQueue', {'username': username, 'language': language});
+    _socket.emit('joinQueue', {
+      'username': username,
+      'language': language,
+    });
     print('Emitted joinQueue for $username');
   }
 
@@ -165,8 +146,9 @@ class SocketService with ChangeNotifier {
   }
 
   //[Turn off] Area
+
   void removeAllListeners() {
-    print("Removing all listeners...");
+    print("Removing all  listeners...");
     _socket.off('connect');
     _socket.off('disconnect');
     _socket.off('battleStart');
@@ -174,5 +156,10 @@ class SocketService with ChangeNotifier {
     _socket.off('progressUpdate');
     _socket.off('battleEnded');
     print("All listeners removed.");
+  }
+
+  void disconnectSocket() {
+    _socket.disconnect();
+    print('Socket manually disconnected.');
   }
 }
