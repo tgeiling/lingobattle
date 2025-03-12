@@ -280,6 +280,7 @@ class _MyHomePageState extends State<MyHomePage>
         });
       }
     } else {
+      print("correct else all that counts");
       await _authService.setGuestToken();
       setState(() {
         _setAuthenticated(false);
