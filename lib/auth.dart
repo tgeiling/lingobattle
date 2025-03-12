@@ -77,8 +77,12 @@ class AuthService {
 
   // Guest access function
   Future<void> setGuestToken() async {
+    print("execute setGuestToken()");
+
     final token = await getGuestToken();
     if (token != null) {
+      print("execute setGuestToken() token is not null");
+
       await storage.write(key: 'authToken', value: token);
     } else {
       print('Failed to obtain guest token.');
@@ -142,6 +146,9 @@ class AuthService {
 
     bool test = expiration.isBefore(DateTime.now());
     print(test);
+
+    print("execute isTokenExpired()");
+    print(expiration.isBefore(DateTime.now()));
 
     return expiration.isBefore(DateTime.now());
   }
