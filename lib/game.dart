@@ -2199,7 +2199,7 @@ class MultiplayerResultScreen extends StatelessWidget {
                           children: [
                             Text(
                               AppLocalizations.of(context)!
-                                  .question_display(index + 1, questions),
+                                  .question_display(index + 1, question),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
