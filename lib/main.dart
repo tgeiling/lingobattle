@@ -384,7 +384,7 @@ class _MyHomePageState extends State<MyHomePage>
           title: Text(
             AppLocalizations.of(context)!.menu1,
             style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
           ),
           selectedColor: Colors.blueGrey[700],
         ),
@@ -397,7 +397,7 @@ class _MyHomePageState extends State<MyHomePage>
           title: Text(
             AppLocalizations.of(context)!.menu2,
             style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
           ),
           selectedColor: Colors.blueGrey[700],
         ),
@@ -410,7 +410,7 @@ class _MyHomePageState extends State<MyHomePage>
           title: Text(
             AppLocalizations.of(context)!.menu3,
             style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
           ),
           selectedColor: Colors.blueGrey[700],
         ),
@@ -423,7 +423,7 @@ class _MyHomePageState extends State<MyHomePage>
           title: Text(
             AppLocalizations.of(context)!.menu4,
             style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.035),
+                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
           ),
           selectedColor: Colors.blueGrey[700],
         ),
