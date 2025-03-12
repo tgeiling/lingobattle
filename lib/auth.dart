@@ -167,6 +167,8 @@ class AuthService {
   Future<bool> isGuestToken() async {
     final token = await storage.read(key: 'authToken');
 
+    print("execute isGuestToken()");
+
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/validateToken'),
