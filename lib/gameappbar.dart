@@ -110,6 +110,9 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
     required double iconSize,
     required double padding,
   }) {
+    // 🔹 Trim username to 9 characters and add "..."
+    String displayText = text.length > 9 ? "${text.substring(0, 9)}..." : text;
+
     return Container(
       padding:
           EdgeInsets.symmetric(horizontal: padding, vertical: padding * 0.6),
@@ -130,7 +133,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
             Image.asset(iconPath!, width: iconSize, height: iconSize),
           SizedBox(width: padding * 0.5),
           Text(
-            text,
+            displayText,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.roboto(
               color: Colors.white,
