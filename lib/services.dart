@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -109,6 +110,24 @@ int weekNumber(DateTime date) {
     weeks += 1;
   }
   return weeks;
+}
+
+bool isTablet(BuildContext context) {
+  final size = MediaQuery.of(context).size;
+  final shortestSide = size.shortestSide;
+  final aspectRatio = size.width / size.height;
+  final devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+
+  // Detect foldable behavior by aspect ratio & density
+  bool isFoldable = (aspectRatio > 1.9 && shortestSide < 800) ||
+      (devicePixelRatio > 2.5 && shortestSide < 800);
+
+  if (isFoldable) {
+    print("[INFO] Foldable detected, treating as phone.");
+    return false;
+  }
+
+  return shortestSide >= 600;
 }
 
 /* const String serverUrl = 'http://35.246.224.168/validate-receipt';

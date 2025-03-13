@@ -11,6 +11,7 @@ import 'matchhistory.dart';
 import 'leaderboard.dart';
 import 'ranks.dart';
 import 'socket.dart';
+import 'services.dart';
 
 class StartPage extends StatefulWidget {
   final bool Function() isLoggedIn;
@@ -252,31 +253,35 @@ class _StartPageState extends State<StartPage> {
               const SizedBox(height: 20),
 
               Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 10.0, horizontal: 110.0),
-                child: isLoggedIn
-                    ? PressableButton(
-                        onPressed: _initiateBattle,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 18),
-                        child: Center(
-                          child: Text(
-                            AppLocalizations.of(context)!.startBattle,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                        ),
-                      )
-                    : PressableButton(
-                        onPressed: _navigateToLogin,
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 12, horizontal: 18),
-                        child: Center(
-                          child: Text(
-                            AppLocalizations.of(context)!.login,
-                            style: Theme.of(context).textTheme.labelLarge,
-                          ),
-                        ),
-                      ),
+                padding: EdgeInsets.symmetric(
+                  vertical: isTablet(context)
+                      ? 6.0
+                      : 10.0, // Decrease vertical padding for tablets
+                  horizontal: isTablet(context)
+                      ? 60.0
+                      : 110.0, // Decrease horizontal padding for tablets
+                ),
+                child: PressableButton(
+                  onPressed: isLoggedIn ? _initiateBattle : _navigateToLogin,
+                  padding: EdgeInsets.symmetric(
+                    vertical: isTablet(context)
+                        ? 8
+                        : 12, // Decrease vertical padding for tablets
+                    horizontal: isTablet(context)
+                        ? 12
+                        : 18, // Decrease horizontal padding for tablets
+                  ),
+                  child: Center(
+                    child: Text(
+                      isLoggedIn
+                          ? AppLocalizations.of(context)!.startBattle
+                          : AppLocalizations.of(context)!.login,
+                      style: !isTablet(context)
+                          ? Theme.of(context).textTheme.bodyLarge //Phone
+                          : Theme.of(context).textTheme.displayMedium, //Tablet
+                    ),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 20),

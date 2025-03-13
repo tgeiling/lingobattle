@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'friends.dart';
 import 'provider.dart';
 import 'battlerequests.dart';
+import 'services.dart';
 
 class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBackToMainMenu;
@@ -36,7 +37,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-        toolbarHeight: 65,
+        toolbarHeight: !isTablet(context) ? 65 : 120,
         title: LayoutBuilder(
           builder: (context, constraints) {
             return Row(
