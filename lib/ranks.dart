@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:lingobattle/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'provider.dart';
@@ -21,7 +22,9 @@ class Ranks extends StatelessWidget {
         return GestureDetector(
           onTap: () => _showEloDialog(context, profile),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: isTablet(context)
+                ? EdgeInsets.symmetric(horizontal: 36, vertical: 4)
+                : EdgeInsets.symmetric(horizontal: 20),
             decoration: BoxDecoration(
               color: Colors.grey[500],
               borderRadius: BorderRadius.circular(30),
@@ -33,7 +36,7 @@ class Ranks extends StatelessWidget {
                 Text(
                   rankText,
                   style: GoogleFonts.pressStart2p(
-                    fontSize: 14,
+                    fontSize: isTablet(context) ? 32 : 14,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -41,8 +44,8 @@ class Ranks extends StatelessWidget {
                 const SizedBox(width: 12),
                 Image.asset(
                   'assets/ranks/$imagePath.png',
-                  width: 180,
-                  height: 46,
+                  width: isTablet(context) ? 250 : 180,
+                  height: isTablet(context) ? 60 : 46,
                   fit: BoxFit.contain,
                 ),
               ],

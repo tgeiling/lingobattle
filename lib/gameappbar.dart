@@ -10,19 +10,26 @@ import 'services.dart';
 
 class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onBackToMainMenu;
+  final bool isTablet;
 
-  const GameAppBar({Key? key, required this.onBackToMainMenu})
-      : super(key: key);
+  const GameAppBar({
+    Key? key,
+    required this.onBackToMainMenu,
+    required this.isTablet,
+  }) : super(key: key);
 
   @override
-  Size get preferredSize => const Size.fromHeight(65);
+  Size get preferredSize => Size.fromHeight(isTablet ? 120 : 65);
 
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final double iconSize = screenWidth * 0.05; // Adaptive icon size
-    final double fontSize = screenWidth * 0.035; // Adaptive font size
-    final double pillPadding = screenWidth * 0.02; // Dynamic padding for pills
+    final double iconSize = isTablet ? screenWidth * 0.036 : screenWidth * 0.05;
+    final double fontSize =
+        isTablet ? screenWidth * 0.0225 : screenWidth * 0.035;
+    final double pillPadding =
+        isTablet ? screenWidth * 0.0135 : screenWidth * 0.02;
+    final double spacing = isTablet ? screenWidth * 0.045 : screenWidth * 0.03;
 
     return Consumer<ProfileProvider>(
       builder: (context, profile, child) => AppBar(
@@ -37,11 +44,12 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ),
-        toolbarHeight: !isTablet(context) ? 65 : 120,
+        toolbarHeight: isTablet ? 120 : 65,
         title: LayoutBuilder(
           builder: (context, constraints) {
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // 🔹 Left Side: Username Pill
                 _gamePill(
@@ -62,7 +70,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
                         username: profile.username,
                         onBackToMainMenu: onBackToMainMenu,
                       ),
-                      SizedBox(width: screenWidth * 0.03),
+                      SizedBox(width: spacing),
                       FriendsButton(
                         username: profile.username,
                         onBackToMainMenu: onBackToMainMenu,
@@ -82,7 +90,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
                       iconSize: iconSize,
                       padding: pillPadding,
                     ),
-                    SizedBox(width: screenWidth * 0.02),
+                    SizedBox(width: spacing),
                     _gamePill(
                       iconPath: 'assets/flame.png',
                       text: '${profile.winStreak}',
@@ -111,7 +119,6 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
     required double iconSize,
     required double padding,
   }) {
-    // 🔹 Trim username to 9 characters and add "..."
     String displayText = text.length > 9 ? "${text.substring(0, 9)}..." : text;
 
     return Container(
@@ -121,9 +128,7 @@ class GameAppBar extends StatelessWidget implements PreferredSizeWidget {
         color: Colors.black.withOpacity(0.4),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color, width: 1.5),
-        boxShadow: [
-          BoxShadow(color: color.withOpacity(0.5), blurRadius: 3),
-        ],
+        boxShadow: [BoxShadow(color: color.withOpacity(0.5), blurRadius: 3)],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

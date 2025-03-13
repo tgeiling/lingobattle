@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import 'game.dart';
+import 'services.dart';
 
 class BattleRequestsButton extends StatefulWidget {
   final String username;
@@ -375,8 +376,11 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
 
     return NeumorphicButton(
       onPressed: _showBattleRequestsDialog,
-      padding: EdgeInsets.symmetric(
-          horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
+      padding: isTablet(context)
+          ? EdgeInsets.symmetric(
+              horizontal: buttonPadding, vertical: buttonPadding * 0.5)
+          : EdgeInsets.symmetric(
+              horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
       style: NeumorphicStyle(
         depth: depth, // Adjust depth based on screen size
         color: Colors.blueAccent,
@@ -384,7 +388,9 @@ class _BattleRequestsButtonState extends State<BattleRequestsButton> {
       ),
       child: Icon(
         Icons.mail,
-        size: iconSize, // Responsive icon size
+        size: isTablet(context)
+            ? iconSize - 10
+            : iconSize, // Responsive icon size
         color: Colors.white,
       ),
     );

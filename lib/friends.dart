@@ -10,6 +10,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'elements.dart';
 import 'game.dart';
 import 'provider.dart';
+import 'services.dart';
 import 'socket.dart';
 
 class FriendsButton extends StatefulWidget {
@@ -818,12 +819,15 @@ class _FriendsButtonState extends State<FriendsButton> {
 
     return PressableButton(
       onPressed: _showFriendsDialog,
-      padding: EdgeInsets.symmetric(
-          horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
+      padding: isTablet(context)
+          ? EdgeInsets.symmetric(
+              horizontal: buttonPadding, vertical: buttonPadding * 0.5)
+          : EdgeInsets.symmetric(
+              horizontal: buttonPadding * 1.5, vertical: buttonPadding * 0.8),
       child: Text(
         AppLocalizations.of(context)!.friends,
         style: TextStyle(
-          fontSize: fontSize,
+          fontSize: isTablet(context) ? fontSize - 4 : fontSize,
           fontWeight: FontWeight.bold,
         ),
       ),

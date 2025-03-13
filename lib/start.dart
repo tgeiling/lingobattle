@@ -195,7 +195,7 @@ class _StartPageState extends State<StartPage> {
                     ),
                     child: NeumorphicIcon(
                       Icons.arrow_left,
-                      size: 70,
+                      size: isTablet(context) ? 160 : 70,
                       style: NeumorphicStyle(
                         color: Colors.grey[400],
                         depth: 2,
@@ -240,7 +240,7 @@ class _StartPageState extends State<StartPage> {
                     ),
                     child: NeumorphicIcon(
                       Icons.arrow_right,
-                      size: 70,
+                      size: isTablet(context) ? 160 : 70,
                       style: NeumorphicStyle(
                         color: Colors.grey[400],
                         depth: 2,
@@ -254,31 +254,23 @@ class _StartPageState extends State<StartPage> {
 
               Padding(
                 padding: EdgeInsets.symmetric(
-                  vertical: isTablet(context)
-                      ? 6.0
-                      : 10.0, // Decrease vertical padding for tablets
-                  horizontal: isTablet(context)
-                      ? 60.0
-                      : 110.0, // Decrease horizontal padding for tablets
+                  vertical: isTablet(context) ? 22.0 : 10.0,
+                  horizontal: isTablet(context) ? 280.0 : 110.0,
                 ),
                 child: PressableButton(
                   onPressed: isLoggedIn ? _initiateBattle : _navigateToLogin,
                   padding: EdgeInsets.symmetric(
-                    vertical: isTablet(context)
-                        ? 8
-                        : 12, // Decrease vertical padding for tablets
-                    horizontal: isTablet(context)
-                        ? 12
-                        : 18, // Decrease horizontal padding for tablets
+                    vertical: isTablet(context) ? 8 : 12,
+                    horizontal: isTablet(context) ? 12 : 18,
                   ),
                   child: Center(
                     child: Text(
                       isLoggedIn
                           ? AppLocalizations.of(context)!.startBattle
                           : AppLocalizations.of(context)!.login,
-                      style: !isTablet(context)
-                          ? Theme.of(context).textTheme.bodyLarge //Phone
-                          : Theme.of(context).textTheme.displayMedium, //Tablet
+                      style: isTablet(context)
+                          ? Theme.of(context).textTheme.displaySmall
+                          : Theme.of(context).textTheme.bodyLarge,
                     ),
                   ),
                 ),
@@ -307,7 +299,9 @@ class _StartPageState extends State<StartPage> {
                         children: [
                           NeumorphicIcon(
                             Icons.leaderboard,
-                            size: MediaQuery.of(context).size.width * 0.15,
+                            size: isTablet(context)
+                                ? MediaQuery.of(context).size.width * 0.1
+                                : MediaQuery.of(context).size.width * 0.15,
                             style: NeumorphicStyle(
                               color: Colors.grey[400],
                               depth: 2,
@@ -332,7 +326,9 @@ class _StartPageState extends State<StartPage> {
                         children: [
                           NeumorphicIcon(
                             Icons.history,
-                            size: MediaQuery.of(context).size.width * 0.15,
+                            size: isTablet(context)
+                                ? MediaQuery.of(context).size.width * 0.1
+                                : MediaQuery.of(context).size.width * 0.15,
                             style: NeumorphicStyle(
                               color: Colors.blue[300],
                               depth: 2,

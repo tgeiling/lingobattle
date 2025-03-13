@@ -317,19 +317,11 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    bool isSmallScreen = screenWidth < 360;
-
-    double modalHeight;
-
-    if (isSmallScreen) {
-      modalHeight = 200;
-    } else {
-      modalHeight = 240;
-    }
-
     return Scaffold(
-      appBar: GameAppBar(onBackToMainMenu: triggerAnimation),
+      appBar: GameAppBar(
+        onBackToMainMenu: triggerAnimation,
+        isTablet: isTablet(context),
+      ),
       body: Stack(
         children: [
           PageView(
@@ -367,6 +359,8 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildBottomNavigationBar() {
+    final bool isTablet = MediaQuery.of(context).size.shortestSide >= 600;
+
     return SalomonBottomBar(
       backgroundColor: Colors.grey[200],
       currentIndex: _currentIndex,
@@ -377,59 +371,51 @@ class _MyHomePageState extends State<MyHomePage>
         });
       },
       items: [
-        SalomonBottomBarItem(
-          icon: NeumorphicIcon(
-            Icons.gamepad,
-            size: 40,
-            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-          ),
-          title: Text(
-            AppLocalizations.of(context)!.menu1,
-            style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
-          ),
-          selectedColor: Colors.blueGrey[700],
+        _buildBottomBarItem(
+          icon: Icons.gamepad,
+          title: AppLocalizations.of(context)!.menu1,
+          isTablet: isTablet,
         ),
-        SalomonBottomBarItem(
-          icon: NeumorphicIcon(
-            Icons.menu_book,
-            size: 40,
-            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-          ),
-          title: Text(
-            AppLocalizations.of(context)!.menu2,
-            style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
-          ),
-          selectedColor: Colors.blueGrey[700],
+        _buildBottomBarItem(
+          icon: Icons.menu_book,
+          title: AppLocalizations.of(context)!.menu2,
+          isTablet: isTablet,
         ),
-        SalomonBottomBarItem(
-          icon: NeumorphicIcon(
-            Icons.person,
-            size: 40,
-            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-          ),
-          title: Text(
-            AppLocalizations.of(context)!.menu3,
-            style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
-          ),
-          selectedColor: Colors.blueGrey[700],
+        _buildBottomBarItem(
+          icon: Icons.person,
+          title: AppLocalizations.of(context)!.menu3,
+          isTablet: isTablet,
         ),
-        SalomonBottomBarItem(
-          icon: NeumorphicIcon(
-            Icons.settings,
-            size: 40,
-            style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
-          ),
-          title: Text(
-            AppLocalizations.of(context)!.menu4,
-            style:
-                TextStyle(fontSize: MediaQuery.of(context).size.width * 0.030),
-          ),
-          selectedColor: Colors.blueGrey[700],
+        _buildBottomBarItem(
+          icon: Icons.settings,
+          title: AppLocalizations.of(context)!.menu4,
+          isTablet: isTablet,
         ),
       ],
+    );
+  }
+
+  SalomonBottomBarItem _buildBottomBarItem({
+    required IconData icon,
+    required String title,
+    required bool isTablet,
+  }) {
+    return SalomonBottomBarItem(
+      icon: NeumorphicIcon(
+        icon,
+        size: isTablet ? 60 : 40, // Reduce icon size on tablets
+        style: NeumorphicStyle(depth: 2, color: Colors.grey.shade400),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: isTablet
+              ? 17
+              : MediaQuery.of(context).size.width *
+                  0.030, // Reduce font size on tablets
+        ),
+      ),
+      selectedColor: Colors.blueGrey[700],
     );
   }
 }
